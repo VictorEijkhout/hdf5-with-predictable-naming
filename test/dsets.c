@@ -48,6 +48,9 @@
 #include "H5FDpkg.h"
 #include "H5VMprivate.h"
 #include "H5Zpkg.h"
+#ifdef H5_HAVE_SZLIB_H
+#include "szlib.h"
+#endif
 
 static const char *FILENAME[] = {"dataset",             /* 0 */
                                  "compact_dataset",     /* 1 */
@@ -526,7 +529,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_simple_io(const char *driver_name, hid_t fapl)
+test_simple_io(const char *env_h5_drvr, hid_t fapl)
 {
     char  filename[FILENAME_BUF_SIZE];
     hid_t file = H5I_INVALID_HID, dataset = H5I_INVALID_HID, space = H5I_INVALID_HID, xfer = H5I_INVALID_HID;
@@ -541,8 +544,8 @@ test_simple_io(const char *driver_name, hid_t fapl)
     TESTING("simple I/O");
 
     /* Can't run this test with multi-file VFDs because of HDopen/read/seek the file directly */
-    if (strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-        strcmp(driver_name, "family") != 0) {
+    if (strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+        strcmp(env_h5_drvr, "family") != 0) {
         h5_fixname(FILENAME[4], fapl, filename, sizeof filename);
 
         /* Set up data array */
@@ -688,7 +691,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_userblock_offset(const char *driver_name, hid_t fapl, bool new_format)
+test_userblock_offset(const char *env_h5_drvr, hid_t fapl, bool new_format)
 {
     char  filename[FILENAME_BUF_SIZE];
     hid_t file = H5I_INVALID_HID, fcpl = H5I_INVALID_HID, dataset = H5I_INVALID_HID, space = H5I_INVALID_HID;
@@ -702,8 +705,8 @@ test_userblock_offset(const char *driver_name, hid_t fapl, bool new_format)
     TESTING("dataset offset with user block");
 
     /* Can't run this test with multi-file VFDs because of HDopen/read/seek the file directly */
-    if (strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-        strcmp(driver_name, "family") != 0) {
+    if (strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+        strcmp(env_h5_drvr, "family") != 0) {
         h5_fixname(FILENAME[2], fapl, filename, sizeof filename);
 
         /* Set up data array */
@@ -5682,329 +5685,6 @@ error:
 } /* end test_multiopen() */
 
 /*-------------------------------------------------------------------------
- * Function:    test_floattypes
- *
- * Purpose:    Make some datasets with various float types.
- *
- * Return:    Success:    0
- *
- *        Failure:    -1
- *
- *-------------------------------------------------------------------------
- */
-static herr_t
-test_floattypes(hid_t file)
-{
-    hid_t         dataset  = H5I_INVALID_HID;
-    hid_t         datatype = H5I_INVALID_HID;
-    hid_t         space    = H5I_INVALID_HID;
-    const hsize_t size[2]  = {2, 5};
-    size_t        i, j;
-    size_t        precision, offset;
-
-    puts("Testing float datatypes");
-
-    /* float */
-    {
-        /* orig_data[] are initialized to be within the range that can be represented by
-         * dataset datatype (no precision loss during datatype conversion)
-         */
-        float orig_data[2][5] = {{188384.0F, 19.103516F, -1.0831790e9F, -84.242188F, 5.2045898F},
-                                 {-49140.0F, 2350.25F, -3.2110596e-1F, 6.4998865e-5F, -0.0F}};
-        float new_data[2][5];
-
-        TESTING("    float (setup)");
-
-        /* Define user-defined single-precision floating-point type for dataset */
-        datatype = H5Tcopy(H5T_IEEE_F32BE);
-        if (H5Tset_fields(datatype, (size_t)26, (size_t)20, (size_t)6, (size_t)7, (size_t)13) < 0)
-            goto error;
-        offset = 7;
-        if (H5Tset_offset(datatype, offset) < 0)
-            goto error;
-        precision = 20;
-        if (H5Tset_precision(datatype, precision) < 0)
-            goto error;
-        if (H5Tset_size(datatype, (size_t)4) < 0)
-            goto error;
-        if (H5Tset_ebias(datatype, (size_t)31) < 0)
-            goto error;
-
-        /* Create the data space */
-        if ((space = H5Screate_simple(2, size, NULL)) < 0)
-            goto error;
-
-        /* Create the dataset */
-        if ((dataset =
-                 H5Dcreate2(file, "float_type)", datatype, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-            goto error;
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 1: Test  writing to it.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    float (write)");
-
-        if (H5Dwrite(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, orig_data) < 0)
-            goto error;
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 2: Try to read the data we just wrote.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    float (read)");
-
-        /* Read the dataset back */
-        if (H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, new_data) < 0)
-            goto error;
-
-        /* Check that the values read are the same as the values written
-         * Assume size of int = size of float
-         */
-        for (i = 0; i < (size_t)size[0]; i++) {
-            for (j = 0; j < (size_t)size[1]; j++) {
-                if (isnan(orig_data[i][j]))
-                    continue; /* skip if value is NaN */
-                if (!H5_FLT_ABS_EQUAL(new_data[i][j], orig_data[i][j])) {
-                    H5_FAILED();
-                    printf("    Read different values than written.\n");
-                    printf("    At index %lu,%lu\n", (unsigned long)i, (unsigned long)j);
-                    goto error;
-                }
-            }
-        }
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * Cleanup
-         *----------------------------------------------------------------------
-         */
-        if (H5Tclose(datatype) < 0)
-            goto error;
-        if (H5Sclose(space) < 0)
-            goto error;
-        if (H5Dclose(dataset) < 0)
-            goto error;
-    }
-
-    /* double */
-    {
-        double orig_data[2][5] = {
-            {(double)1.6081706885101836e+60L, (double)-255.32099170994480, (double)1.2677579992621376e-61L,
-             (double)64568.289448797700, (double)-1.0619721778839084e-75L},
-            {(double)2.1499497833454840e+56L, (double)6.6562295504670740e-3, (double)-1.5747263393432150,
-             (double)1.0711093225222612, (double)-9.8971679387636870e-1}};
-        double new_data[2][5];
-
-        TESTING("    double (setup)");
-
-        /* Define user-defined double-precision floating-point type for dataset */
-        datatype = H5Tcopy(H5T_IEEE_F64BE);
-        if (H5Tset_fields(datatype, (size_t)55, (size_t)46, (size_t)9, (size_t)5, (size_t)41) < 0)
-            goto error;
-        offset = 5;
-        if (H5Tset_offset(datatype, offset) < 0)
-            goto error;
-        precision = 51;
-        if (H5Tset_precision(datatype, precision) < 0)
-            goto error;
-        if (H5Tset_size(datatype, (size_t)8) < 0)
-            goto error;
-        if (H5Tset_ebias(datatype, (size_t)255) < 0)
-            goto error;
-
-        /* Create the data space */
-        if ((space = H5Screate_simple(2, size, NULL)) < 0)
-            goto error;
-
-        /* Create the dataset */
-        if ((dataset =
-                 H5Dcreate2(file, "double_type", datatype, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-            goto error;
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 1: Test writing to it.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    double (write)");
-
-        if (H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, orig_data) < 0)
-            goto error;
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 2: Try to read the data we just wrote.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    double (read)");
-
-        /* Read the dataset back */
-        if (H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, new_data) < 0)
-            goto error;
-
-        /* Check that the values read are the same as the values written
-         * Assume size of long long = size of double
-         */
-        for (i = 0; i < (size_t)size[0]; i++) {
-            for (j = 0; j < (size_t)size[1]; j++) {
-                if (isnan(orig_data[i][j]))
-                    continue; /* skip if value is NaN */
-                if (!H5_DBL_ABS_EQUAL(new_data[i][j], orig_data[i][j])) {
-                    H5_FAILED();
-                    printf("    Read different values than written.\n");
-                    printf("    At index %lu,%lu\n", (unsigned long)i, (unsigned long)j);
-                    goto error;
-                }
-            }
-        }
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * Cleanup
-         *----------------------------------------------------------------------
-         */
-        if (H5Tclose(datatype) < 0)
-            goto error;
-        if (H5Sclose(space) < 0)
-            goto error;
-        if (H5Dclose(dataset) < 0)
-            goto error;
-    }
-
-#if H5_SIZEOF_LONG_DOUBLE != H5_SIZEOF_DOUBLE
-    /* long double */
-    {
-        long double orig_data[2][5] = {
-            {(long double)1.6081706885101836e+300L, (long double)-255.3209917099448032099170994480,
-             (long double)1.2677579992621376e-310L, (long double)64568.289448797700289448797700,
-             (long double)-1.0619721778839084e-310L},
-            {(long double)2.1499497833454840991499497833454840e+257L,
-             (long double)6.6562295504670740996562295504670740e-3,
-             (long double)-1.5747263393432150995747263393432150,
-             (long double)1.0711093225222612990711093225222612,
-             (long double)-9.8971679387636870998971679387636870e-1}};
-        long double new_data[2][5];
-#if LDBL_MANT_DIG != 106
-        size_t ld_spos, ld_epos, ld_esize, ld_mpos, ld_msize;
-        size_t tgt_precision = 128;
-#endif
-
-        TESTING("    long double (setup)");
-
-        if ((datatype = H5Tcopy(H5T_NATIVE_LDOUBLE)) < 0)
-            goto error;
-
-            /* Skip creating a custom floating-point type when long double
-             * is the IBM long double. The library detects different formats
-             * for the type on big-endian vs. little-endian systems and will
-             * cause this to fail on little-endian systems while passing on
-             * big-endian systems. The library needs proper support for the
-             * IBM long double type before we can test this.
-             */
-#if LDBL_MANT_DIG != 106
-        /* Get the layout of the native long double type */
-        if (H5Tget_fields(datatype, &ld_spos, &ld_epos, &ld_esize, &ld_mpos, &ld_msize) < 0)
-            goto error;
-
-        /* Check if all "tgt_precision"+ bits are already used. If not, define
-         * a custom floating-point type where the mantissa takes up the extra
-         * bits. Otherwise, just write and read using the native long double type.
-         */
-        if (ld_esize + ld_msize + 1 < tgt_precision) {
-            size_t extra_bits = tgt_precision - ld_esize - ld_msize - 1;
-
-            /* Increasing precision, call H5Tset_precision first */
-            if (H5Tset_precision(datatype, tgt_precision) < 0)
-                goto error;
-            if (H5Tset_fields(datatype, ld_spos + extra_bits, ld_epos + extra_bits, ld_esize, 0,
-                              ld_msize + extra_bits) < 0)
-                goto error;
-            if (H5Tset_size(datatype, 16) < 0)
-                goto error;
-        }
-#endif
-
-        /* Create the data space */
-        if ((space = H5Screate_simple(2, size, NULL)) < 0)
-            goto error;
-
-        /* Create the dataset */
-        if ((dataset = H5Dcreate2(file, "long_double_type", datatype, space, H5P_DEFAULT, H5P_DEFAULT,
-                                  H5P_DEFAULT)) < 0)
-            goto error;
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 1: Test writing to it.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    long double (write)");
-
-        if (H5Dwrite(dataset, H5T_NATIVE_LDOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, orig_data) < 0)
-            goto error;
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * STEP 2: Try to read the data we just wrote.
-         *----------------------------------------------------------------------
-         */
-        TESTING("    long double (read)");
-
-        /* Read the dataset back */
-        if (H5Dread(dataset, H5T_NATIVE_LDOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, new_data) < 0)
-            goto error;
-
-        /* Check that the values read are the same as the values written */
-        for (i = 0; i < (size_t)size[0]; i++) {
-            for (j = 0; j < (size_t)size[1]; j++) {
-                if (isnan(orig_data[i][j]))
-                    continue; /* skip if value is NaN */
-                if (!H5_LDBL_ABS_EQUAL(new_data[i][j], orig_data[i][j])) {
-                    H5_FAILED();
-                    printf("    Read different values than written.\n");
-                    printf("    At index %lu,%lu\n", (unsigned long)i, (unsigned long)j);
-                    goto error;
-                }
-            }
-        }
-
-        PASSED();
-
-        /*----------------------------------------------------------------------
-         * Cleanup
-         *----------------------------------------------------------------------
-         */
-        if (H5Tclose(datatype) < 0)
-            goto error;
-        if (H5Sclose(space) < 0)
-            goto error;
-        if (H5Dclose(dataset) < 0)
-            goto error;
-    }
-#endif
-
-    return SUCCEED;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Tclose(datatype);
-        H5Sclose(space);
-        H5Dclose(dataset);
-    }
-    H5E_END_TRY
-    return FAIL;
-} /* end test_floattypes() */
-
-/*-------------------------------------------------------------------------
  * Function:    test_types
  *
  * Purpose:    Make some datasets with various types so we can test h5ls.
@@ -9630,7 +9310,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_chunk_fast(const char *driver_name, hid_t fapl)
+test_chunk_fast(const char *env_h5_driver, hid_t fapl)
 {
     char         filename[FILENAME_BUF_SIZE];
     hid_t        fid        = H5I_INVALID_HID; /* File ID */
@@ -9693,7 +9373,7 @@ test_chunk_fast(const char *driver_name, hid_t fapl)
         /* Skip this iteration if SWMR I/O is not supported for the VFD specified
          * by the environment variable.
          */
-        if (swmr && !H5FD__supports_swmr_test(driver_name))
+        if (swmr && !H5FD__supports_swmr_test(env_h5_driver))
             continue;
 
 #ifdef H5_HAVE_FILTER_DEFLATE
@@ -12200,7 +11880,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_swmr_non_latest(const char *driver_name, hid_t fapl)
+test_swmr_non_latest(const char *env_h5_driver, hid_t fapl)
 {
     char              filename[FILENAME_BUF_SIZE];
     hid_t             fid  = H5I_INVALID_HID;       /* File ID */
@@ -12221,7 +11901,7 @@ test_swmr_non_latest(const char *driver_name, hid_t fapl)
     /* Skip this test if SWMR I/O is not supported for the VFD specified
      * by the environment variable.
      */
-    if (!H5FD__supports_swmr_test(driver_name)) {
+    if (!H5FD__supports_swmr_test(env_h5_driver)) {
         SKIPPED();
         puts("    Test skipped due to VFD not supporting SWMR I/O.");
         return SUCCEED;
@@ -12470,7 +12150,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_earray_hdr_fd(const char *driver_name, hid_t fapl)
+test_earray_hdr_fd(const char *env_h5_driver, hid_t fapl)
 {
     char              filename[FILENAME_BUF_SIZE];
     hid_t             fid  = H5I_INVALID_HID;
@@ -12491,7 +12171,7 @@ test_earray_hdr_fd(const char *driver_name, hid_t fapl)
     /* Skip this test if SWMR I/O is not supported for the VFD specified
      * by the environment variable.
      */
-    if (!H5FD__supports_swmr_test(driver_name)) {
+    if (!H5FD__supports_swmr_test(env_h5_driver)) {
         SKIPPED();
         puts("    Test skipped due to VFD not supporting SWMR I/O.");
         return SUCCEED;
@@ -12591,7 +12271,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_farray_hdr_fd(const char *driver_name, hid_t fapl)
+test_farray_hdr_fd(const char *env_h5_driver, hid_t fapl)
 {
     char              filename[FILENAME_BUF_SIZE];
     hid_t             fid  = H5I_INVALID_HID;
@@ -12612,7 +12292,7 @@ test_farray_hdr_fd(const char *driver_name, hid_t fapl)
     /* Skip this test if SWMR I/O is not supported for the VFD specified
      * by the environment variable.
      */
-    if (!H5FD__supports_swmr_test(driver_name)) {
+    if (!H5FD__supports_swmr_test(env_h5_driver)) {
         SKIPPED();
         puts("    Test skipped due to VFD not supporting SWMR I/O.");
         return SUCCEED;
@@ -12712,7 +12392,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_bt2_hdr_fd(const char *driver_name, hid_t fapl)
+test_bt2_hdr_fd(const char *env_h5_driver, hid_t fapl)
 {
     char              filename[FILENAME_BUF_SIZE];
     hid_t             fid  = H5I_INVALID_HID;
@@ -12739,7 +12419,7 @@ test_bt2_hdr_fd(const char *driver_name, hid_t fapl)
     /* Skip this test if SWMR I/O is not supported for the VFD specified
      * by the environment variable.
      */
-    if (!H5FD__supports_swmr_test(driver_name)) {
+    if (!H5FD__supports_swmr_test(env_h5_driver)) {
         SKIPPED();
         puts("    Test skipped due to VFD not supporting SWMR I/O.");
         return SUCCEED;
@@ -15719,174 +15399,6 @@ error:
 } /* end test_0sized_dset_metadata_alloc() */
 
 /*-------------------------------------------------------------------------
- * Function:    test_downsize_vlen_scalar_dataset
- *
- * Purpose:     Tests H5Dwrite on a scalar dataset containing a VLEN array
- *              of { double, C-string }. This causes special code to free
- *              the nested VLEN (in this case, C-string) allocations.
- *
- * Return:      Success: 0
- *              Failure: -1
- *
- *-------------------------------------------------------------------------
- */
-#define VLEN_DS_NAME       "test_downsize_vlen_scalar_dataset"
-#define VLEN_DS_DIM        100
-#define VLEN_DS_STRLEN     20
-#define VLEN_DS_STRING     "vlen test string"
-#define VLEN_DS_VALUE      0.12345678901234567890
-#define VLEN_DS_ARRAY_DIM1 3
-#define VLEN_DS_ARRAY_DIM2 5
-
-typedef struct {
-    double value;
-    char  *string[VLEN_DS_ARRAY_DIM1][VLEN_DS_ARRAY_DIM2];
-} vlen_ds_compound_file_t;
-
-typedef struct {
-    int    padding1;
-    double value;
-    int    padding2;
-    char  *string[VLEN_DS_ARRAY_DIM1][VLEN_DS_ARRAY_DIM2];
-    int    padding3;
-} vlen_ds_compound_memory_t;
-
-static herr_t
-test_downsize_vlen_scalar_dataset(hid_t file)
-{
-    hid_t                      scalar_sid               = -1; /* Scalar dataspace ID */
-    hid_t                      string_tid               = -1; /* VARIABLE string datatype ID */
-    hid_t                      string_array_tid         = -1; /* VARIABLE string array datatype ID */
-    hid_t                      compound_file_tid        = -1; /* COMPOUND datatype ID */
-    hid_t                      compound_memory_tid      = -1; /* COMPOUND datatype ID */
-    hid_t                      vlen_compound_file_tid   = -1; /* VARIABLE COMPOUND datatype ID */
-    hid_t                      vlen_compound_memory_tid = -1; /* VARIABLE COMPOUND datatype ID */
-    hid_t                      scalar_did               = -1; /* SCALAR dataset ID */
-    hvl_t                      vlen_compound_data;            /* Top-level VLEN data */
-    vlen_ds_compound_memory_t *compound_data = NULL;          /* Contents of VLEN data */
-    char                       common_string[VLEN_DS_STRLEN]; /* Common string contents */
-    hsize_t                    array_dims[2] = {VLEN_DS_ARRAY_DIM1, VLEN_DS_ARRAY_DIM2};
-    int                        i, dim1, dim2; /* Local index variables */
-
-    TESTING("H5Dwrite() on down-sized VLEN contents");
-
-    /* Allocate space for compound data */
-    if (NULL == (compound_data =
-                     (vlen_ds_compound_memory_t *)malloc(VLEN_DS_DIM * sizeof(vlen_ds_compound_memory_t))))
-        TEST_ERROR;
-
-    /* Create scalar dataspace */
-    if ((scalar_sid = H5Screate(H5S_SCALAR)) < 0)
-        TEST_ERROR;
-
-    /* Create datatype VLEN{COMPOUND{"value":H5T_NATIVE_DOUBLE, "string":H5T_C_S1|H5T_VARIABLE}} */
-    /* Note: the memory and file structures must be different to invoke the bug @ H5Tconv.c:3323 */
-    if ((string_tid = H5Tcopy(H5T_C_S1)) < 0)
-        TEST_ERROR;
-    if (H5Tset_size(string_tid, H5T_VARIABLE) < 0)
-        TEST_ERROR;
-
-    if ((string_array_tid = H5Tarray_create2(string_tid, 2, array_dims)) < 0)
-        TEST_ERROR;
-
-    if ((compound_file_tid = H5Tcreate(H5T_COMPOUND, sizeof(vlen_ds_compound_file_t))) < 0)
-        TEST_ERROR;
-    if (H5Tinsert(compound_file_tid, "value", HOFFSET(vlen_ds_compound_file_t, value), H5T_NATIVE_DOUBLE) < 0)
-        TEST_ERROR;
-    if (H5Tinsert(compound_file_tid, "string", HOFFSET(vlen_ds_compound_file_t, string), string_array_tid) <
-        0)
-        TEST_ERROR;
-    if ((vlen_compound_file_tid = H5Tvlen_create(compound_file_tid)) < 0)
-        TEST_ERROR;
-
-    if ((compound_memory_tid = H5Tcreate(H5T_COMPOUND, sizeof(vlen_ds_compound_memory_t))) < 0)
-        TEST_ERROR;
-    if (H5Tinsert(compound_memory_tid, "value", HOFFSET(vlen_ds_compound_memory_t, value),
-                  H5T_NATIVE_DOUBLE) < 0)
-        TEST_ERROR;
-    if (H5Tinsert(compound_memory_tid, "string", HOFFSET(vlen_ds_compound_memory_t, string),
-                  string_array_tid) < 0)
-        TEST_ERROR;
-    if ((vlen_compound_memory_tid = H5Tvlen_create(compound_memory_tid)) < 0)
-        TEST_ERROR;
-
-    /* Create the scalar dataset of this data type */
-    if ((scalar_did = H5Dcreate2(file, VLEN_DS_NAME, vlen_compound_file_tid, scalar_sid, H5P_DEFAULT,
-                                 H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-
-    /* Setup the variable-length data. Note that if the double "value" field is set to 0.0, the bug will NOT
-     */
-    /* occur because this is the data at offset zero of the element, and it then looks like a NULL VLEN data
-     */
-    strcpy(common_string, VLEN_DS_STRING);
-
-    for (i = 0; i < VLEN_DS_DIM; ++i) {
-        compound_data[i].value = VLEN_DS_VALUE;
-        for (dim1 = 0; dim1 < VLEN_DS_ARRAY_DIM1; ++dim1) {
-            for (dim2 = 0; dim2 < VLEN_DS_ARRAY_DIM2; ++dim2) {
-                compound_data[i].string[dim1][dim2] = common_string;
-            }
-        }
-        compound_data[i].padding1 = 0;
-        compound_data[i].padding2 = 0;
-        compound_data[i].padding3 = 0;
-    }
-
-    /* Starting with the maximum size, progressively over-write the content of the dataset with smaller
-     * arrays. */
-    /* Note: the bug in v1.8.14 is tripped on the second iteration, when 100 elements are over-written
-     * with 99. */
-    for (i = VLEN_DS_DIM; i > 0; --i) {
-        vlen_compound_data.len = (size_t)i;
-        vlen_compound_data.p   = compound_data;
-        if (H5Dwrite(scalar_did, vlen_compound_memory_tid, scalar_sid, scalar_sid, H5P_DEFAULT,
-                     &vlen_compound_data) < 0)
-            TEST_ERROR;
-    }
-
-    /* Close everything */
-    if (H5Sclose(scalar_sid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(string_tid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(string_array_tid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(compound_file_tid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(vlen_compound_file_tid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(compound_memory_tid) < 0)
-        TEST_ERROR;
-    if (H5Tclose(vlen_compound_memory_tid) < 0)
-        TEST_ERROR;
-    if (H5Dclose(scalar_did) < 0)
-        TEST_ERROR;
-    free(compound_data);
-    compound_data = NULL;
-
-    PASSED();
-    return 0;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Sclose(scalar_sid);
-        H5Tclose(string_tid);
-        H5Tclose(string_array_tid);
-        H5Tclose(compound_file_tid);
-        H5Tclose(vlen_compound_file_tid);
-        H5Tclose(compound_memory_tid);
-        H5Tclose(vlen_compound_memory_tid);
-        H5Dclose(scalar_did);
-        free(compound_data);
-        compound_data = NULL;
-    }
-    H5E_END_TRY;
-    return -1;
-} /* end test_downsize_vlen_scalar_dataset() */
-
-/*-------------------------------------------------------------------------
  * Function:    main
  *
  * Purpose:     Tests the dataset interface (H5D)
@@ -15909,16 +15421,18 @@ main(void)
     size_t      rdcc_nbytes;
     double      rdcc_w0;
     int         nerrors = 0;
-    const char *driver_name;
+    const char *envval;
     bool        contig_addr_vfd; /* Whether VFD used has a contiguous address space */
     bool        driver_is_default_compatible;
     int         i;
 
     /* Don't run this test using certain file drivers */
-    driver_name = h5_get_test_driver_name();
+    envval = getenv(HDF5_DRIVER);
+    if (envval == NULL)
+        envval = "nomatch";
 
     /* Current VFD that does not support contiguous address space */
-    contig_addr_vfd = (bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0);
+    contig_addr_vfd = (bool)(strcmp(envval, "split") != 0 && strcmp(envval, "multi") != 0);
 
     /* Set the random # seed */
     HDsrandom((unsigned)HDtime(NULL));
@@ -16047,7 +15561,7 @@ main(void)
                     goto error;
 
                 nerrors += (test_create(file) < 0 ? 1 : 0);
-                nerrors += (test_simple_io(driver_name, my_fapl) < 0 ? 1 : 0);
+                nerrors += (test_simple_io(envval, my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_compact_io(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_max_compact(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_compact_open_close_dirty(my_fapl) < 0 ? 1 : 0);
@@ -16072,8 +15586,7 @@ main(void)
                 nerrors += (test_scaleoffset_double_2(file) < 0 ? 1 : 0);
                 nerrors += (test_multiopen(file) < 0 ? 1 : 0);
                 nerrors += (test_types(file) < 0 ? 1 : 0);
-                nerrors += (test_floattypes(file) < 0 ? 1 : 0);
-                nerrors += (test_userblock_offset(driver_name, my_fapl, new_format) < 0 ? 1 : 0);
+                nerrors += (test_userblock_offset(envval, my_fapl, new_format) < 0 ? 1 : 0);
 
                 if (driver_is_default_compatible) {
                     nerrors += (test_missing_filter(file) < 0 ? 1 : 0);
@@ -16103,7 +15616,7 @@ main(void)
                 nerrors += (test_huge_chunks(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_chunk_cache(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_big_chunks_bypass_cache(my_fapl) < 0 ? 1 : 0);
-                nerrors += (test_chunk_fast(driver_name, my_fapl) < 0 ? 1 : 0);
+                nerrors += (test_chunk_fast(envval, my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_reopen_chunk_fast(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_chunk_fast_bug1(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_chunk_expand(my_fapl) < 0 ? 1 : 0);
@@ -16121,12 +15634,10 @@ main(void)
                 nerrors += (test_storage_size(my_fapl) < 0 ? 1 : 0);
                 nerrors += (test_power2up(my_fapl) < 0 ? 1 : 0);
 
-                nerrors += (test_swmr_non_latest(driver_name, my_fapl) < 0 ? 1 : 0);
-                nerrors += (test_earray_hdr_fd(driver_name, my_fapl) < 0 ? 1 : 0);
-                nerrors += (test_farray_hdr_fd(driver_name, my_fapl) < 0 ? 1 : 0);
-                nerrors += (test_bt2_hdr_fd(driver_name, my_fapl) < 0 ? 1 : 0);
-
-                nerrors += (test_downsize_vlen_scalar_dataset(file) < 0 ? 1 : 0);
+                nerrors += (test_swmr_non_latest(envval, my_fapl) < 0 ? 1 : 0);
+                nerrors += (test_earray_hdr_fd(envval, my_fapl) < 0 ? 1 : 0);
+                nerrors += (test_farray_hdr_fd(envval, my_fapl) < 0 ? 1 : 0);
+                nerrors += (test_bt2_hdr_fd(envval, my_fapl) < 0 ? 1 : 0);
 
                 if (H5Fclose(file) < 0)
                     goto error;

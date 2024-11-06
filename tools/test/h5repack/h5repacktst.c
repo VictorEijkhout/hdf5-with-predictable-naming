@@ -1694,7 +1694,6 @@ main(void)
             GOERROR;
         if (h5repack(FNAME4, FNAME4OUT, &pack_options) < 0)
             GOERROR;
-        memset(&file_stat, 0, sizeof(h5_stat_t));
         if (HDstat(FNAME4OUT, &file_stat) < 0)
             GOERROR;
         fsize1 = file_stat.st_size;
@@ -1712,7 +1711,6 @@ main(void)
         if (h5repack_verify(FNAME4, FNAME4OUT, &pack_options) <= 0)
             GOERROR;
         /* record the file size of the output file */
-        memset(&file_stat, 0, sizeof(h5_stat_t));
         if (HDstat(FNAME4OUT, &file_stat) < 0)
             GOERROR;
         fsize2 = file_stat.st_size;
@@ -3716,7 +3714,7 @@ make_external(hid_t loc_id)
     /* create */
     if ((dcpl = H5Pcreate(H5P_DATASET_CREATE)) < 0)
         goto out;
-    if (H5Pset_external(dcpl, H5REPACK_EXTFILE, 0, size) < 0)
+    if (H5Pset_external(dcpl, H5REPACK_EXTFILE, (off_t)0, size) < 0)
         goto out;
     if ((sid = H5Screate_simple(1, cur_size, max_size)) < 0)
         goto out;

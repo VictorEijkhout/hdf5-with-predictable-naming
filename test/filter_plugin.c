@@ -847,7 +847,10 @@ test_creating_groups_using_plugins(hid_t fid)
 
     /* Create multiple groups under the top-level group */
     for (i = 0; i < N_SUBGROUPS; i++) {
-        snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX "%d", i);
+        char *sp = subgroup_name;
+
+        sp += snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX);
+        sprintf(sp, "%d", i);
 
         if ((sub_gid = H5Gcreate2(gid, subgroup_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
             TEST_ERROR;
@@ -903,7 +906,10 @@ test_opening_groups_using_plugins(hid_t fid)
 
     /* Open all the sub-groups under the top-level group */
     for (i = 0; i < N_SUBGROUPS; i++) {
-        snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX "%d", i);
+        char *sp = subgroup_name;
+
+        sp += snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX);
+        sprintf(sp, "%d", i);
 
         if ((sub_gid = H5Gopen2(gid, subgroup_name, H5P_DEFAULT)) < 0)
             TEST_ERROR;

@@ -12,7 +12,7 @@
 
 /*
  *  For details of the HDF libraries, see the HDF Documentation at:
- *    https://portal.hdfgroup.org/documentation/index.html
+ *    http://hdfgroup.org/HDF5/doc/
  *
  */
 
@@ -221,11 +221,13 @@ Java_hdf_hdf5lib_H5_H5Sselect_1elements(JNIEnv *env, jclass clss, jlong space_id
                                         jbyteArray coords)
 {
     jboolean isCopy;
-    hsize_t *coords_p     = NULL;
-    uint8_t *pinned_arr_p = NULL;
-    jbyte   *pinned_arr   = NULL;
+    hsize_t *lp  = NULL;
+    hsize_t *llp = NULL;
+    jlong   *jlp = NULL;
+    jbyte   *P   = NULL;
     jsize    size;
-    size_t   nlongs;
+    int      ii;
+    int      nlongs;
     herr_t   status = FAIL;
 
     UNUSED(clss);
@@ -233,40 +235,35 @@ Java_hdf_hdf5lib_H5_H5Sselect_1elements(JNIEnv *env, jclass clss, jlong space_id
     if (NULL == coords)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Sselect_elements: coords is NULL");
 
-    PIN_BYTE_ARRAY(ENVONLY, coords, pinned_arr, &isCopy, "H5Sselect_elements: coords not pinned");
+    PIN_BYTE_ARRAY(ENVONLY, coords, P, &isCopy, "H5Sselect_elements: coords not pinned");
 
     if ((size = ENVPTR->GetArrayLength(ENVONLY, coords)) < 0) {
         CHECK_JNI_EXCEPTION(ENVONLY, JNI_TRUE);
         H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Sselect_elements: coords array length < 0");
     }
 
-    nlongs = (size_t)size / sizeof(jlong);
+    nlongs = (int)((size_t)size / sizeof(jlong));
 
-    if (NULL == (coords_p = malloc(nlongs * sizeof(hsize_t))))
+    if (NULL == (lp = (hsize_t *)malloc((size_t)nlongs * sizeof(hsize_t))))
         H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Sselect_elements: failed to allocate coordinate buffer");
 
-    pinned_arr_p = (uint8_t *)pinned_arr;
-    for (size_t i = 0; i < nlongs; i++) {
-        jlong coord_elem;
+    jlp = (jlong *)P;
+    llp = lp;
+    for (ii = 0; ii < nlongs; ii++) {
+        *lp = (hsize_t)*jlp;
+        lp++;
+        jlp++;
+    } /* end for */
 
-        memcpy(&coord_elem, pinned_arr_p, sizeof(jlong));
-
-        if (coord_elem < 0)
-            H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Sselect_elements: coordinate element can't be negative");
-
-        coords_p[i] = (hsize_t)coord_elem;
-
-        pinned_arr_p += sizeof(jlong);
-    }
-
-    if ((status = H5Sselect_elements(space_id, (H5S_seloper_t)op, (size_t)num_elemn, coords_p)) < 0)
+    if ((status = H5Sselect_elements(space_id, (H5S_seloper_t)op, (size_t)num_elemn, (const hsize_t *)llp)) <
+        0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
-    free(coords_p);
-
-    if (pinned_arr)
-        UNPIN_BYTE_ARRAY(ENVONLY, coords, pinned_arr, JNI_ABORT);
+    if (llp)
+        free(llp);
+    if (P)
+        UNPIN_BYTE_ARRAY(ENVONLY, coords, P, JNI_ABORT);
 
     return (jint)status;
 } /* end Java_hdf_hdf5lib_H5_H5Sselect_1elements */
@@ -633,49 +630,49 @@ JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5Soffset_1simple(JNIEnv *env, jclass clss, jlong space_id, jbyteArray offset)
 {
     jboolean  isCopy;
-    hssize_t *offset_dims  = NULL;
-    uint8_t  *pinned_arr_p = NULL;
-    jbyte    *pinned_arr   = NULL;
+    hssize_t *sa = NULL;
+    hssize_t *lp = NULL;
     size_t    rank;
+    jsize     i;
+    jbyte    *P      = NULL;
+    jlong    *jlp    = NULL;
     herr_t    status = FAIL;
 
     UNUSED(clss);
 
     if (NULL != offset) {
-        jsize size;
+        PIN_BYTE_ARRAY(ENVONLY, offset, P, &isCopy, "H5Soffset_simple: offset not pinned");
 
-        PIN_BYTE_ARRAY(ENVONLY, offset, pinned_arr, &isCopy, "H5Soffset_simple: offset not pinned");
-
-        if ((size = ENVPTR->GetArrayLength(ENVONLY, offset)) < 0) {
+        if ((i = ENVPTR->GetArrayLength(ENVONLY, offset)) < 0) {
             CHECK_JNI_EXCEPTION(ENVONLY, JNI_TRUE);
             H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Soffset_simple: offset array length < 0");
         }
 
-        rank = (size_t)size / sizeof(jlong);
+        rank = (size_t)i / sizeof(jlong);
 
-        if (NULL == (offset_dims = malloc((size_t)rank * sizeof(hssize_t))))
+        if (NULL == (sa = lp = (hssize_t *)malloc((size_t)rank * sizeof(hssize_t))))
             H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Soffset_simple: failed to allocate offset buffer");
 
-        pinned_arr_p = (uint8_t *)pinned_arr;
-        for (size_t i = 0; i < rank; i++) {
-            jlong offset_elem;
-
-            memcpy(&offset_elem, pinned_arr_p, sizeof(jlong));
-
-            offset_dims[i] = (hssize_t)offset_elem;
-
-            pinned_arr_p += sizeof(jlong);
-        }
+        jlp = (jlong *)P;
+        for (i = 0; (size_t)i < rank; i++) {
+            *lp = (hssize_t)*jlp;
+            lp++;
+            jlp++;
+        } /* end for */
+    }
+    else {
+        P  = NULL;
+        sa = (hssize_t *)P;
     }
 
-    if ((status = H5Soffset_simple(space_id, offset_dims)) < 0)
+    if ((status = H5Soffset_simple(space_id, sa)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
-    free(offset_dims);
-
-    if (pinned_arr)
-        UNPIN_BYTE_ARRAY(ENVONLY, offset, pinned_arr, JNI_ABORT);
+    if (sa)
+        free(sa);
+    if (P)
+        UNPIN_BYTE_ARRAY(ENVONLY, offset, P, JNI_ABORT);
 
     return (jint)status;
 } /* end Java_hdf_hdf5lib_H5_H5Soffset_1simple */

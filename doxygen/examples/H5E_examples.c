@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define RESET "\x1b[0m"
-#define RED   "\x1b[31m"
-
 int
 main(void)
 {
@@ -37,8 +34,8 @@ main(void)
         }
 
         // push a custom error message onto the default stack
-        if (H5Epush2(H5E_DEFAULT, __FILE__, __FUNCTION__, __LINE__, cls, major, minor, "%s Hello, error %s\n",
-                     RED, RESET) < 0) {
+        if (H5Epush2(H5E_DEFAULT, __FILE__, __FUNCTION__, __LINE__, cls, major, minor, "Hello, Error!\n") <
+            0) {
             ret_val = EXIT_FAILURE;
             goto fail_push;
         }

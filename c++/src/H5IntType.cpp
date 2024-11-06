@@ -182,4 +182,12 @@ IntType::setSign(H5T_sign_t sign) const
     }
 }
 
+//--------------------------------------------------------------------------
+// Function:    IntType destructor
+///\brief       Noop destructor.
+//--------------------------------------------------------------------------
+IntType::~IntType()
+{
+}
+
 } // namespace H5

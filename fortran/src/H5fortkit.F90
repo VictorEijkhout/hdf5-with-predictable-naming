@@ -25,8 +25,6 @@
 !*****
 MODULE H5fortkit
 
-  USE H5FORTRAN_TYPES, ONLY : SIZE_T
-
 CONTAINS
 
 !****if* H5fortkit/HD5c2fstring
@@ -34,35 +32,28 @@ CONTAINS
 !  HD5c2fstring
 ! INPUTS
 !  cstring  -  C string stored as a string array of size 'len' of string size LEN=1
-!  f_len    -  length of Fortran string
-!  c_len    -  length of C array
+!  len      -  length of Fortran string
 ! OUTPUT
-!   fstring -  Fortran string LEN=1
+!   fstring -  Fortran string array of LEN=1
 ! PURPOSE
-!   Copies a C array of strings having a length of one to a fortran string and removes the C Null
+!   Copies a Fortran array of strings having a length of one to a fortran string and removes the C Null
 !   terminator. The Null terminator is returned from C when calling the C APIs directly.
 !
 !   The fortran standard does not allow C_LOC to be used on a character string of
 !   length greater than one, which is why we use the array of characters instead.
 !
 ! SOURCE
-  SUBROUTINE HD5c2fstring(fstring,cstring,f_len,c_len)
+  SUBROUTINE HD5c2fstring(fstring,cstring,len)
 !*****
     IMPLICIT NONE
 
-    INTEGER(SIZE_T) :: i
-    INTEGER(SIZE_T) :: f_len
-    INTEGER(SIZE_T) :: c_len
-    CHARACTER(*)    :: fstring
-    CHARACTER(LEN=1), DIMENSION(1:c_len) :: cstring
-
-    INTEGER(SIZE_T) :: f_len_max
+    INTEGER :: i
+    INTEGER :: len
+    CHARACTER(LEN=len) :: fstring
+    CHARACTER(LEN=1), DIMENSION(1:len) :: cstring
 
     fstring = ''
-    f_len_max = LEN(fstring, KIND=SIZE_T)
-    DO i = 1, c_len
-       IF (i .GT. f_len_max) EXIT
-       IF (i .GT. f_len) EXIT
+    DO i = 1, len
        IF (cstring(i)(1:1)==CHAR(0)) EXIT
        fstring(i:i) = cstring(i)(1:1)
     END DO

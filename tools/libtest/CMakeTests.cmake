@@ -28,9 +28,6 @@
     if (NOT "${resultcode}" STREQUAL "0")
       set_tests_properties (H5LIBTEST-${resultfile} PROPERTIES WILL_FAIL "true")
     endif ()
-    if ("H5LIBTEST-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5LIBTEST-${resultfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
 ##############################################################################

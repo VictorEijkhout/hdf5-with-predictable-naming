@@ -58,7 +58,7 @@ class H5_DLLCPP LinkCreatPropList : public PropList {
     H5T_cset_t getCharEncoding() const;
 
     // Noop destructor
-    virtual ~LinkCreatPropList() override = default;
+    virtual ~LinkCreatPropList() override;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

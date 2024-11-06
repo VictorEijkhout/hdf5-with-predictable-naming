@@ -140,7 +140,7 @@ class H5_DLLCPP DSetCreatPropList : public ObjCreatPropList {
     DSetCreatPropList(const hid_t plist_id);
 
     // Noop destructor.
-    virtual ~DSetCreatPropList() override = default;
+    virtual ~DSetCreatPropList() override;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

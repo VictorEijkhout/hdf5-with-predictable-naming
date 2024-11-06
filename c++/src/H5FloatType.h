@@ -78,7 +78,7 @@ class H5_DLLCPP FloatType : public AtomType {
     FloatType(const FloatType &original);
 
     // Noop destructor.
-    virtual ~FloatType() override = default;
+    virtual ~FloatType() override;
 
 }; // end of FloatType
 } // namespace H5

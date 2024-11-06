@@ -18,7 +18,7 @@ package hdf.hdf5lib.callbacks;
  */
 public interface H5D_iterate_cb extends Callbacks {
     /**
-     * @ingroup JCALLBK
+     * @ingroup JCALL
      *
      *  application callback for each dataset element
      *

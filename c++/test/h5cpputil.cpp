@@ -198,6 +198,13 @@ InvalidActionException::InvalidActionException(const H5std_string &func, const H
 }
 
 //--------------------------------------------------------------------------
+// Function:    InvalidActionException destructor
+//--------------------------------------------------------------------------
+InvalidActionException::~InvalidActionException() throw()
+{
+}
+
+//--------------------------------------------------------------------------
 // Function:    TestFailedException default constructor
 //--------------------------------------------------------------------------
 TestFailedException::TestFailedException() : Exception()
@@ -216,5 +223,12 @@ TestFailedException::TestFailedException() : Exception()
 //--------------------------------------------------------------------------
 TestFailedException::TestFailedException(const H5std_string &func, const H5std_string &message)
     : Exception(func, message)
+{
+}
+
+//--------------------------------------------------------------------------
+// Function:    TestFailedException destructor
+//--------------------------------------------------------------------------
+TestFailedException::~TestFailedException() throw()
 {
 }

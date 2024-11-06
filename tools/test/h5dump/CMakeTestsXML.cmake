@@ -57,8 +57,6 @@
       tdset.h5
       tempty.h5
       textlink.h5
-      tfloat16.h5
-      tfloat16_be.h5
       tfpformat.h5
       tgroup.h5
       thlink.h5
@@ -108,8 +106,6 @@
       tenum.h5.xml
       test35.nc.xml
       textlink.h5.xml
-      tfloat16.h5.xml
-      tfloat16_be.h5.xml
       tfpformat.h5.xml
       tgroup.h5.xml
       thlink.h5.xml
@@ -171,12 +167,12 @@
 
   macro (ADD_XML_SKIP_H5_TEST skipresultfile skipresultcode testtype)
     if ("${testtype}" STREQUAL "SKIP")
-      if (NOT HDF5_USING_ANALYSIS_TOOL)
+      if (NOT HDF5_ENABLE_USING_MEMCHECKER)
         add_test (
             NAME H5DUMP_XML-${skipresultfile}
             COMMAND ${CMAKE_COMMAND} -E echo "SKIP ${skipresultfile}.xml --xml ${ARGN}"
         )
-        set_property(TEST H5DUMP_XML-${skipresultfile} PROPERTY DISABLED true)
+        set_property(TEST H5DUMP_XML-${skipresultfile} PROPERTY DISABLED)
       endif ()
     else ()
       ADD_XML_H5_TEST (${skipresultfile} ${skipresultcode} ${ARGN})
@@ -184,8 +180,8 @@
   endmacro ()
 
   macro (ADD_XML_H5_TEST resultfile resultcode)
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5DUMP_XML-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5dump> --xml ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5DUMP_XML-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5dump${tgt_file_ext}> --xml ${ARGN})
       if (${resultcode})
         set_tests_properties (H5DUMP_XML-${resultfile} PROPERTIES WILL_FAIL "true")
       endif ()
@@ -194,7 +190,7 @@
           NAME H5DUMP_XML-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=--xml;${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles/xml"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -206,9 +202,6 @@
     set_tests_properties (H5DUMP_XML-${resultfile} PROPERTIES
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles/xml"
     )
-    if ("H5DUMP_XML-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5DUMP_XML-${resultfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
 ##############################################################################
@@ -297,10 +290,6 @@
   ADD_XML_H5_TEST (torderattr2.h5 0 -H --sort_by=name --sort_order=descending torderattr.h5)
   ADD_XML_H5_TEST (torderattr3.h5 0 -H --sort_by=creation_order --sort_order=ascending torderattr.h5)
   ADD_XML_H5_TEST (torderattr4.h5 0 -H --sort_by=creation_order --sort_order=descending torderattr.h5)
-
-  # Add tests for _Float16 type
-  ADD_XML_H5_TEST (tfloat16.h5 0 tfloat16.h5)
-  ADD_XML_H5_TEST (tfloat16_be.h5 0 tfloat16_be.h5)
 
   # tests for floating point user defined printf format
   ADD_XML_H5_TEST (tfpformat.h5 0 -u -m %.7f tfpformat.h5)

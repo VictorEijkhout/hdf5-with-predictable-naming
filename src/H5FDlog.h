@@ -11,15 +11,12 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Purpose:	The public header file for the log virtual file driver (VFD)
+ * Purpose:	The public header file for the log driver.
  */
 #ifndef H5FDlog_H
 #define H5FDlog_H
 
-/** Initializer for the log VFD */
-#define H5FD_LOG (H5FDperform_init(H5FD_log_init))
-
-/** Identifier for the log VFD */
+#define H5FD_LOG       (H5FDperform_init(H5FD_log_init))
 #define H5FD_LOG_VALUE H5_VFD_LOG
 
 /* Flags for H5Pset_fapl_log() */
@@ -65,10 +62,6 @@
 extern "C" {
 #endif
 
-/** @private
- *
- * \brief Private initializer for the log VFD
- */
 H5_DLL hid_t H5FD_log_init(void);
 
 /**

@@ -55,9 +55,6 @@ set_tests_properties (MPI_TEST_testphdf5 PROPERTIES
     ENVIRONMENT "HDF5_ALARM_SECONDS=3600;srcdir=${HDF5_TEST_PAR_BINARY_DIR}"
     WORKING_DIRECTORY ${HDF5_TEST_PAR_BINARY_DIR}
 )
-if ("MPI_TEST_testphdf5" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-  set_tests_properties (MPI_TEST_testphdf5 PROPERTIES DISABLED true)
-endif ()
 if (last_test)
   set_tests_properties (MPI_TEST_testphdf5 PROPERTIES DEPENDS ${last_test})
 endif ()
@@ -71,9 +68,6 @@ foreach (skiptest ${SKIP_tests})
       ENVIRONMENT "HDF5_ALARM_SECONDS=3600;srcdir=${HDF5_TEST_PAR_BINARY_DIR}"
       WORKING_DIRECTORY ${HDF5_TEST_PAR_BINARY_DIR}
   )
-  if ("MPI_TEST_testphdf5_${skiptest}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-    set_tests_properties (MPI_TEST_testphdf5_${skiptest} PROPERTIES DISABLED true)
-  endif ()
   if (last_test)
     set_tests_properties (MPI_TEST_testphdf5_${skiptest} PROPERTIES DEPENDS ${last_test})
   endif ()
@@ -137,9 +131,6 @@ foreach (h5_testp ${H5P_TESTS})
       ENVIRONMENT "HDF5_ALARM_SECONDS=3600;srcdir=${HDF5_TEST_PAR_BINARY_DIR}"
       WORKING_DIRECTORY ${HDF5_TEST_PAR_BINARY_DIR}
   )
-  if ("MPI_TEST_${h5_testp}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-    set_tests_properties (MPI_TEST_${h5_testp} PROPERTIES DISABLED true)
-  endif ()
   if (last_test)
     set_tests_properties (MPI_TEST_${h5_testp} PROPERTIES DEPENDS ${last_test})
   endif ()

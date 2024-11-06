@@ -26,18 +26,14 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <fenv.h>
+#include <float.h>
+#include <math.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-/* Define __STDC_WANT_IEC_60559_TYPES_EXT__ for _FloatN support, if available */
-#define __STDC_WANT_IEC_60559_TYPES_EXT__
-#include <float.h>
-#include <math.h>
 
 /* POSIX headers */
 #ifdef H5_HAVE_SYS_TIME_H
@@ -110,8 +106,7 @@
  * H5_init_library(); also, make sure that the initializer for default
  * VFD does *not* call H5_init_library().
  */
-#define H5_DEFAULT_VFD      H5FD_SEC2
-#define H5_DEFAULT_VFD_NAME "sec2"
+#define H5_DEFAULT_VFD H5FD_SEC2
 
 /* Define the default VOL driver */
 #define H5_DEFAULT_VOL H5VL_NATIVE
@@ -121,14 +116,6 @@
 /* The following two defines must be before any windows headers are included */
 #define WIN32_LEAN_AND_MEAN /* Exclude rarely-used stuff from Windows headers */
 #define NOGDI               /* Exclude Graphic Display Interface macros */
-
-/* InitOnceExecuteOnce() requires 0x0600 to work on MinGW w/ Win32 threads */
-#if defined(H5_HAVE_MINGW) && defined(H5_HAVE_THREADSAFE)
-#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0600)
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
-#endif
-#endif
 
 #include <windows.h>
 
@@ -318,15 +305,6 @@
 /* limit the middle value to be within a range (inclusive) */
 #define RANGE(LO, X, HI) MAX(LO, MIN(X, HI))
 
-/* Macro for checking if two ranges overlap one another */
-/*
- * Check for the inverse of whether the ranges are disjoint.  If they are
- * disjoint, then the low bound of one of the ranges must be greater than the
- * high bound of the other.
- */
-/* (Assumes that low & high bounds are _inclusive_) */
-#define H5_RANGE_OVERLAP(L1, H1, L2, H2) (!((L1) > (H2) || (L2) > (H1)))
-
 /* absolute value */
 #ifndef ABS
 #define ABS(a) (((a) >= 0) ? (a) : -(a))
@@ -345,28 +323,9 @@
 #define H5_EXP2(n) (1 << (n))
 
 /* Check if a read of size bytes starting at ptr would overflow past
- * the last valid byte, pointed to by buffer_end. Note that 'size'
- * is expected to be of type size_t. Providing values of other
- * datatypes may cause warnings due to the comparison against
- * PTRDIFF_MAX and comparison of < 0 after conversion to ptrdiff_t.
- * For the time being, these can be suppressed with
- * H5_GCC_CLANG_DIAG_OFF("type-limits")/H5_GCC_CLANG_DIAG_ON("type-limits")
+ * the last valid byte, pointed to by buffer_end.
  */
-/* clang-format off */
-#define H5_IS_BUFFER_OVERFLOW(ptr, size, buffer_end)                                                         \
-    (                                                                                                        \
-      /* Trivial case */                                                                                     \
-      ((size) != 0) &&                                                                                       \
-      (                                                                                                      \
-        /* Bad precondition */                                                                               \
-        ((ptr) > (buffer_end)) ||                                                                            \
-        /* Account for (likely unintentional) negative 'size' */                                             \
-        (((size_t)(size) <= PTRDIFF_MAX) && ((ptrdiff_t)(size) < 0)) ||                                      \
-        /* Typical overflow */                                                                               \
-        ((size_t)(size) > (size_t)((((const uint8_t *)buffer_end) - ((const uint8_t *)ptr)) + 1))            \
-      )                                                                                                      \
-    )
-/* clang-format on */
+#define H5_IS_BUFFER_OVERFLOW(ptr, size, buffer_end) (((ptr) + (size)-1) > (buffer_end))
 
 /* Variant of H5_IS_BUFFER_OVERFLOW, used with functions such as H5Tdecode()
  * that don't take a size parameter, where we need to skip the bounds checks.
@@ -375,7 +334,7 @@
  * the entire library.
  */
 #define H5_IS_KNOWN_BUFFER_OVERFLOW(skip, ptr, size, buffer_end)                                             \
-    (skip ? false : H5_IS_BUFFER_OVERFLOW(ptr, size, buffer_end))
+    (skip ? false : ((ptr) + (size)-1) > (buffer_end))
 
 /*
  * HDF Boolean type.
@@ -479,7 +438,8 @@
                                   (X) >= (Y))
 #define H5_addr_cmp(X,Y)         (H5_addr_eq((X), (Y)) ? 0 :                \
                                  (H5_addr_lt((X), (Y)) ? -1 : 1))
-#define H5_addr_overlap(O1,L1,O2,L2) H5_RANGE_OVERLAP(O1, ((O1)+(L1)-1), O2, ((O2)+(L2)-1))
+#define H5_addr_overlap(O1,L1,O2,L2) (((O1) < (O2) && ((O1) + (L1)) > (O2)) || \
+                                      ((O1) >= (O2) && (O1) < ((O2) + (L2))))
 /* clang-format on */
 
 /*
@@ -498,25 +458,9 @@
 #define H5_DBL_ABS_EQUAL(X, Y)  (fabs((X) - (Y)) < DBL_EPSILON)
 #define H5_LDBL_ABS_EQUAL(X, Y) (fabsl((X) - (Y)) < LDBL_EPSILON)
 
-#ifdef H5_HAVE__FLOAT16
-#ifdef H5_HAVE_FABSF16
-#define H5_FLT16_ABS_EQUAL(X, Y) (fabsf16((X) - (Y)) < FLT16_EPSILON)
-#else
-#define H5_FLT16_ABS_EQUAL(X, Y) H5_FLT_ABS_EQUAL((float)X, (float)Y)
-#endif
-#endif
-
 #define H5_FLT_REL_EQUAL(X, Y, M)  (fabsf(((Y) - (X)) / (X)) < (M))
 #define H5_DBL_REL_EQUAL(X, Y, M)  (fabs(((Y) - (X)) / (X)) < (M))
 #define H5_LDBL_REL_EQUAL(X, Y, M) (fabsl(((Y) - (X)) / (X)) < (M))
-
-#ifdef H5_HAVE__FLOAT16
-#ifdef H5_HAVE_FABSF16
-#define H5_FLT16_REL_EQUAL(X, Y, M) (fabsf16(((Y) - (X)) / (X)) < (M))
-#else
-#define H5_FLT16_REL_EQUAL(X, Y, M) H5_FLT_REL_EQUAL((float)X, (float)Y, M)
-#endif
-#endif
 
 /* KiB, MiB, GiB, TiB, PiB, EiB - Used in profiling and timing code */
 #define H5_KB (1024.0F)
@@ -552,16 +496,8 @@
 #define H5_DIAG_DO_PRAGMA(x)  _Pragma(#x)
 #define H5_DIAG_PRAGMA(x)     H5_DIAG_DO_PRAGMA(GCC diagnostic x)
 
-/* Allow suppression of compiler diagnostics unless H5_SHOW_ALL_WARNINGS is
- *      defined (enabled with '--enable-show-all-warnings' configure option).
- */
-#ifndef H5_SHOW_ALL_WARNINGS
 #define H5_DIAG_OFF(x) H5_DIAG_PRAGMA(push) H5_DIAG_PRAGMA(ignored H5_DIAG_JOINSTR("-W", x))
 #define H5_DIAG_ON(x)  H5_DIAG_PRAGMA(pop)
-#else
-#define H5_DIAG_OFF(x)
-#define H5_DIAG_ON(x)
-#endif
 
 /* Macros for enabling/disabling particular GCC-only warnings.
  * These pragmas are only implemented usefully in gcc 4.6+
@@ -593,19 +529,6 @@
 #else
 #define H5_GCC_CLANG_DIAG_OFF(x)
 #define H5_GCC_CLANG_DIAG_ON(x)
-#endif
-
-/* If necessary, create a typedef for library usage of the
- * _Float16 type to avoid issues when compiling the library
- * with the -pedantic flag or similar where we get warnings
- * about _Float16 not being an ISO C type.
- */
-#ifdef H5_HAVE__FLOAT16
-#if defined(__GNUC__)
-__extension__ typedef _Float16 H5__Float16;
-#else
-typedef _Float16 H5__Float16;
-#endif
 #endif
 
 /* Function pointer typedef for qsort */
@@ -680,8 +603,14 @@ typedef off_t       h5_stat_size_t;
 #define HDoff_t off_t
 #endif
 
-/* Redefinions of some POSIX and C functions (mainly to deal with Windows) */
+/* Redefine all the POSIX and C functions.  We should never see an
+ * undecorated POSIX or C function (or any other non-HDF5 function)
+ * in the source.
+ */
 
+#ifndef HDabort
+#define HDabort() abort()
+#endif
 #ifndef HDaccess
 #define HDaccess(F, M) access(F, M)
 #endif
@@ -937,7 +866,7 @@ H5_DLL H5_ATTR_CONST int Nflock(int fd, int operation);
 #ifdef H5_HAVE_VASPRINTF
 #define HDvasprintf(RET, FMT, A) vasprintf(RET, FMT, A)
 #else
-H5_DLL int       HDvasprintf(char **bufp, const char *fmt, va_list _ap);
+H5_DLL int HDvasprintf(char **bufp, const char *fmt, va_list _ap);
 #endif
 #endif
 
@@ -950,7 +879,7 @@ H5_DLL int       HDvasprintf(char **bufp, const char *fmt, va_list _ap);
 #define H5_STRINGIZE(x) #x
 #define H5_TOSTRING(x)  H5_STRINGIZE(x)
 
-/* Macro for "gluing" together items, for re-scanning macros */
+/* Macro for "glueing" together items, for re-scanning macros */
 #define H5_GLUE(x, y)        x##y
 #define H5_GLUE3(x, y, z)    x##y##z
 #define H5_GLUE4(w, x, y, z) w##x##y##z

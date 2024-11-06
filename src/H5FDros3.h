@@ -11,24 +11,20 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Purpose:	The public header file for the read-only S3 (ros3) virtual file driver (VFD)
+ * Read-Only S3 Virtual File Driver (VFD)
+ *
+ * Purpose:    The public header file for the ros3 driver.
  */
 #ifndef H5FDros3_H
 #define H5FDros3_H
 
 #ifdef H5_HAVE_ROS3_VFD
-/** Initializer for the ros3 VFD */
-#define H5FD_ROS3 (H5FDperform_init(H5FD_ros3_init))
-
-/** Identifier for the ros3 VFD */
+#define H5FD_ROS3       (H5FDperform_init(H5FD_ros3_init))
 #define H5FD_ROS3_VALUE H5_VFD_ROS3
 #else
-/** Initializer for the ros3 VFD (disabled) */
 #define H5FD_ROS3       (H5I_INVALID_HID)
-
-/** Identifier for the ros3 VFD (disabled) */
 #define H5FD_ROS3_VALUE H5_VFD_INVALID
-#endif
+#endif /* H5_HAVE_ROS3_VFD */
 
 #ifdef H5_HAVE_ROS3_VFD
 
@@ -100,7 +96,7 @@
  * \def H5FD_ROS3_MAX_SECRET_TOK_LEN
  * Maximum string length for specifying the session/security token.
  */
-#define H5FD_ROS3_MAX_SECRET_TOK_LEN 4096
+#define H5FD_ROS3_MAX_SECRET_TOK_LEN 1024
 
 /**
  *\struct H5FD_ros3_fapl_t
@@ -143,9 +139,9 @@ typedef struct H5FD_ros3_fapl_t {
 extern "C" {
 #endif
 
-/** @private
- *
- * \brief Private initializer for the ros3 VFD
+/**
+ * \brief Internal routine to initialize #H5FD_ROS3 driver. Not meant to be
+ *        called directly by an HDF5 application.
  */
 H5_DLL hid_t H5FD_ros3_init(void);
 

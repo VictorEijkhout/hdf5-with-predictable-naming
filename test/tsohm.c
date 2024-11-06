@@ -3208,7 +3208,7 @@ test_sohm_extlink(void)
     CHECK_I(ret, "h5_driver_is_default_vfd_compatible");
 
     if (!driver_is_default_compatible) {
-        MESSAGE(5, ("-- SKIPPED --\n"));
+        printf("-- SKIPPED --\n");
         return;
     }
 
@@ -3710,22 +3710,17 @@ test_sohm_external_dtype(void)
 void
 test_sohm(void)
 {
-    const char *driver_name;
-    bool        vol_is_native;
+    const char *env_h5_drvr;
     bool        default_driver;
 
     MESSAGE(5, ("Testing Shared Object Header Messages\n"));
 
-    /* Check if native VOL is being used */
-    CHECK(h5_using_native_vol(H5P_DEFAULT, H5I_INVALID_HID, &vol_is_native), FAIL, "h5_using_native_vol");
-    if (!vol_is_native) {
-        MESSAGE(5, (" -- SKIPPED --\n"));
-        return;
-    }
-
     /* Get the VFD to use */
-    driver_name    = h5_get_test_driver_name();
-    default_driver = h5_using_default_driver(driver_name);
+    env_h5_drvr = getenv(HDF5_DRIVER);
+    if (env_h5_drvr == NULL)
+        env_h5_drvr = "nomatch";
+
+    default_driver = h5_using_default_driver(env_h5_drvr);
 
     test_sohm_fcpl();        /* Test SOHMs and file creation plists */
     test_sohm_fcpl_errors(); /* Bogus H5P* calls for SOHMs */

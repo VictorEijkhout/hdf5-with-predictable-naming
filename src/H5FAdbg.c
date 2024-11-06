@@ -35,6 +35,7 @@
 #include "H5private.h"   /* Generic Functions			*/
 #include "H5Eprivate.h"  /* Error handling		  	*/
 #include "H5FApkg.h"     /* Fixed Arrays				*/
+#include "H5Oprivate.h"  /* Object Header 			*/
 #include "H5VMprivate.h" /* Vector functions                     */
 
 /****************/

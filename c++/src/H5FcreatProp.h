@@ -90,7 +90,7 @@ class H5_DLLCPP FileCreatPropList : public PropList {
     FileCreatPropList(const hid_t plist_id);
 
     // Noop destructor
-    virtual ~FileCreatPropList() override = default;
+    virtual ~FileCreatPropList() override;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

@@ -35,7 +35,10 @@
 #include "H5private.h"   /* Generic Functions			*/
 #include "H5Eprivate.h"  /* Error handling		  	*/
 #include "H5FApkg.h"     /* Fixed Arrays				*/
+#include "H5MFprivate.h" /* File memory management		*/
 #include "H5MMprivate.h" /* Memory management			*/
+#include "H5VMprivate.h" /* Vectors and arrays 			*/
+#include "H5WBprivate.h" /* Wrapped Buffers                      */
 
 /****************/
 /* Local Macros */
@@ -502,7 +505,7 @@ H5FA__cache_hdr_free_icr(void *thing)
     /* Check arguments */
     assert(thing);
 
-    /* Release the fixed array header */
+    /* Release the extensible array header */
     if (H5FA__hdr_dest((H5FA_hdr_t *)thing) < 0)
         HGOTO_ERROR(H5E_FARRAY, H5E_CANTFREE, FAIL, "can't free fixed array header");
 

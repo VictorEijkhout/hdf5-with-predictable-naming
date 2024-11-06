@@ -575,14 +575,8 @@ H5S__point_add(H5S_t *space, H5S_seloper_t op, size_t num_elem, const hsize_t *c
     for (u = 0; u < num_elem; u++) {
         unsigned dim; /* Counter for dimensions */
 
-        /* The following allocation relies on the size of an hcoords_t being
-         * the same as an 'H5S_pnt_node_t *', so fail now if that's not true
-         */
-        HDcompile_assert(sizeof(hcoords_t) >= sizeof(H5S_pnt_node_t *));
-
         /* Allocate space for the new node */
-        /* Note: allocating "rank + 1" to allow for 'next' pointer */
-        if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, space->extent.rank + 1)))
+        if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, space->extent.rank)))
             HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate point node");
 
         /* Initialize fields in node */
@@ -801,7 +795,7 @@ H5S__copy_pnt_list(const H5S_pnt_list_t *src, unsigned rank)
     assert(rank > 0);
 
     /* Allocate room for the head of the point list */
-    if (NULL == (dst = H5FL_CALLOC(H5S_pnt_list_t)))
+    if (NULL == (dst = H5FL_MALLOC(H5S_pnt_list_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, NULL, "can't allocate point list node");
 
     curr     = src->head;
@@ -809,14 +803,8 @@ H5S__copy_pnt_list(const H5S_pnt_list_t *src, unsigned rank)
     while (curr) {
         H5S_pnt_node_t *new_node; /* New point information node */
 
-        /* The following allocation relies on the size of an hcoords_t being
-         * the same as an 'H5S_pnt_node_t *', so fail now if that's not true
-         */
-        HDcompile_assert(sizeof(hcoords_t) >= sizeof(H5S_pnt_node_t *));
-
         /* Create new point */
-        /* Note: allocating "rank + 1" to allow for 'next' pointer */
-        if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, rank + 1)))
+        if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, rank)))
             HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, NULL, "can't allocate point node");
         new_node->next = NULL;
 
@@ -1414,9 +1402,6 @@ H5S__point_deserialize(H5S_t **space, const uint8_t **p, const size_t p_size, bo
     if (H5_IS_KNOWN_BUFFER_OVERFLOW(skip, pp, sizeof(uint32_t), p_end))
         HGOTO_ERROR(H5E_DATASPACE, H5E_OVERFLOW, FAIL, "buffer overflow while decoding selection rank");
     UINT32DECODE(pp, rank);
-    if (0 == rank || rank > H5S_MAX_RANK)
-        HGOTO_ERROR(H5E_DATASPACE, H5E_BADVALUE, FAIL, "invalid rank (%u) for serialized point selection",
-                    rank);
 
     if (!*space) {
         /* Patch the rank of the allocated dataspace */
@@ -1458,6 +1443,10 @@ H5S__point_deserialize(H5S_t **space, const uint8_t **p, const size_t p_size, bo
             break;
     } /* end switch */
 
+    /* Allocate space for the coordinates */
+    if (NULL == (coord = (hsize_t *)H5MM_malloc(num_elem * rank * sizeof(hsize_t))))
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "can't allocate coordinate information");
+
     /* Determine necessary size of buffer for coordinates */
     enc_type_size = 0;
 
@@ -1478,18 +1467,9 @@ H5S__point_deserialize(H5S_t **space, const uint8_t **p, const size_t p_size, bo
 
     coordinate_buffer_requirement = num_elem * rank * enc_type_size;
 
-    /* Check for overflow during multiplication */
-    if (num_elem != (coordinate_buffer_requirement / (rank * enc_type_size)))
-        HGOTO_ERROR(H5E_DATASPACE, H5E_OVERFLOW, FAIL, "size of point selection buffer overflowed");
-
-    /* Check for possible buffer overrun */
     if (H5_IS_KNOWN_BUFFER_OVERFLOW(skip, pp, coordinate_buffer_requirement, p_end))
         HGOTO_ERROR(H5E_DATASPACE, H5E_OVERFLOW, FAIL,
                     "buffer overflow while decoding selection coordinates");
-
-    /* Allocate space for the coordinates */
-    if (NULL == (coord = (hsize_t *)H5MM_malloc(num_elem * rank * sizeof(hsize_t))))
-        HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate coordinate information");
 
     /* Retrieve the coordinates from the buffer */
     for (tcoord = coord, i = 0; i < num_elem; i++)
@@ -1644,7 +1624,7 @@ H5Sget_select_elem_pointlist(hid_t spaceid, hsize_t startpoint, hsize_t numpoint
     herr_t ret_value; /* return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE4("e", "ihh*[a2]h", spaceid, startpoint, numpoints, buf);
+    H5TRACE4("e", "ihhx", spaceid, startpoint, numpoints, buf);
 
     /* Check args */
     if (NULL == buf)
@@ -2294,7 +2274,7 @@ H5S__point_project_simple(const H5S_t *base_space, H5S_t *new_space, hsize_t *of
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTDELETE, FAIL, "can't release selection");
 
     /* Allocate room for the head of the point list */
-    if (NULL == (new_space->select.sel_info.pnt_lst = H5FL_CALLOC(H5S_pnt_list_t)))
+    if (NULL == (new_space->select.sel_info.pnt_lst = H5FL_MALLOC(H5S_pnt_list_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate point list node");
 
     /* Check if the new space's rank is < or > base space's rank */
@@ -2313,14 +2293,8 @@ H5S__point_project_simple(const H5S_t *base_space, H5S_t *new_space, hsize_t *of
         base_node = base_space->select.sel_info.pnt_lst->head;
         prev_node = NULL;
         while (base_node) {
-            /* The following allocation relies on the size of an hcoords_t being
-             * the same as an 'H5S_pnt_node_t *', so fail now if that's not true
-             */
-            HDcompile_assert(sizeof(hcoords_t) >= sizeof(H5S_pnt_node_t *));
-
             /* Create new point */
-            /* Note: allocating "rank + 1" to allow for 'next' pointer */
-            if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, new_space->extent.rank + 1)))
+            if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, new_space->extent.rank)))
                 HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate point node");
             new_node->next = NULL;
 
@@ -2361,14 +2335,8 @@ H5S__point_project_simple(const H5S_t *base_space, H5S_t *new_space, hsize_t *of
         base_node = base_space->select.sel_info.pnt_lst->head;
         prev_node = NULL;
         while (base_node) {
-            /* The following allocation relies on the size of an hcoords_t being
-             * the same as an 'H5S_pnt_node_t *', so fail now if that's not true
-             */
-            HDcompile_assert(sizeof(hcoords_t) >= sizeof(H5S_pnt_node_t *));
-
             /* Create new point */
-            /* Note: allocating "rank + 1" to allow for 'next' pointer */
-            if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, new_space->extent.rank + 1)))
+            if (NULL == (new_node = (H5S_pnt_node_t *)H5FL_ARR_MALLOC(hcoords_t, new_space->extent.rank)))
                 HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate point node");
             new_node->next = NULL;
 

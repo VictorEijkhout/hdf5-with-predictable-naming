@@ -97,10 +97,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5F_mpi_get_comm
  *
- * Purpose:     Retrieves the file's MPI_Comm communicator object
+ * Purpose:     Retrieves the file's communicator
  *
- * Return:      Success:    The communicator object
- *              Failure:    MPI_COMM_NULL
+ * Return:      Success:    The communicator (non-negative)
+ *
+ *              Failure:    Negative
  *
  *-------------------------------------------------------------------------
  */
@@ -120,33 +121,6 @@ H5F_mpi_get_comm(const H5F_t *f)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5F_mpi_get_comm() */
-
-/*-------------------------------------------------------------------------
- * Function:    H5F_mpi_get_info
- *
- * Purpose:     Retrieves the file's MPI_Info info object
- *
- * Return:      Success:    The info object
- *              Failure:    MPI_INFO_NULL
- *
- *-------------------------------------------------------------------------
- */
-MPI_Info
-H5F_mpi_get_info(const H5F_t *f)
-{
-    MPI_Info ret_value = MPI_INFO_NULL;
-
-    FUNC_ENTER_NOAPI(MPI_INFO_NULL)
-
-    assert(f && f->shared);
-
-    /* Dispatch to driver */
-    if ((ret_value = H5FD_mpi_get_info(f->shared->lf)) == MPI_INFO_NULL)
-        HGOTO_ERROR(H5E_FILE, H5E_CANTGET, MPI_INFO_NULL, "driver get_info request failed");
-
-done:
-    FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5F_mpi_get_info() */
 
 /*-------------------------------------------------------------------------
  * Function:    H5F_shared_mpi_get_size
@@ -284,7 +258,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5F__get_mpi_atomicity(const H5F_t *file, bool *flag)
+H5F__get_mpi_atomicity(const H5F_t *file, hbool_t *flag)
 {
     herr_t ret_value = SUCCEED;
 
@@ -326,7 +300,7 @@ H5Fget_mpi_atomicity(hid_t file_id, bool *flag /*out*/)
     herr_t                           ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE2("e", "i*b", file_id, flag);
+    H5TRACE2("e", "ix", file_id, flag);
 
     /* Get the file object */
     if (NULL == (vol_obj = (H5VL_object_t *)H5I_object_verify(file_id, H5I_FILE)))

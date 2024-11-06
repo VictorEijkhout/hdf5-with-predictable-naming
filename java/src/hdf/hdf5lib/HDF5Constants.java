@@ -1093,10 +1093,6 @@ public class HDF5Constants {
     /** */
     public static final long H5T_FORTRAN_S1 = H5T_FORTRAN_S1();
     /** */
-    public static final long H5T_IEEE_F16BE = H5T_IEEE_F16BE();
-    /** */
-    public static final long H5T_IEEE_F16LE = H5T_IEEE_F16LE();
-    /** */
     public static final long H5T_IEEE_F32BE = H5T_IEEE_F32BE();
     /** */
     public static final long H5T_IEEE_F32LE = H5T_IEEE_F32LE();
@@ -1176,8 +1172,6 @@ public class HDF5Constants {
     public static final long H5T_NATIVE_DOUBLE = H5T_NATIVE_DOUBLE();
     /** */
     public static final long H5T_NATIVE_FLOAT = H5T_NATIVE_FLOAT();
-    /** */
-    public static final long H5T_NATIVE_FLOAT16 = H5T_NATIVE_FLOAT16();
     /** */
     public static final long H5T_NATIVE_HADDR = H5T_NATIVE_HADDR();
     /** */
@@ -2582,10 +2576,6 @@ public class HDF5Constants {
 
     private static native final long H5T_FORTRAN_S1();
 
-    private static native final long H5T_IEEE_F16BE();
-
-    private static native final long H5T_IEEE_F16LE();
-
     private static native final long H5T_IEEE_F32BE();
 
     private static native final long H5T_IEEE_F32LE();
@@ -2665,8 +2655,6 @@ public class HDF5Constants {
     private static native final long H5T_NATIVE_DOUBLE();
 
     private static native final long H5T_NATIVE_FLOAT();
-
-    private static native final long H5T_NATIVE_FLOAT16();
 
     private static native final long H5T_NATIVE_HADDR();
 

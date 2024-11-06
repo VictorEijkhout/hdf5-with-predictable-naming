@@ -527,4 +527,12 @@ DSetMemXferPropList::getEDCCheck() const
     return (check);
 }
 
+//--------------------------------------------------------------------------
+// Function:    DSetMemXferPropList destructor
+///\brief       Noop destructor.
+//--------------------------------------------------------------------------
+DSetMemXferPropList::~DSetMemXferPropList()
+{
+}
+
 } // namespace H5

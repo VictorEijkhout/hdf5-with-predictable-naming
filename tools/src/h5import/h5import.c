@@ -26,48 +26,48 @@
 #endif
 
 /* Local function declarations */
-static int             gtoken(char *s);
-static int             process(struct Options *opt);
-static int             processConfigurationFile(char *infile, struct Input *in);
-static int             mapKeywordToIndex(char *key);
-static int             parsePathInfo(struct path_info *path, char *strm);
-static int             parseDimensions(struct Input *in, char *strm);
-static int             getInputSize(struct Input *in, int ival);
-static int             getInputClass(struct Input *in, char *strm);
-static int             getInputClassType(struct Input *in, char *strm);
-static int             getInputByteOrder(struct Input *in, FILE *strm);
-static int             InputClassStrToInt(char *temp);
-static int             getRank(struct Input *in, FILE *strm);
-static int             getDimensionSizes(struct Input *in, FILE *strm);
-static int             getOutputSize(struct Input *in, FILE *strm);
-static int             getOutputClass(struct Input *in, FILE *strm);
-static int             OutputClassStrToInt(char *temp);
-static int             getOutputArchitecture(struct Input *in, FILE *strm);
-static int             OutputArchStrToInt(const char *temp);
-static int             getOutputByteOrder(struct Input *in, FILE *strm);
-static int             OutputByteOrderStrToInt(const char *temp);
-static int             getChunkedDimensionSizes(struct Input *in, FILE *strm);
-static int             getCompressionType(struct Input *in, FILE *strm);
-static int             CompressionTypeStrToInt(char *temp);
-static int             getCompressionParameter(struct Input *in, FILE *strm);
-static int             getExternalFilename(struct Input *in, FILE *strm);
-static int             getMaximumDimensionSizes(struct Input *in, FILE *strm);
-static int             processDataFile(char *infile, struct Input *in, hid_t file_id);
-static int             readIntegerData(FILE *strm, struct Input *in);
-static int             readFloatData(FILE *strm, struct Input *in);
-static int             allocateIntegerStorage(struct Input *in);
-static int             allocateFloatStorage(struct Input *in);
-static int             readUIntegerData(FILE *strm, struct Input *in);
-static int             allocateUIntegerStorage(struct Input *in);
-static int             validateConfigurationParameters(struct Input *in);
-static int             processStrData(FILE *strm, struct Input *in, hid_t file_id);
-static int             processStrHDFData(FILE *strm, struct Input *in, hid_t file_id);
-H5_ATTR_CONST uint16_t swap_uint16(uint16_t val);
-H5_ATTR_CONST int16_t  swap_int16(int16_t val);
-H5_ATTR_CONST uint32_t swap_uint32(uint32_t val);
-H5_ATTR_CONST int32_t  swap_int32(int32_t val);
-H5_ATTR_CONST int64_t  swap_int64(int64_t val);
-H5_ATTR_CONST uint64_t swap_uint64(uint64_t val);
+static int gtoken(char *s);
+static int process(struct Options *opt);
+static int processConfigurationFile(char *infile, struct Input *in);
+static int mapKeywordToIndex(char *key);
+static int parsePathInfo(struct path_info *path, char *strm);
+static int parseDimensions(struct Input *in, char *strm);
+static int getInputSize(struct Input *in, int ival);
+static int getInputClass(struct Input *in, char *strm);
+static int getInputClassType(struct Input *in, char *strm);
+static int getInputByteOrder(struct Input *in, FILE *strm);
+static int InputClassStrToInt(char *temp);
+static int getRank(struct Input *in, FILE *strm);
+static int getDimensionSizes(struct Input *in, FILE *strm);
+static int getOutputSize(struct Input *in, FILE *strm);
+static int getOutputClass(struct Input *in, FILE *strm);
+static int OutputClassStrToInt(char *temp);
+static int getOutputArchitecture(struct Input *in, FILE *strm);
+static int OutputArchStrToInt(const char *temp);
+static int getOutputByteOrder(struct Input *in, FILE *strm);
+static int OutputByteOrderStrToInt(const char *temp);
+static int getChunkedDimensionSizes(struct Input *in, FILE *strm);
+static int getCompressionType(struct Input *in, FILE *strm);
+static int CompressionTypeStrToInt(char *temp);
+static int getCompressionParameter(struct Input *in, FILE *strm);
+static int getExternalFilename(struct Input *in, FILE *strm);
+static int getMaximumDimensionSizes(struct Input *in, FILE *strm);
+static int processDataFile(char *infile, struct Input *in, hid_t file_id);
+static int readIntegerData(FILE *strm, struct Input *in);
+static int readFloatData(FILE *strm, struct Input *in);
+static int allocateIntegerStorage(struct Input *in);
+static int allocateFloatStorage(struct Input *in);
+static int readUIntegerData(FILE *strm, struct Input *in);
+static int allocateUIntegerStorage(struct Input *in);
+static int validateConfigurationParameters(struct Input *in);
+static int processStrData(FILE *strm, struct Input *in, hid_t file_id);
+static int processStrHDFData(FILE *strm, struct Input *in, hid_t file_id);
+uint16_t   swap_uint16(uint16_t val);
+int16_t    swap_int16(int16_t val);
+uint32_t   swap_uint32(uint32_t val);
+int32_t    swap_int32(int32_t val);
+int64_t    swap_int64(int64_t val);
+uint64_t   swap_uint64(uint64_t val);
 
 int
 main(int argc, char *argv[])
@@ -3114,48 +3114,6 @@ getInputClassType(struct Input *in, char *buffer)
 
         kindex = 7;
     }
-    else if (!strcmp(buffer, "H5T_IEEE_F16BE")) {
-        in->inputSize                      = 16;
-        in->configOptionVector[INPUT_SIZE] = 1;
-
-        if ((kindex = OutputArchStrToInt("IEEE")) == -1) {
-            (void)fprintf(stderr, "%s", err2);
-            return (-1);
-        }
-        in->outputArchitecture = kindex;
-
-        if ((kindex = OutputByteOrderStrToInt("BE")) == -1) {
-            (void)fprintf(stderr, "%s", err3);
-            return (-1);
-        }
-        in->outputByteOrder = kindex;
-#ifdef H5DEBUGIMPORT
-        printf("h5dump inputByteOrder %d\n", in->inputByteOrder);
-#endif
-
-        kindex = 3;
-    }
-    else if (!strcmp(buffer, "H5T_IEEE_F16LE")) {
-        in->inputSize                      = 16;
-        in->configOptionVector[INPUT_SIZE] = 1;
-
-        if ((kindex = OutputArchStrToInt("IEEE")) == -1) {
-            (void)fprintf(stderr, "%s", err2);
-            return (-1);
-        }
-        in->outputArchitecture = kindex;
-
-        if ((kindex = OutputByteOrderStrToInt("LE")) == -1) {
-            (void)fprintf(stderr, "%s", err3);
-            return (-1);
-        }
-        in->outputByteOrder = kindex;
-#ifdef H5DEBUGIMPORT
-        printf("h5dump inputByteOrder %d\n", in->inputByteOrder);
-#endif
-
-        kindex = 3;
-    }
     else if (!strcmp(buffer, "H5T_IEEE_F32BE")) {
         in->inputSize                      = 32;
         in->configOptionVector[INPUT_SIZE] = 1;
@@ -3252,20 +3210,6 @@ getInputClassType(struct Input *in, char *buffer)
 
         kindex = 3;
     }
-#ifdef H5_HAVE__FLOAT16
-    else if (!strcmp(buffer, "H5T_NATIVE_FLOAT16")) {
-        in->inputSize                      = 16;
-        in->configOptionVector[INPUT_SIZE] = 1;
-
-        if ((kindex = OutputArchStrToInt("NATIVE")) == -1) {
-            (void)fprintf(stderr, "%s", err2);
-            return (-1);
-        }
-        in->outputArchitecture = kindex;
-
-        kindex = 3;
-    }
-#endif
     else if (!strcmp(buffer, "H5T_NATIVE_FLOAT")) {
         in->inputSize                      = 32;
         in->configOptionVector[INPUT_SIZE] = 1;
@@ -3992,12 +3936,6 @@ createOutputDataType(struct Input *in)
             switch (in->outputArchitecture) {
                 case 0:
                     switch (in->outputSize) {
-#ifdef H5_HAVE__FLOAT16
-                        case 16:
-                            new_type = H5Tcopy(H5T_NATIVE_FLOAT16);
-                            break;
-#endif
-
                         case 32:
                             new_type = H5Tcopy(H5T_NATIVE_FLOAT);
                             break;
@@ -4033,23 +3971,6 @@ createOutputDataType(struct Input *in)
 
                 case 2:
                     switch (in->outputSize) {
-                        case 16:
-                            switch (in->outputByteOrder) {
-                                case -1:
-                                case 0:
-                                    new_type = H5Tcopy(H5T_IEEE_F16BE);
-                                    break;
-
-                                case 1:
-                                    new_type = H5Tcopy(H5T_IEEE_F16LE);
-                                    break;
-
-                                default:
-                                    (void)fprintf(stderr, "%s", err3);
-                                    return (-1);
-                            }
-                            break;
-
                         case 32:
                             switch (in->outputByteOrder) {
                                 case -1:
@@ -4370,12 +4291,6 @@ createInputDataType(struct Input *in)
                 switch (in->inputArchitecture) {
                     case 0:
                         switch (in->inputSize) {
-#ifdef H5_HAVE__FLOAT16
-                            case 16:
-                                new_type = H5Tcopy(H5T_NATIVE_FLOAT16);
-                                break;
-#endif
-
                             case 32:
                                 new_type = H5Tcopy(H5T_NATIVE_FLOAT);
                                 break;
@@ -4411,23 +4326,6 @@ createInputDataType(struct Input *in)
 
                     case 2:
                         switch (in->inputSize) {
-                            case 16:
-                                switch (in->inputByteOrder) {
-                                    case -1:
-                                    case 0:
-                                        new_type = H5Tcopy(H5T_IEEE_F16BE);
-                                        break;
-
-                                    case 1:
-                                        new_type = H5Tcopy(H5T_IEEE_F16LE);
-                                        break;
-
-                                    default:
-                                        (void)fprintf(stderr, "%s", err3);
-                                        return (-1);
-                                }
-                                break;
-
                             case 32:
                                 switch (in->inputByteOrder) {
                                     case -1:
@@ -4637,12 +4535,6 @@ createInputDataType(struct Input *in)
             case 2:
             case 3:
                 switch (in->inputSize) {
-#ifdef H5_HAVE__FLOAT16
-                    case 16:
-                        new_type = H5Tcopy(H5T_NATIVE_FLOAT16);
-                        break;
-#endif
-
                     case 32:
                         new_type = H5Tcopy(H5T_NATIVE_FLOAT);
                         break;
@@ -4810,7 +4702,8 @@ process(struct Options *opt)
                     return (-1);
                 }
                 fclose(extfile);
-                H5Pset_external(proplist, in->externFilename, 0, numOfElements * (hsize_t)in->inputSize / 8);
+                H5Pset_external(proplist, in->externFilename, (off_t)0,
+                                numOfElements * (hsize_t)in->inputSize / 8);
             }
 
             /* create dataspace */

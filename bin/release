@@ -327,6 +327,7 @@ today=`date +%Y%m%d`
 pmode='no'
 revmode='no'
 tmpdir="../#release_tmp.$$"     # tmp work directory
+CPPLUS_RM_NAME=cpplus_RM
 MAINT_MODE_ENABLED=""
 
 # If maintainer mode is enabled in configure, it should be disabled for release,
@@ -465,7 +466,7 @@ done
 
 # Create the tar file
 test "$verbose" && echo "   Running tar..." 1>&2
-(cd "$tmpdir" && exec tar -ch --exclude-vcs --exclude=*autom4te* --exclude=.clang-format --exclude=.codespellrc --exclude=.devcontainer --exclude=.git* --exclude=.h5chkright.ini -f "$HDF5_VERS.tar" "./$HDF5_IN_VERS" || exit 1 )
+(cd "$tmpdir" && exec tar -ch --exclude-vcs -f "$HDF5_VERS.tar" "./$HDF5_IN_VERS" || exit 1 )
 
 # Compress
 #SHA256=$HDF5_VERS.sha256
@@ -500,6 +501,23 @@ for comp in $methods; do
             test "$verbose" && echo "   Creating CMake-zip ball..." 1>&2
             tar2cmakezip $HDF5_VERS $tmpdir/$HDF5_VERS.tar $DEST/CMake-$HDF5_VERS.zip 1>&2
             (cd $DEST; sha256sum CMake-$HDF5_VERS.zip > CMake-$HDF5_VERS.zip.sha256)
+            ;;
+        doc)
+            if [ "${DOCVERSION}" = "" ]; then
+                DOCVERSION=master
+            fi
+            test "$verbose" && echo "   Creating docs..." 1>&2
+            # Check out docs from git repo
+            (cd $tmpdir; git clone -q $DOC_URL ${DOCVERSION} > /dev/null) || exit 1
+            # Create doxygen C++ RM
+            (cd c++/src && doxygen cpp_doc_config > /dev/null ) || exit 1
+            # Replace version of C++ RM with just-created version
+            rm -rf $tmpdir/${DOCVERSION}/html/$CPPLUS_RM_NAME || exit 1
+            mv c++/src/$CPPLUS_RM_NAME $tmpdir/${DOCVERSION}/html/$CPPLUS_RM_NAME || exit 1
+            # Compress the docs and move them to the release area
+            mv $tmpdir/${DOCVERSION} $tmpdir/${HDF5_VERS}_docs || exit 1
+            (cd $tmpdir && tar cf ${HDF5_VERS}_docs.tar ${HDF5_VERS}_docs) || exit 1
+            mv $tmpdir/${HDF5_VERS}_docs.tar $DEST || exit 1
             ;;
         *)
             echo "***Error*** Unknown method $comp"

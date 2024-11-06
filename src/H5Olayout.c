@@ -21,16 +21,17 @@
 #include "H5Dpkg.h"      /* Dataset functions                        */
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5FLprivate.h" /* Free Lists                               */
+#include "H5MFprivate.h" /* File space management                    */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Opkg.h"      /* Object headers                           */
+#include "H5Pprivate.h"  /* Property lists                           */
 
 /* Local macros */
 
 /* PRIVATE PROTOTYPES */
 static void  *H5O__layout_decode(H5F_t *f, H5O_t *open_oh, unsigned mesg_flags, unsigned *ioflags,
                                  size_t p_size, const uint8_t *p);
-static herr_t H5O__layout_encode(H5F_t *f, bool disable_shared, size_t H5_ATTR_UNUSED p_size, uint8_t *p,
-                                 const void *_mesg);
+static herr_t H5O__layout_encode(H5F_t *f, bool disable_shared, uint8_t *p, const void *_mesg);
 static void  *H5O__layout_copy(const void *_mesg, void *_dest);
 static size_t H5O__layout_size(const H5F_t *f, bool disable_shared, const void *_mesg);
 static herr_t H5O__layout_reset(void *_mesg);
@@ -392,16 +393,10 @@ H5O__layout_decode(H5F_t *f, H5O_t H5_ATTR_UNUSED *open_oh, unsigned H5_ATTR_UNU
 
                         case H5D_CHUNK_IDX_SINGLE: /* Single Chunk Index */
                             if (mesg->u.chunk.flags & H5O_LAYOUT_CHUNK_SINGLE_INDEX_WITH_FILTER) {
-                                uint64_t nbytes = 0;
-
                                 if (H5_IS_BUFFER_OVERFLOW(p, H5F_sizeof_size(f) + 4, p_end))
                                     HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL,
                                                 "ran off end of input buffer while decoding");
-
-                                H5F_DECODE_LENGTH(f, p, nbytes);
-                                H5_CHECKED_ASSIGN(mesg->storage.u.chunk.u.single.nbytes, uint32_t, nbytes,
-                                                  uint64_t);
-
+                                H5F_DECODE_LENGTH(f, p, mesg->storage.u.chunk.u.single.nbytes);
                                 UINT32DECODE(p, mesg->storage.u.chunk.u.single.filter_mask);
                             }
 
@@ -799,8 +794,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O__layout_encode(H5F_t *f, bool H5_ATTR_UNUSED disable_shared, size_t H5_ATTR_UNUSED p_size, uint8_t *p,
-                   const void *_mesg)
+H5O__layout_encode(H5F_t *f, bool H5_ATTR_UNUSED disable_shared, uint8_t *p, const void *_mesg)
 {
     const H5O_layout_t *mesg = (const H5O_layout_t *)_mesg;
     unsigned            u;
@@ -1226,7 +1220,8 @@ H5O__layout_copy_file(H5F_t *file_src, void *mesg_src, H5F_t *file_dst, bool H5_
     H5D_copy_file_ud_t *udata      = (H5D_copy_file_ud_t *)_udata; /* Dataset copying user data */
     H5O_layout_t       *layout_src = (H5O_layout_t *)mesg_src;
     H5O_layout_t       *layout_dst = NULL;
-    void               *ret_value  = NULL; /* Return value */
+    bool                copied     = false; /* Whether the data was copied */
+    void               *ret_value  = NULL;  /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -1247,28 +1242,18 @@ H5O__layout_copy_file(H5F_t *file_src, void *mesg_src, H5F_t *file_dst, bool H5_
                 if (H5D__compact_copy(file_src, &layout_src->storage.u.compact, file_dst,
                                       &layout_dst->storage.u.compact, udata->src_dtype, cpy_info) < 0)
                     HGOTO_ERROR(H5E_OHDR, H5E_CANTCOPY, NULL, "unable to copy chunked storage");
+                copied = true;
             } /* end if */
             break;
 
-        case H5D_CONTIGUOUS: {
-            hsize_t nelmts;  /* Number of elements in dataset's extent */
-            size_t  dt_size; /* Size of dataset's datatype in bytes */
-            /* Sanity check the dataset's info */
-            if (H5D__contig_check(file_src, layout_src, udata->src_space_extent, udata->src_dtype) < 0)
-                HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, NULL, "invalid layout / dataspace / datatype info");
-
+        case H5D_CONTIGUOUS:
             /* Compute the size of the contiguous storage for versions of the
              * layout message less than version 3 because versions 1 & 2 would
              * truncate the dimension sizes to 32-bits of information. - QAK 5/26/04
              */
-            nelmts  = H5S_extent_nelem(udata->src_space_extent);
-            dt_size = H5T_get_size(udata->src_dtype);
             if (layout_src->version < H5O_LAYOUT_VERSION_3)
-                layout_dst->storage.u.contig.size = nelmts * dt_size;
-            else
-                /* Sanity check layout storage size */
-                if (layout_dst->storage.u.contig.size != (nelmts * dt_size))
-                    HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, NULL, "invalid layout storage size ");
+                layout_dst->storage.u.contig.size =
+                    H5S_extent_nelem(udata->src_space_extent) * H5T_get_size(udata->src_dtype);
 
             if (H5D__contig_is_space_alloc(&layout_src->storage) ||
                 (cpy_info->shared_fo &&
@@ -1277,8 +1262,9 @@ H5O__layout_copy_file(H5F_t *file_src, void *mesg_src, H5F_t *file_dst, bool H5_
                 if (H5D__contig_copy(file_src, &layout_src->storage.u.contig, file_dst,
                                      &layout_dst->storage.u.contig, udata->src_dtype, cpy_info) < 0)
                     HGOTO_ERROR(H5E_OHDR, H5E_CANTCOPY, NULL, "unable to copy contiguous storage");
+                copied = true;
             } /* end if */
-        } break;
+            break;
 
         case H5D_CHUNKED:
             if (H5D__chunk_is_space_alloc(&layout_src->storage) ||
@@ -1289,6 +1275,7 @@ H5O__layout_copy_file(H5F_t *file_src, void *mesg_src, H5F_t *file_dst, bool H5_
                                     &layout_dst->storage.u.chunk, udata->src_space_extent, udata->src_dtype,
                                     udata->common.src_pline, cpy_info) < 0)
                     HGOTO_ERROR(H5E_OHDR, H5E_CANTCOPY, NULL, "unable to copy chunked storage");
+                copied = true;
             } /* end if */
             break;
 
@@ -1304,6 +1291,10 @@ H5O__layout_copy_file(H5F_t *file_src, void *mesg_src, H5F_t *file_dst, bool H5_
         default:
             HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, NULL, "Invalid layout class");
     } /* end switch */
+
+    /* Check if copy routine was invoked (which frees the source datatype) */
+    if (copied)
+        udata->src_dtype = NULL;
 
     /* Set return value */
     ret_value = layout_dst;

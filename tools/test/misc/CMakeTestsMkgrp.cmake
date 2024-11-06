@@ -55,14 +55,11 @@
 ##############################################################################
 
   macro (ADD_H5_TEST resultfile resultcode resultoption)
-    if (HDF5_USING_ANALYSIS_TOOL)
+    if (HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5MKGRP-${resultfile}
-          COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp> ${resultoption} ${resultfile}.h5 ${ARGN}
+          COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp${tgt_file_ext}> ${resultoption} ${resultfile}.h5 ${ARGN}
       )
-      if ("H5MKGRP-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5MKGRP-${resultfile} PROPERTIES DISABLED true)
-      endif ()
     else ()
       add_test (
           NAME H5MKGRP-${resultfile}-clear-objects
@@ -73,20 +70,17 @@
       )
       add_test (
           NAME H5MKGRP-${resultfile}
-          COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp> ${resultoption} ${resultfile}.h5 ${ARGN}
+          COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp${tgt_file_ext}> ${resultoption} ${resultfile}.h5 ${ARGN}
       )
       set_tests_properties (H5MKGRP-${resultfile} PROPERTIES
           DEPENDS H5MKGRP-${resultfile}-clear-objects
           WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles"
       )
-      if ("H5MKGRP-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5MKGRP-${resultfile} PROPERTIES DISABLED true)
-      endif ()
       add_test (
           NAME H5MKGRP-${resultfile}-h5ls
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=-v;-r;${resultfile}.h5"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -96,15 +90,12 @@
               -P "${HDF_RESOURCES_DIR}/runTest.cmake"
       )
       set_tests_properties (H5MKGRP-${resultfile}-h5ls PROPERTIES DEPENDS H5MKGRP-${resultfile})
-      if ("H5MKGRP-${resultfile}-h5ls" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5MKGRP-${resultfile}-h5ls PROPERTIES DISABLED true)
-      endif ()
     endif ()
   endmacro ()
 
   macro (ADD_H5_CMP resultfile resultcode)
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5MKGRP_CMP-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp> ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5MKGRP_CMP-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5mkgrp${tgt_file_ext}> ${ARGN})
     else ()
       add_test (
           NAME H5MKGRP_CMP-${resultfile}-clear-objects
@@ -117,7 +108,7 @@
           NAME H5MKGRP_CMP-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5mkgrp>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5mkgrp${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -128,9 +119,6 @@
       set_tests_properties (H5MKGRP_CMP-${resultfile} PROPERTIES
           DEPENDS H5MKGRP_CMP-${resultfile}-clear-objects
       )
-      if ("H5MKGRP_CMP-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5MKGRP_CMP-${resultfile} PROPERTIES DISABLED true)
-      endif ()
     endif ()
   endmacro ()
 
@@ -139,7 +127,7 @@
 ###           T H E   T E S T S                                            ###
 ##############################################################################
 ##############################################################################
-  if (HDF5_USING_ANALYSIS_TOOL)
+  if (HDF5_ENABLE_USING_MEMCHECKER)
     add_test (
         NAME H5MKGRP-clearall-objects
         COMMAND ${CMAKE_COMMAND} -E remove

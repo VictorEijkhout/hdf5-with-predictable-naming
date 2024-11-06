@@ -32,6 +32,7 @@
 #include "H5private.h"   /* Generic Functions			*/
 #include "H5Eprivate.h"  /* Error handling		  	*/
 #include "H5Fprivate.h"  /* File access				*/
+#include "H5Gprivate.h"  /* Groups				*/
 #include "H5HFprivate.h" /* Fractal heap				*/
 #include "H5MMprivate.h" /* Memory management			*/
 #include "H5Opkg.h"      /* Object headers			*/
@@ -286,13 +287,12 @@ done:
  *-------------------------------------------------------------------------
  */
 void *
-H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size, const uint8_t *buf,
+H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, const uint8_t *buf,
                    const H5O_msg_class_t *type)
 {
-    const uint8_t *buf_end = buf + buf_size - 1; /* End of the buffer */
-    H5O_shared_t   sh_mesg;                      /* Shared message info */
-    unsigned       version;                      /* Shared message version */
-    void          *ret_value = NULL;             /* Return value */
+    H5O_shared_t sh_mesg;          /* Shared message info */
+    unsigned     version;          /* Shared message version */
+    void        *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -302,8 +302,6 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
     assert(type);
 
     /* Version */
-    if (H5_IS_BUFFER_OVERFLOW(buf, 1, buf_end))
-        HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
     version = *buf++;
     if (version < H5O_SHARED_VERSION_1 || version > H5O_SHARED_VERSION_LATEST)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTLOAD, NULL, "bad version number for shared object message");
@@ -311,8 +309,6 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
     /* Get the shared information type
      * Flags are unused before version 3.
      */
-    if (H5_IS_BUFFER_OVERFLOW(buf, 1, buf_end))
-        HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
     if (version >= H5O_SHARED_VERSION_2)
         sh_mesg.type = *buf++;
     else {
@@ -321,11 +317,8 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
     } /* end else */
 
     /* Skip reserved bytes (for version 1) */
-    if (version == H5O_SHARED_VERSION_1) {
-        if (H5_IS_BUFFER_OVERFLOW(buf, 6, buf_end))
-            HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
+    if (version == H5O_SHARED_VERSION_1)
         buf += 6;
-    }
 
     /* Body */
     if (version == H5O_SHARED_VERSION_1) {
@@ -333,11 +326,7 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
         sh_mesg.u.loc.index = 0;
 
         /* Decode stored "symbol table entry" into message location */
-        if (H5_IS_BUFFER_OVERFLOW(buf, H5F_SIZEOF_SIZE(f), buf_end))
-            HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
         buf += H5F_SIZEOF_SIZE(f); /* Skip over local heap address */
-        if (H5_IS_BUFFER_OVERFLOW(buf, H5F_sizeof_addr(f), buf_end))
-            HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
         H5F_addr_decode(f, &buf, &(sh_mesg.u.loc.oh_addr));
     } /* end if */
     else if (version >= H5O_SHARED_VERSION_2) {
@@ -346,8 +335,6 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
          */
         if (sh_mesg.type == H5O_SHARE_TYPE_SOHM) {
             assert(version >= H5O_SHARED_VERSION_3);
-            if (H5_IS_BUFFER_OVERFLOW(buf, sizeof(sh_mesg.u.heap_id), buf_end))
-                HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
             H5MM_memcpy(&sh_mesg.u.heap_id, buf, sizeof(sh_mesg.u.heap_id));
         } /* end if */
         else {
@@ -358,8 +345,6 @@ H5O__shared_decode(H5F_t *f, H5O_t *open_oh, unsigned *ioflags, size_t buf_size,
                 sh_mesg.type = H5O_SHARE_TYPE_COMMITTED;
 
             sh_mesg.u.loc.index = 0;
-            if (H5_IS_BUFFER_OVERFLOW(buf, H5F_sizeof_addr(f), buf_end))
-                HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, NULL, "ran off end of input buffer while decoding");
             H5F_addr_decode(f, &buf, &sh_mesg.u.loc.oh_addr);
         } /* end else */
     }     /* end else if */

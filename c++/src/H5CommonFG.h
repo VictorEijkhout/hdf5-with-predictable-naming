@@ -72,7 +72,7 @@ class H5_DLLCPP CommonFG {
     CommonFG();
 
     // Noop destructor.
-    virtual ~CommonFG() = default;
+    virtual ~CommonFG();
 
   protected:
     virtual void p_setId(const hid_t new_id) = 0;

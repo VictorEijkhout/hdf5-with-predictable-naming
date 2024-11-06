@@ -56,47 +56,9 @@ if (CMAKE_C_COMPILER_ID STREQUAL "NVHPC" )
   else ()
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Mbounds -g")
   endif ()
-
-  # With at least NVHPC 23.5 - 23.9, compiling with -O2 or higher and -DNDEBUG
-  # appears to have issues that manifest in the tests as incorrect metadata
-  # checksums being read or memory being corrupted. Compiling without -DNDEBUG
-  # does not appear to have these issues, but is not ideal due to compiling in
-  # asserts and other library debug code. Compiling with -O1 also does not appear
-  # to have these issues, so set maximum optimization level to -O1 for now until
-  # it can be determined whether these issues are compiler-specific or issues
-  # in the library.
-  set (cmake_c_flags_minsizerel_edited "${CMAKE_C_FLAGS_MINSIZEREL}")
-  string (REPLACE "-O2" "" cmake_c_flags_minsizerel_edited "${cmake_c_flags_minsizerel_edited}")
-  string (REPLACE "-O3" "" cmake_c_flags_minsizerel_edited "${cmake_c_flags_minsizerel_edited}")
-  string (REPLACE "-O4" "" cmake_c_flags_minsizerel_edited "${cmake_c_flags_minsizerel_edited}")
-  string (REPLACE "-Ofast" "" cmake_c_flags_minsizerel_edited "${cmake_c_flags_minsizerel_edited}")
-  string (REPLACE "-fast" "" cmake_c_flags_minsizerel_edited "${cmake_c_flags_minsizerel_edited}")
-  string (STRIP "${cmake_c_flags_minsizerel_edited}" cmake_c_flags_minsizerel_edited)
-  string (PREPEND cmake_c_flags_minsizerel_edited "-O1 ")
-  set (CMAKE_C_FLAGS_MINSIZEREL "${cmake_c_flags_minsizerel_edited}")
-
-  set (cmake_c_flags_release_edited "${CMAKE_C_FLAGS_RELEASE}")
-  string (REPLACE "-O2" "" cmake_c_flags_release_edited "${cmake_c_flags_release_edited}")
-  string (REPLACE "-O3" "" cmake_c_flags_release_edited "${cmake_c_flags_release_edited}")
-  string (REPLACE "-O4" "" cmake_c_flags_release_edited "${cmake_c_flags_release_edited}")
-  string (REPLACE "-Ofast" "" cmake_c_flags_release_edited "${cmake_c_flags_release_edited}")
-  string (REPLACE "-fast" "" cmake_c_flags_release_edited "${cmake_c_flags_release_edited}")
-  string (STRIP "${cmake_c_flags_release_edited}" cmake_c_flags_release_edited)
-  string (PREPEND cmake_c_flags_release_edited "-O1 ")
-  set (CMAKE_C_FLAGS_RELEASE "${cmake_c_flags_release_edited}")
-
-  set (cmake_c_flags_relwithdebinfo_edited "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-  string (REPLACE "-O2" "" cmake_c_flags_relwithdebinfo_edited "${cmake_c_flags_relwithdebinfo_edited}")
-  string (REPLACE "-O3" "" cmake_c_flags_relwithdebinfo_edited "${cmake_c_flags_relwithdebinfo_edited}")
-  string (REPLACE "-O4" "" cmake_c_flags_relwithdebinfo_edited "${cmake_c_flags_relwithdebinfo_edited}")
-  string (REPLACE "-Ofast" "" cmake_c_flags_relwithdebinfo_edited "${cmake_c_flags_relwithdebinfo_edited}")
-  string (REPLACE "-fast" "" cmake_c_flags_relwithdebinfo_edited "${cmake_c_flags_relwithdebinfo_edited}")
-  string (STRIP "${cmake_c_flags_relwithdebinfo_edited}" cmake_c_flags_relwithdebinfo_edited)
-  string (PREPEND cmake_c_flags_relwithdebinfo_edited "-O1 ")
-  set (CMAKE_C_FLAGS_RELWITHDEBINFO "${cmake_c_flags_relwithdebinfo_edited}")
 endif ()
 
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+if (CMAKE_COMPILER_IS_GNUCC)
   set (CMAKE_C_FLAGS "${CMAKE_ANSI_CFLAGS} ${CMAKE_C_FLAGS}")
   if (${HDF_CFG_NAME} MATCHES "Debug" OR ${HDF_CFG_NAME} MATCHES "Developer")
     if (NOT CMAKE_C_COMPILER_VERSION VERSION_LESS 5.0)
@@ -375,8 +337,11 @@ if (HDF5_ENABLE_DEBUG_APIS)
       H5D_DEBUG
       H5D_CHUNK_DEBUG
       H5F_DEBUG
+      H5HL_DEBUG
+      H5I_DEBUG
       H5MM_DEBUG
       H5O_DEBUG
+      H5S_DEBUG
       H5T_DEBUG
       H5Z_DEBUG
   )
@@ -405,7 +370,7 @@ endif ()
 # This is in here to help some of the GCC based IDES like Eclipse
 # and code blocks parse the compiler errors and warnings better.
 #-----------------------------------------------------------------------------
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+if (CMAKE_COMPILER_IS_GNUCC)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fmessage-length=0")
 endif ()
 

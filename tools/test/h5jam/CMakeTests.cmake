@@ -53,8 +53,8 @@
   #
   macro (TEST_H5JAM_OUTPUT expectfile resultcode)
     # If using memchecker add tests without using scripts
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5JAM-${expectfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam> ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5JAM-${expectfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam${tgt_file_ext}> ${ARGN})
       if (${resultcode})
         set_tests_properties (H5JAM-${expectfile} PROPERTIES WILL_FAIL "true")
       endif ()
@@ -63,7 +63,7 @@
           NAME H5JAM-${expectfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5jam>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5jam${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${expectfile}.out"
@@ -74,9 +74,6 @@
               -P "${HDF_RESOURCES_DIR}/runTest.cmake"
       )
     endif ()
-    if ("H5JAM-${expectfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5JAM-${expectfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
   # ============================================================
@@ -85,8 +82,8 @@
   #
   macro (TEST_H5UNJAM_OUTPUT expectfile resultcode)
     # If using memchecker add tests without using scripts
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5JAM-UNJAM-${expectfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam> ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5JAM-UNJAM-${expectfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam${tgt_file_ext}> ${ARGN})
       if (${resultcode})
         set_tests_properties (H5JAM-UNJAM-${expectfile} PROPERTIES WILL_FAIL "true")
       endif ()
@@ -95,7 +92,7 @@
           NAME H5JAM-UNJAM-${expectfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5unjam>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5unjam${tgt_file_ext}>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${expectfile}.out"
@@ -104,19 +101,16 @@
               -P "${HDF_RESOURCES_DIR}/runTest.cmake"
       )
     endif ()
-    if ("H5JAM-UNJAM-${expectfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5JAM-UNJAM-${expectfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
   macro (CHECKFILE testname testdepends expected actual)
     # If using memchecker add tests without using scripts
-    if (NOT HDF5_USING_ANALYSIS_TOOL)
+    if (NOT HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5JAM-${testname}-CHECKFILE-H5DMP
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=testfiles/${expected}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${actual}.new"
@@ -125,15 +119,12 @@
               -D "TEST_SKIP_COMPARE=TRUE"
               -P "${HDF_RESOURCES_DIR}/runTest.cmake"
       )
-      if ("H5JAM-${testname}-CHECKFILE-H5DMP" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}-CHECKFILE-H5DMP PROPERTIES DISABLED true)
-      endif ()
       set_tests_properties (H5JAM-${testname}-CHECKFILE-H5DMP PROPERTIES DEPENDS ${testdepends})
       add_test (
           NAME H5JAM-${testname}-CHECKFILE-H5DMP_CMP
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5dump${tgt_file_ext}>"
               -D "TEST_ARGS:STRING=${actual}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${actual}.out"
@@ -142,15 +133,12 @@
               -D "TEST_REFERENCE=${actual}.new"
               -P "${HDF_RESOURCES_DIR}/runTest.cmake"
       )
-      if ("H5JAM-${testname}-CHECKFILE-H5DMP_CMP" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}-CHECKFILE-H5DMP_CMP PROPERTIES DISABLED true)
-      endif ()
       set_tests_properties (H5JAM-${testname}-CHECKFILE-H5DMP_CMP PROPERTIES DEPENDS H5JAM-${testname}-CHECKFILE-H5DMP)
     endif ()
   endmacro()
 
   macro (UNJAMTEST testname setfile infile ufile chkfile outfile)
-    if (NOT HDF5_USING_ANALYSIS_TOOL)
+    if (NOT HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5JAM-${testname}-UNJAM-SETUP-clear-objects
           COMMAND ${CMAKE_COMMAND} -E remove ${infile}
@@ -171,7 +159,7 @@
             COMMAND ${CMAKE_COMMAND} -E remove ${ufile}
         )
         set_tests_properties (H5JAM-${testname}-UNJAM_D-clear-objects PROPERTIES DEPENDS H5JAM-${testname}-UNJAM-clear-objects)
-        add_test (NAME H5JAM-${testname}-UNJAM COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam> -i ${infile} -u ${ufile} -o ${outfile})
+        add_test (NAME H5JAM-${testname}-UNJAM COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam${tgt_file_ext}> -i ${infile} -u ${ufile} -o ${outfile})
         set_tests_properties (H5JAM-${testname}-UNJAM PROPERTIES DEPENDS H5JAM-${testname}-UNJAM_D-clear-objects)
         set (compare_test ${ufile})
       else ()
@@ -180,7 +168,7 @@
               NAME H5JAM-${testname}-UNJAM
               COMMAND "${CMAKE_COMMAND}"
                   -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-                  -D "TEST_PROGRAM=$<TARGET_FILE:h5unjam>"
+                  -D "TEST_PROGRAM=$<TARGET_FILE:h5unjam${tgt_file_ext}>"
                   -D "TEST_ARGS:STRING=-i;${infile};-o;${outfile}"
                   -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
                   -D "TEST_OUTPUT=${outfile}.ufile.txt"
@@ -191,13 +179,10 @@
           set_tests_properties (H5JAM-${testname}-UNJAM PROPERTIES DEPENDS H5JAM-${testname}-UNJAM-clear-objects)
           set (compare_test "${outfile}.ufile.txt")
         else ()
-          add_test (NAME H5JAM-${testname}-UNJAM COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam> -i ${infile} -o ${outfile})
+          add_test (NAME H5JAM-${testname}-UNJAM COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5unjam${tgt_file_ext}> -i ${infile} -o ${outfile})
           set_tests_properties (H5JAM-${testname}-UNJAM PROPERTIES DEPENDS H5JAM-${testname}-UNJAM-clear-objects)
           set (compare_test "")
         endif ()
-      endif ()
-      if ("H5JAM-${testname}-UNJAM" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}-UNJAM PROPERTIES DISABLED true)
       endif ()
       if (${compare_test})
         add_test (
@@ -223,9 +208,6 @@
                 -P "${HDF_RESOURCES_DIR}/userblockTest.cmake"
         )
         set_tests_properties (H5JAM-${testname}-UNJAM-CHECK_UB_1 PROPERTIES DEPENDS H5JAM-${testname}-UNJAM-CHECK_UB_1-clear-objects)
-        if ("H5JAM-${testname}-UNJAM-CHECK_UB_1" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-          set_tests_properties (H5JAM-${testname}-UNJAM-CHECK_UB_1 PROPERTIES DISABLED true)
-        endif ()
       endif ()
 
       add_test (
@@ -247,26 +229,20 @@
       else ()
         set_tests_properties (H5JAM-${testname}-UNJAM-CHECK_NOUB PROPERTIES DEPENDS H5JAM-${testname}-UNJAM)
       endif ()
-      if ("H5JAM-${testname}-UNJAM-CHECK_NOUB" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}-UNJAM-CHECK_NOUB PROPERTIES DISABLED true)
-      endif ()
 
       CHECKFILE (${testname} "H5JAM-${testname}-UNJAM-CHECK_NOUB" ${chkfile} ${outfile})
     endif ()
   endmacro()
 
   macro (JAMTEST testname jamfile infile chkfile outfile)
-    if (NOT HDF5_USING_ANALYSIS_TOOL)
+    if (NOT HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5JAM-${testname}-clear-objects
           COMMAND ${CMAKE_COMMAND} -E remove ${outfile} ${infile}.cpy.h5
       )
     endif ()
-    add_test (NAME H5JAM-${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam> -u testfiles/${jamfile} -i testfiles/${infile} -o ${outfile} ${ARGN})
-    if ("H5JAM-${testname}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5JAM-${testname} PROPERTIES DISABLED true)
-    endif ()
-    if (NOT HDF5_USING_ANALYSIS_TOOL)
+    add_test (NAME H5JAM-${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam${tgt_file_ext}> -u testfiles/${jamfile} -i testfiles/${infile} -o ${outfile} ${ARGN})
+    if (NOT HDF5_ENABLE_USING_MEMCHECKER)
       set_tests_properties (H5JAM-${testname} PROPERTIES DEPENDS H5JAM-${testname}-clear-objects)
       set (compare_test ${outfile})
       set (compare_orig testfiles/${infile})
@@ -297,15 +273,12 @@
               -P "${HDF_RESOURCES_DIR}/userblockTest.cmake"
       )
       set_tests_properties (H5JAM-${testname}-CHECK_UB_1 PROPERTIES DEPENDS H5JAM-${testname}-CHECK_UB_1-clear-objects)
-      if ("H5JAM-${testname}-CHECK_UB_1" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}-CHECK_UB_1 PROPERTIES DISABLED true)
-      endif ()
       CHECKFILE (${testname} "H5JAM-${testname}-CHECK_UB_1" ${chkfile} ${outfile})
     endif ()
   endmacro ()
 
   macro (JAMTEST_NONE testname jamfile infile setfile chkfile)
-    if (NOT HDF5_USING_ANALYSIS_TOOL)
+    if (NOT HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5JAM-${testname}_NONE-clear-objects
           COMMAND ${CMAKE_COMMAND} -E remove
@@ -322,15 +295,9 @@
           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${chkfile} ${chkfile}.cpy.h5
       )
       set_tests_properties (H5JAM-${testname}_NONE_COPY PROPERTIES DEPENDS H5JAM-${testname}_NONE-SETUP)
-      if ("H5JAM-${testname}_NONE_COPY" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}_NONE_COPY PROPERTIES DISABLED true)
-      endif ()
 
-      add_test (NAME H5JAM-${testname}_NONE COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam> -u testfiles/${jamfile} -i ${chkfile} ${ARGN})
+      add_test (NAME H5JAM-${testname}_NONE COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5jam${tgt_file_ext}> -u testfiles/${jamfile} -i ${chkfile} ${ARGN})
       set_tests_properties (H5JAM-${testname}_NONE PROPERTIES DEPENDS H5JAM-${testname}_NONE_COPY)
-      if ("H5JAM-${testname}_NONE" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}_NONE PROPERTIES DISABLED true)
-      endif ()
 
       set (compare_test ${chkfile})
       set (compare_orig ${chkfile}.cpy.h5)
@@ -361,9 +328,6 @@
               -P "${HDF_RESOURCES_DIR}/userblockTest.cmake"
       )
       set_tests_properties (H5JAM-${testname}_NONE-CHECK_UB_1 PROPERTIES DEPENDS H5JAM-${testname}_NONE-CHECK_UB_1-clear-objects)
-      if ("H5JAM-${testname}_NONE-CHECK_UB_1" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-        set_tests_properties (H5JAM-${testname}_NONE-CHECK_UB_1 PROPERTIES DISABLED true)
-      endif ()
       CHECKFILE (${testname} "H5JAM-${testname}_NONE-CHECK_UB_1" ${infile} ${chkfile})
     endif ()
   endmacro ()

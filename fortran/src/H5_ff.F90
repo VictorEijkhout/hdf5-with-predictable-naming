@@ -135,11 +135,11 @@ MODULE H5LIB
   !
   ! H5S flags declaration
   !
-  INTEGER, PARAMETER :: H5S_FLAGS_LEN = 20
+  INTEGER, PARAMETER :: H5S_FLAGS_LEN = 18
   INTEGER, DIMENSION(1:H5S_FLAGS_LEN) :: H5S_flags
   INTEGER, PARAMETER :: H5S_HSIZE_FLAGS_LEN = 1
   INTEGER(HSIZE_T), DIMENSION(1:H5S_HSIZE_FLAGS_LEN) :: H5S_hsize_flags
-  INTEGER, PARAMETER :: H5S_HID_FLAGS_LEN = 3
+  INTEGER, PARAMETER :: H5S_HID_FLAGS_LEN = 1
   INTEGER(HSIZE_T), DIMENSION(1:H5S_HID_FLAGS_LEN)   :: H5S_hid_flags
   !
   ! H5T flags declaration
@@ -632,9 +632,7 @@ CONTAINS
     !
     ! H5S flags
     !
-    H5S_ALL_F   = H5S_hid_flags(1)
-    H5S_BLOCK_F = H5S_hid_flags(2)
-    H5S_PLIST_F = H5S_hid_flags(3)
+    H5S_ALL_F = H5S_hid_flags(1)
 
     H5S_UNLIMITED_F = H5S_hsize_flags(1)
 
@@ -656,8 +654,6 @@ CONTAINS
     H5S_SEL_POINTS_F     = H5S_flags(16)
     H5S_SEL_HYPERSLABS_F = H5S_flags(17)
     H5S_SEL_ALL_F        = H5S_flags(18)
-    H5S_SEL_ITER_GET_SEQ_LIST_SORTED_F  = H5S_flags(19)
-    H5S_SEL_ITER_SHARE_WITH_DATASPACE_F = H5S_flags(20)
     !
     ! H5T flags declaration
     !
@@ -1000,7 +996,7 @@ CONTAINS
           h5_type = H5T_NATIVE_REAL_C_LONG_DOUBLE
 #endif
 #if H5_PAC_FC_MAX_REAL_PRECISION > 28
-#ifdef H5_HAVE_FLOAT128
+#if H5_HAVE_FLOAT128 == 1
        ELSE
           h5_type = H5T_NATIVE_FLOAT_128
 #endif

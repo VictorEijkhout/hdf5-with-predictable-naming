@@ -274,16 +274,4 @@ Group::~Group()
     }
 }
 
-//--------------------------------------------------------------------------
-// Function:    Copy assignment operator
-Group &
-Group::operator=(const Group &original)
-{
-    if (&original != this) {
-        setId(original.id);
-    }
-
-    return *this;
-}
-
 } // namespace H5

@@ -358,9 +358,11 @@ main(int ac, char **av)
 
      PROGRAM MPIOEXAMPLE
 
-     USE mpi
+     ! USE MPI
 
      IMPLICIT NONE
+
+     INCLUDE 'mpif.h'
         
      CHARACTER(LEN=80), PARAMETER :: filename = "filef.h5" ! File name
      INTEGER     ::   ierror  ! Error flag

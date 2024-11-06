@@ -140,4 +140,12 @@ LinkAccPropList::getNumLinks() const
     return (nlinks);
 }
 
+//--------------------------------------------------------------------------
+// Function:    LinkAccPropList destructor
+///\brief       Noop destructor
+//--------------------------------------------------------------------------
+LinkAccPropList::~LinkAccPropList()
+{
+}
+
 } // namespace H5

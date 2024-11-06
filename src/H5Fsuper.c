@@ -21,10 +21,10 @@
 /***********/
 #include "H5private.h"   /* Generic Functions                    */
 #include "H5ACprivate.h" /* Metadata cache                       */
+#include "H5CXprivate.h" /* API Contexts                         */
 #include "H5Eprivate.h"  /* Error handling                       */
 #include "H5Fpkg.h"      /* File access                          */
 #include "H5FDprivate.h" /* File drivers                         */
-#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5Iprivate.h"  /* IDs                                  */
 #include "H5MFprivate.h" /* File memory management               */
 #include "H5MMprivate.h" /* Memory management                    */
@@ -799,11 +799,8 @@ H5F__super_read(H5F_t *f, H5P_genplist_t *fa_plist, bool initial_read)
                         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "unable to set file space strategy");
                 } /* end if */
 
-                if (f->shared->fs_page_size < H5F_FILE_SPACE_PAGE_SIZE_MIN)
-                    HGOTO_ERROR(H5E_FILE, H5E_BADVALUE, FAIL, "file space page size too small");
-                if (fsinfo.page_size < H5F_FILE_SPACE_PAGE_SIZE_MIN)
-                    HGOTO_ERROR(H5E_FILE, H5E_BADVALUE, FAIL, "file space page size too small");
-
+                assert(f->shared->fs_page_size >= H5F_FILE_SPACE_PAGE_SIZE_MIN);
+                assert(fsinfo.page_size >= H5F_FILE_SPACE_PAGE_SIZE_MIN);
                 if (f->shared->fs_page_size != fsinfo.page_size) {
                     f->shared->fs_page_size = fsinfo.page_size;
 

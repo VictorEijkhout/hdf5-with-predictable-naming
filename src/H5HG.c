@@ -43,7 +43,6 @@
 #include "H5private.h"   /* Generic Functions			*/
 #include "H5Eprivate.h"  /* Error handling		  	*/
 #include "H5Fprivate.h"  /* File access				*/
-#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5HGpkg.h"     /* Global heaps				*/
 #include "H5MFprivate.h" /* File memory management		*/
 #include "H5MMprivate.h" /* Memory management			*/
@@ -556,21 +555,12 @@ H5HG_read(H5F_t *f, H5HG_t *hobj, void *object /*out*/, size_t *buf_size)
     assert(f);
     assert(hobj);
 
-    /* Heap object idx 0 is the free space in the heap and should never be given out */
-    if (0 == hobj->idx)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, NULL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-
     /* Load the heap */
     if (NULL == (heap = H5HG__protect(f, hobj->addr, H5AC__READ_ONLY_FLAG)))
         HGOTO_ERROR(H5E_HEAP, H5E_CANTPROTECT, NULL, "unable to protect global heap");
-    if (hobj->idx >= heap->nused)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, NULL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-    if (NULL == heap->obj[hobj->idx].begin)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, NULL, "bad heap pointer, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
 
+    assert(hobj->idx < heap->nused);
+    assert(heap->obj[hobj->idx].begin);
     size = heap->obj[hobj->idx].size;
     p    = heap->obj[hobj->idx].begin + H5HG_SIZEOF_OBJHDR(f);
 
@@ -635,22 +625,13 @@ H5HG_link(H5F_t *f, const H5HG_t *hobj, int adjust)
     if (0 == (H5F_INTENT(f) & H5F_ACC_RDWR))
         HGOTO_ERROR(H5E_HEAP, H5E_WRITEERROR, FAIL, "no write intent on file");
 
-    /* Heap object idx 0 is the free space in the heap and should never be given out */
-    if (0 == hobj->idx)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-
     /* Load the heap */
     if (NULL == (heap = H5HG__protect(f, hobj->addr, H5AC__NO_FLAGS_SET)))
         HGOTO_ERROR(H5E_HEAP, H5E_CANTPROTECT, FAIL, "unable to protect global heap");
 
     if (adjust != 0) {
-        if (hobj->idx >= heap->nused)
-            HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                        hobj->addr, hobj->idx);
-        if (NULL == heap->obj[hobj->idx].begin)
-            HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap pointer, heap object = {%" PRIxHADDR ", %zu}",
-                        hobj->addr, hobj->idx);
+        assert(hobj->idx < heap->nused);
+        assert(heap->obj[hobj->idx].begin);
         if ((heap->obj[hobj->idx].nrefs + adjust) < 0)
             HGOTO_ERROR(H5E_HEAP, H5E_BADRANGE, FAIL, "new link count would be out of range");
         if ((heap->obj[hobj->idx].nrefs + adjust) > H5HG_MAXLINK)
@@ -692,22 +673,12 @@ H5HG_get_obj_size(H5F_t *f, H5HG_t *hobj, size_t *obj_size)
     assert(hobj);
     assert(obj_size);
 
-    /* Heap object idx 0 is the free space in the heap and should never be given out */
-    if (0 == hobj->idx)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-
     /* Load the heap */
     if (NULL == (heap = H5HG__protect(f, hobj->addr, H5AC__READ_ONLY_FLAG)))
         HGOTO_ERROR(H5E_HEAP, H5E_CANTPROTECT, FAIL, "unable to protect global heap");
 
-    /* Sanity check the heap object */
-    if (hobj->idx >= heap->nused)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-    if (NULL == heap->obj[hobj->idx].begin)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap pointer, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
+    assert(hobj->idx < heap->nused);
+    assert(heap->obj[hobj->idx].begin);
 
     /* Set object size */
     *obj_size = heap->obj[hobj->idx].size;
@@ -746,31 +717,18 @@ H5HG_remove(H5F_t *f, H5HG_t *hobj)
     if (0 == (H5F_INTENT(f) & H5F_ACC_RDWR))
         HGOTO_ERROR(H5E_HEAP, H5E_WRITEERROR, FAIL, "no write intent on file");
 
-    /* Heap object idx 0 is the free space in the heap and should never be given out */
-    if (0 == hobj->idx)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
-
     /* Load the heap */
     if (NULL == (heap = H5HG__protect(f, hobj->addr, H5AC__NO_FLAGS_SET)))
         HGOTO_ERROR(H5E_HEAP, H5E_CANTPROTECT, FAIL, "unable to protect global heap");
 
-    /* Sanity check the heap object (split around bugfix below) */
-    if (hobj->idx >= heap->nused)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap index, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
+    assert(hobj->idx < heap->nused);
 
     /* When the application selects the same location to rewrite the VL element by using H5Sselect_elements,
      * it can happen that the entry has been removed by first rewrite.  Here we simply skip the removal of
      * the entry and let the second rewrite happen (see HDFFV-10635).  In the future, it'd be nice to handle
      * this situation in H5T_conv_vlen in H5Tconv.c instead of this level (HDFFV-10648). */
     if (heap->obj[hobj->idx].nrefs == 0 && heap->obj[hobj->idx].size == 0 && !heap->obj[hobj->idx].begin)
-        HGOTO_DONE(SUCCEED);
-
-    /* Finish sanity checking the heap object */
-    if (NULL == heap->obj[hobj->idx].begin)
-        HGOTO_ERROR(H5E_HEAP, H5E_BADVALUE, FAIL, "bad heap pointer, heap object = {%" PRIxHADDR ", %zu}",
-                    hobj->addr, hobj->idx);
+        HGOTO_DONE(ret_value);
 
     obj_start = heap->obj[hobj->idx].begin;
     /* Include object header size */

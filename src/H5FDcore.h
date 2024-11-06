@@ -11,25 +11,17 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Purpose:	The public header file for the core virtual file driver (VFD)
+ * Purpose:	The public header file for the core driver.
  */
 #ifndef H5FDcore_H
 #define H5FDcore_H
 
-/** Initializer for the core VFD */
-#define H5FD_CORE (H5FDperform_init(H5FD_core_init))
-
-/** Identifier for the core VFD */
+#define H5FD_CORE       (H5FDperform_init(H5FD_core_init))
 #define H5FD_CORE_VALUE H5_VFD_CORE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/** @private
- *
- * \brief Private initializer for the core VFD
- */
 H5_DLL hid_t H5FD_core_init(void);
 
 /**

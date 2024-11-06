@@ -13,10 +13,9 @@
 #include "H5Fmodule.h" /* This source code file is part of the H5F module */
 
 /* Packages needed by this file... */
-#include "H5private.h"   /* Generic Functions			*/
-#include "H5Eprivate.h"  /* Error handling		  	*/
-#include "H5Fpkg.h"      /* File access				*/
-#include "H5FLprivate.h" /* Free Lists                               */
+#include "H5private.h"  /* Generic Functions			*/
+#include "H5Eprivate.h" /* Error handling		  	*/
+#include "H5Fpkg.h"     /* File access				*/
 
 /* PRIVATE PROTOTYPES */
 

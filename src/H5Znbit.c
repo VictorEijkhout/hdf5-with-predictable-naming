@@ -17,6 +17,7 @@
 #include "H5Iprivate.h"  /* IDs			  		*/
 #include "H5MMprivate.h" /* Memory management			*/
 #include "H5Ppublic.h"   /* Property lists			*/
+#include "H5Oprivate.h"  /* Object headers                       */
 #include "H5Sprivate.h"  /* Dataspaces         			*/
 #include "H5Tprivate.h"  /* Datatypes         			*/
 #include "H5Zpkg.h"      /* Data filters				*/
@@ -947,10 +948,8 @@ H5Z__filter_nbit(unsigned flags, size_t cd_nelmts, const unsigned cd_values[], s
             HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, 0, "memory allocation failed for nbit decompression");
 
         /* decompress the buffer */
-        if (H5Z__nbit_decompress(outbuf, d_nelmts, (unsigned char *)*buf, cd_values) < 0) {
-            H5MM_xfree(outbuf);
+        if (H5Z__nbit_decompress(outbuf, d_nelmts, (unsigned char *)*buf, cd_values) < 0)
             HGOTO_ERROR(H5E_PLINE, H5E_CANTFILTER, 0, "can't decompress buffer");
-        }
     } /* end if */
     /* output; compress */
     else {
@@ -1182,7 +1181,7 @@ static herr_t
 H5Z__nbit_decompress_one_compound(unsigned char *data, size_t data_offset, unsigned char *buffer, size_t *j,
                                   size_t *buf_len, const unsigned parms[], unsigned *parms_index)
 {
-    unsigned     i, nmembers, member_offset, member_class, member_size, used_size = 0, prev_used_size, size;
+    unsigned     i, nmembers, member_offset, member_class, member_size, used_size = 0, size;
     parms_atomic p;
     herr_t       ret_value = SUCCEED; /* Return value */
 
@@ -1196,15 +1195,10 @@ H5Z__nbit_decompress_one_compound(unsigned char *data, size_t data_offset, unsig
         member_class  = parms[(*parms_index)++];
 
         /* Check for overflow */
-        member_size    = parms[*parms_index];
-        prev_used_size = used_size;
+        member_size = parms[*parms_index];
         used_size += member_size;
         if (used_size > size)
-            HGOTO_ERROR(H5E_PLINE, H5E_BADVALUE, FAIL, "compound member size overflowed compound size");
-        if (used_size <= prev_used_size)
-            HGOTO_ERROR(H5E_PLINE, H5E_BADVALUE, FAIL, "compound member size overflowed compound size");
-        if ((member_offset + member_size) > size)
-            HGOTO_ERROR(H5E_PLINE, H5E_BADRANGE, FAIL, "compound member offset overflowed compound size");
+            HGOTO_ERROR(H5E_PLINE, H5E_BADTYPE, FAIL, "compound member offset overflowed compound size");
         switch (member_class) {
             case H5Z_NBIT_ATOMIC:
                 p.size = member_size;

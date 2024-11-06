@@ -149,7 +149,7 @@ class H5_DLLCPP FileAccPropList : public PropList {
     FileAccPropList(const hid_t plist_id);
 
     // Noop destructor
-    virtual ~FileAccPropList() override = default;
+    virtual ~FileAccPropList() override;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 

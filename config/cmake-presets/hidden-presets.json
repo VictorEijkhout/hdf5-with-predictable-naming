@@ -88,16 +88,8 @@
     {
       "name": "ci-Intel",
       "hidden": true,
-      "toolset": {
-        "value": "host=x64",
-        "strategy": "external"
-      }
-    },
-    {
-      "name": "ci-Fortran",
-      "hidden": true,
       "cacheVariables": {
-        "HDF5_BUILD_FORTRAN": "ON"
+        "CMAKE_TOOLCHAIN_FILE": "config/toolchain/intel.cmake"
       },
       "toolset": {
         "value": "host=x64",
@@ -107,7 +99,6 @@
     {
       "name": "ci-Fortran-Clang",
       "hidden": true,
-      "inherits": "ci-Fortran",
       "cacheVariables": {
         "CMAKE_Fortran_COMPILER":  {"type": "FILEPATH", "value": "gfortran"}
       },
@@ -115,6 +106,18 @@
         "type": "matches",
         "string": "${presetName}",
         "regex": ".*-Clang"
+      }
+    },
+    {
+      "name": "ci-Fortran",
+      "hidden": true,
+      "inherits": "ci-Fortran-Clang",
+      "cacheVariables": {
+        "HDF5_BUILD_FORTRAN": "ON"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
       }
     },
     {
@@ -202,28 +205,6 @@
       ]
     },
     {
-      "name": "ci-x64-Debug-Intel",
-      "description": "Intel for x64 (Debug)",
-      "hidden": true,
-      "inherits": [
-        "ci-base",
-        "ci-x64",
-        "ci-Debug",
-        "ci-Intel"
-      ]
-    },
-    {
-      "name": "ci-x64-Release-Intel",
-      "description": "Intel for x64 (Release)",
-      "hidden": true,
-      "inherits": [
-        "ci-base",
-        "ci-x64",
-        "ci-Release",
-        "ci-Intel"
-      ]
-    },
-    {
       "name": "ci-x64-Debug-MSVC-asan",
       "description": "x64-Debug-MSVC with /fsanitize=address",
       "hidden": true,
@@ -284,8 +265,7 @@
       "hidden": true,
       "inherits": [
         "ci-base"
-      ],
-      "configuration": "Debug"
+      ]
     },
     {
       "name": "ci-x64-Release-MSVC",
@@ -293,8 +273,7 @@
       "hidden": true,
       "inherits": [
         "ci-base"
-      ],
-      "configuration": "RelWithDebInfo"
+      ]
     },
     {
       "name": "ci-x64-Debug-Clang",
@@ -327,24 +306,6 @@
       "inherits": [
         "ci-base"
       ]
-    },
-    {
-      "name": "ci-x64-Debug-Intel",
-      "configurePreset": "ci-x64-Debug-Intel",
-      "hidden": true,
-      "inherits": [
-        "ci-base"
-      ],
-      "configuration": "Debug"
-    },
-    {
-      "name": "ci-x64-Release-Intel",
-      "configurePreset": "ci-x64-Release-Intel",
-      "hidden": true,
-      "inherits": [
-        "ci-base"
-      ],
-      "configuration": "RelWithDebInfo"
     },
     {
       "name": "ci-x64-Debug-MSVC-asan",
@@ -400,7 +361,7 @@
       "execution": {
         "noTestsAction": "error",
         "timeout": 600,
-        "jobs": 4
+        "jobs": 8
       }
     },
     {
@@ -409,8 +370,7 @@
       "hidden": true,
       "inherits": [
         "ci-base"
-      ],
-      "configuration": "Debug"
+      ]
     },
     {
       "name": "ci-x64-Release-MSVC",
@@ -418,8 +378,7 @@
       "hidden": true,
       "inherits": [
         "ci-base"
-      ],
-      "configuration": "RelWithDebInfo"
+      ]
     },
     {
       "name": "ci-x64-Debug-Clang",
@@ -448,22 +407,6 @@
     {
       "name": "ci-x64-Release-GNUC",
       "configurePreset": "ci-x64-Release-GNUC",
-      "hidden": true,
-      "inherits": [
-        "ci-base"
-      ]
-    },
-    {
-      "name": "ci-x64-Debug-Intel",
-      "configurePreset": "ci-x64-Debug-Intel",
-      "hidden": true,
-      "inherits": [
-        "ci-base"
-      ]
-    },
-    {
-      "name": "ci-x64-Release-Intel",
-      "configurePreset": "ci-x64-Release-Intel",
       "hidden": true,
       "inherits": [
         "ci-base"
@@ -522,26 +465,27 @@
       "configurePreset": "ci-x64-Release-MSVC",
       "hidden": true,
       "inherits": "ci-base",
-      "configurations": ["RelWithDebInfo"]
+      "generators": [
+        "ZIP"
+      ]
     },
     {
       "name": "ci-x64-Release-Clang",
       "configurePreset": "ci-x64-Release-Clang",
       "hidden": true,
-      "inherits": "ci-base"
+      "inherits": "ci-base",
+      "generators": [
+        "TGZ"
+      ]
     },
     {
       "name": "ci-x64-Release-GNUC",
       "configurePreset": "ci-x64-Release-GNUC",
       "hidden": true,
-      "inherits": "ci-base"
-    },
-    {
-      "name": "ci-x64-Release-Intel",
-      "configurePreset": "ci-x64-Release-Intel",
-      "hidden": true,
-      "inherits": "ci-base"
+      "inherits": "ci-base",
+      "generators": [
+        "TGZ"
+      ]
     }
   ]
 }
-

@@ -68,7 +68,7 @@ fi
 . $srcdir/config/oneapi-fflags
 
 # Figure out Intel classic FC compiler flags
-. $srcdir/config/intel-fflags
+. $srcdir/config/classic-fflags
 
 # The default C++ compiler
 

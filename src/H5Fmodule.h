@@ -235,11 +235,11 @@
  * Note that the root group, indicated above by /, was automatically created when the file was created.
  *
  * h5dump is described on the
- * <a href="https://docs.hdfgroup.org/hdf5/v1_14_4/_view_tools_view.html#subsecViewToolsViewContent_h5dump">
- * Tools</a>
+ * <a href="https://portal.hdfgroup.org/display/HDF5/h5dump">Tools</a>
  * page under
- * <a href="https://docs.hdfgroup.org/hdf5/v1_14_4/_view_tools_command.html">Command-line Tools</a>.
- * The HDF5 DDL grammar is described in the document \ref DDLBNF114.
+ * <a href="https://portal.hdfgroup.org/display/HDF5/Libraries+and+Tools+Reference">
+ * Libraries and Tools Reference</a>.
+ * The HDF5 DDL grammar is described in the document \ref DDLBNF110.
  *
  * \subsection subsec_file_summary File Function Summaries
  * General library (\ref H5 functions and macros), (\ref H5F functions), file related
@@ -408,19 +408,14 @@
  * </table>
  *
  * \anchor fcpl_table_tag File creation property list functions (H5P)
- * <div>
  * \snippet{doc} tables/propertyLists.dox fcpl_table
- * </div>
  *
  * \anchor fapl_table_tag File access property list functions (H5P)
- * <div>
  * \snippet{doc} tables/propertyLists.dox fapl_table
- * </div>
  *
  * \anchor fd_pl_table_tag File driver property list functions (H5P)
- * <div>
  * \snippet{doc} tables/propertyLists.dox fd_pl_table
- * </div>
+ *
  *
  * \subsection subsec_file_create Creating or Opening an HDF5 File
  * This section describes in more detail how to create and how to open files.
@@ -677,9 +672,7 @@
  * #H5FD_SEC2. Alternative layouts and drivers are designed to suit the needs of a variety of
  * systems, environments, and applications. The drivers are listed in the table below.
  *
- * <div>
  * \snippet{doc} tables/fileDriverLists.dox supported_file_driver_table
- * </div>
  *
  * For more information, see the HDF5 Reference Manual entries for the function calls shown in
  * the column on the right in the table above.
@@ -712,7 +705,7 @@
  * If the application opens an HDF5 file without both determining the driver used to create the file
  * and setting up the use of that driver, the HDF5 Library will examine the superblock and the
  * driver definition block to identify the driver.
- * See the <a href="https://hdfgroup.github.io/hdf5/v1_14_4/_s_p_e_c.html">HDF5 File Format Specification</a>
+ * See the <a href="https://docs.hdfgroup.org/hdf5/develop/_s_p_e_c.html">HDF5 File Format Specification</a>
  * for detailed descriptions of the superblock and the driver definition block.
  *
  * \subsubsection subsubsec_file_alternate_drivers_sec2 The POSIX (aka SEC2) Driver
@@ -888,11 +881,10 @@
  *
  * Additional parameters may be added to these functions in the future.
  *
- * @see <a href="https://portal.hdfgroup.org/documentation/hdf5-docs/advanced_topics/file_image_ops.html">
+ * @see <a href="https://portal.hdfgroup.org/display/HDF5/HDF5+File+Image+Operations">
  * HDF5 File Image Operations</a>
  * section for information on more advanced usage of the Memory file driver, and
- * @see <a
- * href="https://docs.hdfgroup.org/archive/support/HDF5/doc/Advanced/ModifiedRegionWrites/ModifiedRegionWrites.pdf">
+ * @see <a href="http://www.hdfgroup.org/HDF5/doc/Advanced/ModifiedRegionWrites/ModifiedRegionWrites.pdf">
  * Modified Region Writes</a>
  * section for information on how to set write operations so that only modified regions are written
  * to storage.
@@ -1053,7 +1045,7 @@
  * The file access properties managed by #H5Pset_fapl_mpio and retrieved by
  * #H5Pget_fapl_mpio are the MPI communicator, comm, and the MPI info object, info. comm and
  * info are used for file open. info is an information object much like an HDF5 property list. Both
- * are defined in MPI_FILE_OPEN of MPI.
+ * are defined in MPI_FILE_OPEN of MPI-2.
  *
  * The communicator and the info object are saved in the file access property list fapl_id.
  * fapl_id can then be passed to MPI_FILE_OPEN to create and/or open the file.

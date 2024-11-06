@@ -410,11 +410,8 @@ H5G_loc_find(const H5G_loc_t *loc, const char *name, H5G_loc_t *obj_loc /*out*/)
 
     /* Check args. */
     assert(loc);
-    assert(name);
+    assert(name && *name);
     assert(obj_loc);
-
-    if (!*name)
-        HGOTO_ERROR(H5E_SYM, H5E_BADVALUE, FAIL, "invalid object name");
 
     /* Set up user data for locating object */
     udata.loc = obj_loc;
@@ -556,7 +553,7 @@ H5G__loc_insert(H5G_loc_t *grp_loc, char *name, H5G_loc_t *obj_loc, H5O_type_t o
     lnk.u.hard.addr  = obj_loc->oloc->addr;
 
     /* Insert new group into current group's symbol table */
-    if (H5G_obj_insert(grp_loc->oloc, &lnk, true, obj_type, crt_info) < 0)
+    if (H5G_obj_insert(grp_loc->oloc, name, &lnk, true, obj_type, crt_info) < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTINSERT, FAIL, "unable to insert object");
 
     /* Set the name of the object location */
@@ -647,21 +644,24 @@ H5G__loc_addr_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc /*in*/, const char H5_ATTR_UN
                  const H5O_link_t H5_ATTR_UNUSED *lnk, H5G_loc_t *obj_loc, void *_udata /*in,out*/,
                  H5G_own_loc_t *own_loc /*out*/)
 {
-    haddr_t *udata = (haddr_t *)_udata; /* User data passed in */
+    haddr_t *udata     = (haddr_t *)_udata; /* User data passed in */
+    herr_t   ret_value = SUCCEED;           /* Return value */
 
-    FUNC_ENTER_PACKAGE_NOERR
+    FUNC_ENTER_PACKAGE
 
     /* Check if the name in this group resolved to a valid link */
     if (obj_loc == NULL)
-        *udata = HADDR_UNDEF; /* No object found */
-    else
-        *udata = obj_loc->oloc->addr; /* Set address of object */
+        HGOTO_ERROR(H5E_SYM, H5E_NOTFOUND, FAIL, "name doesn't exist");
 
+    /* Set address of object */
+    *udata = obj_loc->oloc->addr;
+
+done:
     /* Indicate that this callback didn't take ownership of the group *
      * location for the object */
     *own_loc = H5G_OWN_NONE;
 
-    FUNC_LEAVE_NOAPI(SUCCEED)
+    FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5G__loc_addr_cb() */
 
 /*-------------------------------------------------------------------------

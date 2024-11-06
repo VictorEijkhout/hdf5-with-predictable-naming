@@ -857,7 +857,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_basic_file_operation(const char *driver_name)
+test_basic_file_operation(const char *env_h5_drvr)
 {
     hid_t fid        = H5I_INVALID_HID;
     hid_t fid_reopen = H5I_INVALID_HID;
@@ -865,8 +865,6 @@ test_basic_file_operation(const char *driver_name)
     hid_t fapl_id2   = H5I_INVALID_HID;
     hid_t fcpl_id    = H5I_INVALID_HID;
 
-    htri_t      use_locking_env     = FAIL;
-    htri_t      ignore_disabled_env = FAIL;
     char        filename[1024];
     ssize_t     obj_count;
     hid_t       obj_id_list[1];
@@ -896,24 +894,6 @@ test_basic_file_operation(const char *driver_name)
     if (H5Pset_metadata_read_attempts(fapl_id, 9) < 0)
         TEST_ERROR;
 
-    /* Similar to the above, make sure the FAPL has an appropriate file locking
-     * setting if the HDF5_USE_FILE_LOCKING environment variable was set so that
-     * the H5Pequal call will work correctly.
-     */
-    h5_check_file_locking_env_var(&use_locking_env, &ignore_disabled_env);
-    if (use_locking_env != FAIL) {
-        hbool_t default_use_locking           = true;
-        hbool_t default_ignore_disabled_locks = true;
-
-        if (H5Pget_file_locking(H5P_DEFAULT, &default_use_locking, &default_ignore_disabled_locks) < 0)
-            TEST_ERROR;
-
-        if (H5Pset_file_locking(fapl_id, (bool)use_locking_env,
-                                (ignore_disabled_env == FAIL) ? default_ignore_disabled_locks
-                                                              : (bool)ignore_disabled_env) < 0)
-            TEST_ERROR;
-    }
-
     /* H5Fcreate */
     if ((fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id)) < 0)
         TEST_ERROR;
@@ -933,10 +913,10 @@ test_basic_file_operation(const char *driver_name)
         TEST_ERROR;
 
     /* Can't compare VFD properties for several VFDs */
-    if ((bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-               strcmp(driver_name, "family") != 0 && strcmp(driver_name, "direct") != 0 &&
-               strcmp(driver_name, "core") != 0 && strcmp(driver_name, "core_paged") != 0 &&
-               strcmp(driver_name, "mpio") != 0 && strcmp(driver_name, "splitter") != 0)) {
+    if ((bool)(strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+               strcmp(env_h5_drvr, "family") != 0 && strcmp(env_h5_drvr, "direct") != 0 &&
+               strcmp(env_h5_drvr, "core") != 0 && strcmp(env_h5_drvr, "core_paged") != 0 &&
+               strcmp(env_h5_drvr, "mpio") != 0 && strcmp(env_h5_drvr, "splitter") != 0)) {
         /* H5Fget_access_plist */
         if ((fapl_id2 = H5Fget_access_plist(fid)) < 0)
             TEST_ERROR;
@@ -957,8 +937,8 @@ test_basic_file_operation(const char *driver_name)
         TEST_ERROR;
 
     /* Can't retrieve VFD handle for split / multi / family VFDs */
-    if ((bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-               strcmp(driver_name, "family") != 0)) {
+    if ((bool)(strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+               strcmp(env_h5_drvr, "family") != 0)) {
         /* H5Fget_vfd_handle */
         if (H5Fget_vfd_handle(fid, H5P_DEFAULT, &os_file_handle) < 0)
             TEST_ERROR;
@@ -997,10 +977,10 @@ test_basic_file_operation(const char *driver_name)
         TEST_ERROR;
 
     /* Can't compare VFD properties for several VFDs */
-    if ((bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-               strcmp(driver_name, "family") != 0 && strcmp(driver_name, "direct") != 0 &&
-               strcmp(driver_name, "core") != 0 && strcmp(driver_name, "core_paged") != 0 &&
-               strcmp(driver_name, "mpio") != 0 && strcmp(driver_name, "splitter") != 0)) {
+    if ((bool)(strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+               strcmp(env_h5_drvr, "family") != 0 && strcmp(env_h5_drvr, "direct") != 0 &&
+               strcmp(env_h5_drvr, "core") != 0 && strcmp(env_h5_drvr, "core_paged") != 0 &&
+               strcmp(env_h5_drvr, "mpio") != 0 && strcmp(env_h5_drvr, "splitter") != 0)) {
         /* H5Fget_access_plist */
         if ((fapl_id2 = H5Fget_access_plist(fid)) < 0)
             TEST_ERROR;
@@ -1014,10 +994,10 @@ test_basic_file_operation(const char *driver_name)
         TEST_ERROR;
 
     /* Can't compare VFD properties for several VFDs */
-    if ((bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0 &&
-               strcmp(driver_name, "family") != 0 && strcmp(driver_name, "direct") != 0 &&
-               strcmp(driver_name, "core") != 0 && strcmp(driver_name, "core_paged") != 0 &&
-               strcmp(driver_name, "mpio") != 0 && strcmp(driver_name, "splitter") != 0)) {
+    if ((bool)(strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0 &&
+               strcmp(env_h5_drvr, "family") != 0 && strcmp(env_h5_drvr, "direct") != 0 &&
+               strcmp(env_h5_drvr, "core") != 0 && strcmp(env_h5_drvr, "core_paged") != 0 &&
+               strcmp(env_h5_drvr, "mpio") != 0 && strcmp(env_h5_drvr, "splitter") != 0)) {
         /* H5Fget_access_plist */
         if ((fapl_id2 = H5Fget_access_plist(fid_reopen)) < 0)
             TEST_ERROR;
@@ -2645,11 +2625,13 @@ error:
 int
 main(void)
 {
-    const char *driver_name; /* File driver value from environment */
+    const char *env_h5_drvr; /* File driver value from environment */
     int         nerrors = 0;
 
     /* Get the VFD to use */
-    driver_name = h5_get_test_driver_name();
+    env_h5_drvr = getenv(HDF5_DRIVER);
+    if (env_h5_drvr == NULL)
+        env_h5_drvr = "nomatch";
 
     h5_reset();
 
@@ -2658,7 +2640,7 @@ main(void)
     nerrors += test_vol_registration() < 0 ? 1 : 0;
     nerrors += test_register_opt_operation() < 0 ? 1 : 0;
     nerrors += test_native_vol_init() < 0 ? 1 : 0;
-    nerrors += test_basic_file_operation(driver_name) < 0 ? 1 : 0;
+    nerrors += test_basic_file_operation(env_h5_drvr) < 0 ? 1 : 0;
     nerrors += test_basic_group_operation() < 0 ? 1 : 0;
     nerrors += test_basic_dataset_operation() < 0 ? 1 : 0;
     nerrors += test_basic_attribute_operation() < 0 ? 1 : 0;

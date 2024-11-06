@@ -98,7 +98,7 @@ set_tests_properties (HL_test-clean-objects PROPERTIES
 #  Macro used to add a unit test
 # --------------------------------------------------------------------
 macro (HL_ADD_TEST hl_name)
-  if (HDF5_USING_ANALYSIS_TOOL)
+  if (HDF5_ENABLE_USING_MEMCHECKER)
     add_test (NAME HL_${hl_name} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:hl_${hl_name}>)
   else ()
     add_test (NAME HL_${hl_name} COMMAND "${CMAKE_COMMAND}"
@@ -118,9 +118,6 @@ macro (HL_ADD_TEST hl_name)
       ENVIRONMENT "srcdir=${HDF5_HL_TEST_BINARY_DIR}"
       WORKING_DIRECTORY ${HDF5_HL_TEST_BINARY_DIR}
   )
-  if ("HL_${hl_name}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-    set_tests_properties (HL_${hl_name} PROPERTIES DISABLED true)
-  endif ()
 endmacro ()
 
 HL_add_test (test_lite )

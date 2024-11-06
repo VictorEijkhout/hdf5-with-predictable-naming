@@ -128,8 +128,6 @@ extern "C" {
  * \note The H5Iregister_future() function is primarily targeted at VOL connector
  *          authors and is _not_ designed for general-purpose application use.
  *
- * \since 1.14.0
- *
  */
 H5_DLL hid_t H5Iregister_future(H5I_type_t type, const void *object, H5I_future_realize_func_t realize_cb,
                                 H5I_future_discard_func_t discard_cb);

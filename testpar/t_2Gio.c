@@ -3906,7 +3906,7 @@ test_no_collective_cause_mode(int selection_mode)
     }
 
     if (selection_mode & TEST_NOT_CONTIGUOUS_OR_CHUNKED_DATASET_EXTERNAL) {
-        ret = H5Pset_external(dcpl, FILE_EXTERNAL, 0, H5F_UNLIMITED);
+        ret = H5Pset_external(dcpl, FILE_EXTERNAL, (off_t)0, H5F_UNLIMITED);
         VRFY((ret >= 0), "set EXTERNAL file layout succeeded");
         is_chunked = 0;
     }
@@ -4291,9 +4291,8 @@ main(int argc, char **argv)
         printf("2 GByte IO TESTS START\n");
         printf("2 MPI ranks will run the tests...\n");
         printf("===================================\n");
+        h5_show_hostname();
     }
-
-    h5_show_hostname();
 
     if (H5dont_atexit() < 0) {
         printf("Failed to turn off atexit processing. Continue.\n");
@@ -4346,7 +4345,8 @@ main(int argc, char **argv)
 #endif /* H5_HAVE_FILTER_DEFLATE */
 
         /* Display testing information */
-        TestInfo(argv[0]);
+        if (MAINPROCESS)
+            TestInfo(argv[0]);
 
         /* setup file access property list */
         fapl = H5Pcreate(H5P_FILE_ACCESS);

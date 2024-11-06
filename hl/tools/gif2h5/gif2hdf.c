@@ -26,8 +26,8 @@ main(int argv, char *argc[])
     FILE *fpGif;
 
     /* replacing int32 with long */
-    long    i, ImageCount;
-    HDoff_t filesize;
+    long i, ImageCount;
+    long filesize;
 
     GIFBYTE *MemGif;
     GIFBYTE *StartPos;
@@ -71,7 +71,7 @@ main(int argv, char *argc[])
 
     /* Get the whole file into memory. Mem's much faster than I/O */
     fseek(fpGif, 0L, 2);
-    filesize = HDftell(fpGif);
+    filesize = ftell(fpGif);
     fseek(fpGif, 0L, 0);
 
     if (filesize == 0)

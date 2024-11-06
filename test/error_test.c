@@ -781,12 +781,14 @@ main(void)
     hid_t       fapl      = H5I_INVALID_HID;
     hid_t       estack_id = H5I_INVALID_HID;
     char        filename[1024];
-    const char *driver_name; /* File driver value from environment */
+    const char *env_h5_drvr; /* File driver value from environment */
     const char *FUNC_main = "main";
     int         i;
 
     /* Get the VFD to use */
-    driver_name = h5_get_test_driver_name();
+    env_h5_drvr = getenv(HDF5_DRIVER);
+    if (env_h5_drvr == NULL)
+        env_h5_drvr = "nomatch";
 
     fprintf(stderr, "   This program tests the Error API.  There're supposed to be some error messages\n");
 
@@ -877,7 +879,7 @@ main(void)
      * the test file was pre-generated.
      */
     h5_fixname(DATAFILE, H5P_DEFAULT, filename, sizeof filename);
-    if (!h5_using_default_driver(driver_name) && strcmp(driver_name, "stdio")) {
+    if (!h5_using_default_driver(env_h5_drvr) && strcmp(env_h5_drvr, "stdio")) {
         /* If not using the library's default VFD or the stdio VFD, force
          * the library's default VFD here. The test file was pre-generated
          * and can cause issues with many VFDs.

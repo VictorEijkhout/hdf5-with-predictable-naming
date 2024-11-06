@@ -227,10 +227,6 @@ main(int argc, char *argv[])
     if (argno >= argc)
         usage(prog_name);
     src_gen_name = argv[argno++];
-    if (!src_gen_name) {
-        fprintf(stderr, "invalid source file name pointer");
-        exit(EXIT_FAILURE);
-    }
     snprintf(src_name, NAMELEN, src_gen_name, src_membno);
     src_is_family = strcmp(src_name, src_gen_name);
 
@@ -239,7 +235,6 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    memset(&sb, 0, sizeof(h5_stat_t));
     if (HDfstat(src, &sb) < 0) {
         perror("fstat");
         exit(EXIT_FAILURE);
@@ -254,10 +249,6 @@ main(int argc, char *argv[])
     if (argno >= argc)
         usage(prog_name);
     dst_gen_name = argv[argno++];
-    if (!dst_gen_name) {
-        fprintf(stderr, "invalid destination file name pointer");
-        exit(EXIT_FAILURE);
-    }
     snprintf(dst_name, NAMELEN, dst_gen_name, dst_membno);
     dst_is_family = strcmp(dst_name, dst_gen_name);
 
@@ -359,7 +350,6 @@ main(int argc, char *argv[])
                 perror(src_name);
                 exit(EXIT_FAILURE);
             }
-            memset(&sb, 0, sizeof(h5_stat_t));
             if (HDfstat(src, &sb) < 0) {
                 perror("fstat");
                 exit(EXIT_FAILURE);

@@ -12316,11 +12316,13 @@ main(void)
     int          test_api_config;
     unsigned     bit_config;
     H5F_libver_t low, high;   /* Low and high bounds */
-    const char  *driver_name; /* File Driver value from environment */
+    const char  *env_h5_drvr; /* File Driver value from environment */
     bool         driver_is_parallel;
     int          nerrors = 0;
 
-    driver_name = h5_get_test_driver_name();
+    env_h5_drvr = getenv(HDF5_DRIVER);
+    if (env_h5_drvr == NULL)
+        env_h5_drvr = "nomatch";
 
     /* Testing setup */
     h5_reset();
@@ -12334,7 +12336,7 @@ main(void)
      * doesn't support parallel reads and the splitter VFD has external
      * link-related bugs.
      */
-    if (driver_is_parallel || !strcmp(driver_name, "splitter")) {
+    if (driver_is_parallel || !strcmp(env_h5_drvr, "splitter")) {
         puts(" -- SKIPPED for incompatible VFD --");
         exit(EXIT_SUCCESS);
     }

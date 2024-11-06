@@ -32,7 +32,6 @@
 #include "H5ACprivate.h" /* Metadata Cache               */
 #include "H5Cpkg.h"      /* Cache                        */
 #include "H5Eprivate.h"  /* Error Handling               */
-#include "H5SLprivate.h" /* Skip Lists                               */
 
 /****************/
 /* Local Macros */

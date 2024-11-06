@@ -628,7 +628,6 @@ test_core(void)
     /* Create file image buffer */
     fd = HDopen(copied_filename, O_RDONLY);
     VERIFY(fd > 0, "open failed");
-    memset(&sb, 0, sizeof(h5_stat_t));
     ret = HDfstat(fd, &sb);
     VERIFY(ret == 0, "fstat failed");
     size       = (size_t)sb.st_size;
@@ -705,8 +704,6 @@ test_get_file_image(const char *test_banner, const int file_name_num, hid_t fapl
     herr_t    ret;
 
     TESTING(test_banner);
-
-    memset(&stat_buf, 0, sizeof(h5_stat_t));
 
     /* set flag if we are dealing with a family file */
     driver = H5Pget_driver(fapl);
@@ -874,7 +871,7 @@ test_get_file_image(const char *test_banner, const int file_name_num, hid_t fapl
             HDoff_t off;
 
             /* Position at userblock */
-            off = HDlseek(fd, USERBLOCK_SIZE, SEEK_SET);
+            off = HDlseek(fd, (HDoff_t)USERBLOCK_SIZE, SEEK_SET);
             VERIFY(off >= 0, "HDlseek() failed.");
         }
 

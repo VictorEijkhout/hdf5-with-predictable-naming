@@ -224,7 +224,7 @@ H5FD_ioc_init(void)
 
         /* Check if IOC VFD has been loaded dynamically */
         env_var = getenv(HDF5_DRIVER);
-        if (env_var && strlen(env_var) > 0 && !strcmp(env_var, H5FD_IOC_NAME)) {
+        if (env_var && !strcmp(env_var, H5FD_IOC_NAME)) {
             int mpi_initialized = 0;
             int provided        = 0;
 
@@ -843,17 +843,12 @@ H5FD__ioc_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr)
         H5_SUBFILING_GOTO_ERROR(H5E_FILE, H5E_CANTOPENFILE, NULL, "unable to open subfiles for file '%s'",
                                 name);
 
-    /*
-     * Initialize I/O concentrator threads if this MPI rank is an I/O
-     * concentrator and the threads haven't already been initialized by
-     * a different open of this file
-     */
+    /* Initialize I/O concentrator threads if this MPI rank is an I/O concentrator */
     sf_context = H5_get_subfiling_object(file_ptr->context_id);
-    if (sf_context && sf_context->topology->rank_is_ioc && !sf_context->threads_inited) {
+    if (sf_context && sf_context->topology->rank_is_ioc) {
         if (initialize_ioc_threads(sf_context) < 0)
             H5_SUBFILING_GOTO_ERROR(H5E_FILE, H5E_CANTINIT, NULL,
                                     "unable to initialize I/O concentrator threads");
-        sf_context->threads_inited = true;
     }
 
     ret_value = (H5FD_t *)file_ptr;
@@ -922,22 +917,14 @@ H5FD__ioc_close_int(H5FD_ioc_t *file_ptr)
             if (MPI_SUCCESS != (mpi_code = MPI_Barrier(file_ptr->comm)))
                 H5_SUBFILING_MPI_GOTO_ERROR(FAIL, "MPI_Barrier failed", mpi_code);
 
-        /* Only finalize IOC threads and close subfiles if this is
-         * the last file holding a reference to the context
-         */
-        if (sf_context && sf_context->file_ref == 1) {
-            if (sf_context->topology->rank_is_ioc && sf_context->threads_inited) {
-                if (finalize_ioc_threads(sf_context) < 0)
-                    /* Note that closing of subfiles is collective */
-                    H5_SUBFILING_DONE_ERROR(H5E_VFL, H5E_CANTCLOSEFILE, FAIL,
-                                            "unable to finalize IOC threads");
-            }
-
-            if (H5_close_subfiles(file_ptr->context_id, file_ptr->comm) < 0)
-                H5_SUBFILING_GOTO_ERROR(H5E_VFL, H5E_CANTCLOSEFILE, FAIL,
-                                        "unable to close subfiling file(s)");
+        if (sf_context && sf_context->topology->rank_is_ioc) {
+            if (finalize_ioc_threads(sf_context) < 0)
+                /* Note that closing of subfiles is collective */
+                H5_SUBFILING_DONE_ERROR(H5E_VFL, H5E_CANTCLOSEFILE, FAIL, "unable to finalize IOC threads");
         }
 
+        if (H5_close_subfiles(file_ptr->context_id, file_ptr->comm) < 0)
+            H5_SUBFILING_GOTO_ERROR(H5E_VFL, H5E_CANTCLOSEFILE, FAIL, "unable to close subfiling file(s)");
         file_ptr->context_id = -1;
     }
 
@@ -1492,7 +1479,6 @@ H5FD__ioc_del(const char *name, hid_t fapl)
         char   *prefix_env      = NULL;
         int     num_digits      = 0;
 
-        memset(&st, 0, sizeof(h5_stat_t));
         if (HDstat(name, &st) < 0)
             H5_SUBFILING_SYS_GOTO_ERROR(H5E_FILE, H5E_SYSERRSTR, FAIL, "HDstat failed");
 
@@ -1512,8 +1498,7 @@ H5FD__ioc_del(const char *name, hid_t fapl)
         /* TODO: No support for subfile directory prefix currently */
         /* TODO: Possibly try loading config file prefix from file before deleting */
         snprintf(tmp_filename, PATH_MAX, "%s/" H5FD_SUBFILING_CONFIG_FILENAME_TEMPLATE,
-                 prefix_env && (strlen(prefix_env) > 0) ? prefix_env : file_dirname, base_filename,
-                 (uint64_t)st.st_ino);
+                 prefix_env ? prefix_env : file_dirname, base_filename, (uint64_t)st.st_ino);
 
         if (NULL == (config_file = fopen(tmp_filename, "r"))) {
             if (ENOENT == errno) {
@@ -1625,14 +1610,12 @@ H5FD__ioc_write_vector_internal(H5FD_t *_file, uint32_t count, H5FD_mem_t H5_ATT
     H5FD_ioc_t          *file_ptr      = (H5FD_ioc_t *)_file;
     io_req_t           **sf_io_reqs    = NULL;
     int64_t              sf_context_id = -1;
-    size_t               io_size       = 0;
-    bool                 extend_sizes  = false;
     herr_t               ret_value     = SUCCEED;
 
     assert(_file);
-    assert((addrs) || (count == 0));
-    assert((sizes) || (count == 0));
-    assert((bufs) || (count == 0));
+    assert(addrs);
+    assert(sizes);
+    assert(bufs);
 
     if (count == 0)
         H5_SUBFILING_GOTO_DONE(SUCCEED);
@@ -1665,22 +1648,12 @@ H5FD__ioc_write_vector_internal(H5FD_t *_file, uint32_t count, H5FD_mem_t H5_ATT
     for (size_t i = 0; i < (size_t)count; i++) {
         herr_t write_status;
 
-        if (!extend_sizes) {
-            if ((i > 0) && (sizes[i] == 0)) {
-                extend_sizes = true;
-                io_size      = sizes[i - 1];
-            }
-            else {
-                io_size = sizes[i];
-            }
-        }
-
-        if (io_size == 0)
+        if (sizes[i] == 0)
             H5_SUBFILING_GOTO_ERROR(H5E_IO, H5E_WRITEERROR, FAIL, "invalid size argument of 0");
 
         H5_CHECK_OVERFLOW(addrs[i], haddr_t, int64_t);
-        H5_CHECK_OVERFLOW(io_size, size_t, int64_t);
-        write_status = ioc__write_independent_async(sf_context_id, (int64_t)addrs[i], (int64_t)io_size,
+        H5_CHECK_OVERFLOW(sizes[i], size_t, int64_t);
+        write_status = ioc__write_independent_async(sf_context_id, (int64_t)addrs[i], (int64_t)sizes[i],
                                                     bufs[i], &sf_io_reqs[i]);
 
         if (write_status < 0)
@@ -1718,14 +1691,12 @@ H5FD__ioc_read_vector_internal(H5FD_t *_file, uint32_t count, haddr_t addrs[], s
     H5FD_ioc_t          *file_ptr      = (H5FD_ioc_t *)_file;
     io_req_t           **sf_io_reqs    = NULL;
     int64_t              sf_context_id = -1;
-    size_t               io_size       = 0;
-    bool                 extend_sizes  = false;
     herr_t               ret_value     = SUCCEED;
 
     assert(_file);
-    assert((addrs) || (count == 0));
-    assert((sizes) || (count == 0));
-    assert((bufs) || (count == 0));
+    assert(addrs);
+    assert(sizes);
+    assert(bufs);
 
     if (count == 0)
         H5_SUBFILING_GOTO_DONE(SUCCEED);
@@ -1749,22 +1720,12 @@ H5FD__ioc_read_vector_internal(H5FD_t *_file, uint32_t count, haddr_t addrs[], s
         H5_SUBFILING_GOTO_ERROR(H5E_RESOURCE, H5E_CANTALLOC, FAIL, "can't allocate MPI request array");
 
     for (size_t i = 0; i < (size_t)count; i++) {
-        herr_t read_status;
-
-        if (!extend_sizes) {
-            if ((i > 0) && (sizes[i] == 0)) {
-                extend_sizes = true;
-                io_size      = sizes[i - 1];
-            }
-            else {
-                io_size = sizes[i];
-            }
-        }
+        int read_status;
 
         H5_CHECK_OVERFLOW(addrs[i], haddr_t, int64_t);
-        H5_CHECK_OVERFLOW(io_size, size_t, int64_t);
-        read_status = ioc__read_independent_async(sf_context_id, (int64_t)addrs[i], (int64_t)io_size, bufs[i],
-                                                  &sf_io_reqs[i]);
+        H5_CHECK_OVERFLOW(sizes[i], size_t, int64_t);
+        read_status = ioc__read_independent_async(sf_context_id, (int64_t)addrs[i], (int64_t)sizes[i],
+                                                  bufs[i], &sf_io_reqs[i]);
 
         if (read_status < 0)
             H5_SUBFILING_GOTO_ERROR(H5E_IO, H5E_READERROR, FAIL, "couldn't queue read operation");

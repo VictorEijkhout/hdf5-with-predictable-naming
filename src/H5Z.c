@@ -13,6 +13,7 @@
 #include "H5Zmodule.h" /* This source code file is part of the H5Z module */
 
 #include "H5private.h"   /* Generic Functions   */
+#include "H5CXprivate.h" /* API Contexts        */
 #include "H5Dprivate.h"  /* Dataset functions   */
 #include "H5Eprivate.h"  /* Error handling      */
 #include "H5Fprivate.h"  /* File                */
@@ -27,11 +28,6 @@
 #ifdef H5_HAVE_SZLIB_H
 #include "szlib.h"
 #endif
-
-/* This module can collect and optionally dump some simple filter statistics
- * to stdout. If you want to do this, you need to define H5Z_DEBUG and set
- * the DUMP_DEBUG_STATS_g flag to true.
- */
 
 /* Local typedefs */
 #ifdef H5Z_DEBUG
@@ -64,8 +60,6 @@ static size_t        H5Z_table_used_g  = 0;
 static H5Z_class2_t *H5Z_table_g       = NULL;
 #ifdef H5Z_DEBUG
 static H5Z_stats_t *H5Z_stat_table_g = NULL;
-/* Set to true if you want to dump compression statistics to stdout */
-static const bool DUMP_DEBUG_STATS_g = false;
 #endif /* H5Z_DEBUG */
 
 /* Local functions */
@@ -144,7 +138,7 @@ H5Z_term_package(void)
     int    dir, nprint = 0;
     size_t i;
 
-    if (DUMP_DEBUG_STATS_g) {
+    if (H5DEBUG(Z)) {
         for (i = 0; i < H5Z_table_used_g; i++) {
             for (dir = 0; dir < 2; dir++) {
                 struct {
@@ -159,11 +153,11 @@ H5Z_term_package(void)
 
                 if (0 == nprint++) {
                     /* Print column headers */
-                    fprintf(stdout, "H5Z: filter statistics "
-                                    "accumulated over life of library:\n");
-                    fprintf(stdout, "   %-16s %10s %10s %8s %8s %8s %10s\n", "Filter", "Total", "Errors",
+                    fprintf(H5DEBUG(Z), "H5Z: filter statistics "
+                                        "accumulated over life of library:\n");
+                    fprintf(H5DEBUG(Z), "   %-16s %10s %10s %8s %8s %8s %10s\n", "Filter", "Total", "Errors",
                             "User", "System", "Elapsed", "Bandwidth");
-                    fprintf(stdout, "   %-16s %10s %10s %8s %8s %8s %10s\n", "------", "-----", "------",
+                    fprintf(H5DEBUG(Z), "   %-16s %10s %10s %8s %8s %8s %10s\n", "------", "-----", "------",
                             "----", "------", "-------", "---------");
                 } /* end if */
 
@@ -180,7 +174,7 @@ H5Z_term_package(void)
                              H5Z_stat_table_g[i].stats[dir].times.elapsed);
 
                 /* Print the statistics */
-                fprintf(stdout, "   %s%-15s %10" PRIdHSIZE " %10" PRIdHSIZE " %8s %8s %8s %10s\n",
+                fprintf(H5DEBUG(Z), "   %s%-15s %10" PRIdHSIZE " %10" PRIdHSIZE " %8s %8s %8s %10s\n",
                         (dir ? "<" : ">"), comment, H5Z_stat_table_g[i].stats[dir].total,
                         H5Z_stat_table_g[i].stats[dir].errors, timestrs.user, timestrs.system,
                         timestrs.elapsed, bandwidth);
@@ -211,7 +205,7 @@ next:
 /*-------------------------------------------------------------------------
  * Function: H5Zregister
  *
- * Purpose:  This function registers a new filter
+ * Purpose:  This function registers new filter.
  *
  * Return:   Non-negative on success/Negative on failure
  *-------------------------------------------------------------------------
@@ -491,30 +485,19 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__check_unregister_group_cb(void H5_ATTR_UNUSED *obj_ptr, hid_t obj_id, void *key)
+H5Z__check_unregister_group_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void *key)
 {
-    hid_t                 ocpl_id = -1;
-    H5Z_object_t         *object  = (H5Z_object_t *)key;
-    H5VL_object_t        *vol_obj;     /* Object for loc_id */
-    H5VL_group_get_args_t vol_cb_args; /* Arguments to VOL callback */
-    htri_t                filter_in_pline = false;
-    int                   ret_value       = false; /* Return value */
+    hid_t         ocpl_id         = -1;
+    H5Z_object_t *object          = (H5Z_object_t *)key;
+    htri_t        filter_in_pline = false;
+    int           ret_value       = false; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
+    assert(obj_ptr);
+
     /* Get the group creation property */
-    if (NULL == (vol_obj = (H5VL_object_t *)H5I_object_verify(obj_id, H5I_GROUP)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid group identifier");
-
-    /* Set up VOL callback arguments */
-    vol_cb_args.op_type               = H5VL_GROUP_GET_GCPL;
-    vol_cb_args.args.get_gcpl.gcpl_id = H5I_INVALID_HID;
-
-    /* Get the group creation property list */
-    if (H5VL_group_get(vol_obj, &vol_cb_args, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL) < 0)
-        HGOTO_ERROR(H5E_PLINE, H5E_CANTGET, H5I_INVALID_HID, "unable to get group creation properties");
-
-    if ((ocpl_id = vol_cb_args.args.get_gcpl.gcpl_id) < 0)
+    if ((ocpl_id = H5G_get_create_plist((H5G_t *)obj_ptr)) < 0)
         HGOTO_ERROR(H5E_PLINE, H5E_CANTGET, FAIL, "can't get group creation property list");
 
     /* Check if the filter is in the group creation property list */
@@ -552,30 +535,19 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__check_unregister_dset_cb(void H5_ATTR_UNUSED *obj_ptr, hid_t obj_id, void *key)
+H5Z__check_unregister_dset_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void *key)
 {
-    hid_t                   ocpl_id = -1;
-    H5Z_object_t           *object  = (H5Z_object_t *)key;
-    H5VL_object_t          *vol_obj;     /* Object for loc_id */
-    H5VL_dataset_get_args_t vol_cb_args; /* Arguments to VOL callback */
-    htri_t                  filter_in_pline = false;
-    int                     ret_value       = false; /* Return value */
+    hid_t         ocpl_id         = -1;
+    H5Z_object_t *object          = (H5Z_object_t *)key;
+    htri_t        filter_in_pline = false;
+    int           ret_value       = false; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
+    assert(obj_ptr);
+
     /* Get the dataset creation property */
-    if (NULL == (vol_obj = (H5VL_object_t *)H5I_object_verify(obj_id, H5I_DATASET)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid dataset identifier");
-
-    /* Set up VOL callback arguments */
-    vol_cb_args.op_type               = H5VL_DATASET_GET_DCPL;
-    vol_cb_args.args.get_dcpl.dcpl_id = H5I_INVALID_HID;
-
-    /* Get the dataset creation property list */
-    if (H5VL_dataset_get(vol_obj, &vol_cb_args, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL) < 0)
-        HGOTO_ERROR(H5E_DATASET, H5E_CANTGET, H5I_INVALID_HID, "unable to get dataset creation properties");
-
-    if ((ocpl_id = vol_cb_args.args.get_dcpl.dcpl_id) < 0)
+    if ((ocpl_id = H5D_get_create_plist((H5D_t *)obj_ptr)) < 0)
         HGOTO_ERROR(H5E_PLINE, H5E_CANTGET, FAIL, "can't get dataset creation property list");
 
     /* Check if the filter is in the dataset creation property list */
@@ -609,83 +581,51 @@ done:
  *-------------------------------------------------------------------------
  */
 static int
-H5Z__flush_file_cb(void H5_ATTR_UNUSED *obj_ptr, hid_t obj_id, void H5_ATTR_PARALLEL_USED *key)
+H5Z__flush_file_cb(void *obj_ptr, hid_t H5_ATTR_UNUSED obj_id, void H5_ATTR_PARALLEL_USED *key)
 {
-
+    H5F_t *f = (H5F_t *)obj_ptr; /* File object for operations */
 #ifdef H5_HAVE_PARALLEL
     H5Z_object_t *object = (H5Z_object_t *)key;
-#endif                                              /* H5_HAVE_PARALLEL */
-    int                       ret_value = false;    /* Return value */
-    H5VL_file_specific_args_t vol_cb_args_specific; /* Arguments to VOL callback */
-    H5VL_object_t            *vol_obj;              /* File for file_id */
-    H5VL_file_get_args_t      vol_cb_args;          /* Arguments to VOL callback */
-    bool                      is_native_vol_obj = true;
-    unsigned int              intent            = 0;
+#endif                     /* H5_HAVE_PARALLEL */
+    int ret_value = false; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
     /* Sanity checks */
+    assert(obj_ptr);
     assert(key);
 
-    /* Get the internal file structure */
-    if (NULL == (vol_obj = (H5VL_object_t *)H5I_object(obj_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid file identifier");
-
-    /* Get intent */
-    vol_cb_args.op_type               = H5VL_FILE_GET_INTENT;
-    vol_cb_args.args.get_intent.flags = &intent;
-
-    /* Get the flags */
-    if (H5VL_file_get(vol_obj, &vol_cb_args, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL) < 0)
-        HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "unable to get file's intent flags");
-
-    if (H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
-        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID,
-                    "can't determine if VOL object is native connector object");
-
     /* Do a global flush if the file is opened for write */
-    if (H5F_ACC_RDWR & intent) {
+    if (H5F_ACC_RDWR & H5F_INTENT(f)) {
 
 #ifdef H5_HAVE_PARALLEL
-        /* Checking MPI flag requires native VOL */
-        if (is_native_vol_obj) {
-            H5F_t *f = (H5F_t *)obj_ptr; /* File object for native VOL operation */
+        /* Check if MPIO driver is used */
+        if (H5F_HAS_FEATURE(f, H5FD_FEAT_HAS_MPI)) {
+            /* Sanity check for collectively calling H5Zunregister, if requested */
+            /* (Sanity check assumes that a barrier on one file's comm
+             *  is sufficient (i.e. that there aren't different comms for
+             *  different files).  -QAK, 2018/02/14)
+             */
+            if (H5_coll_api_sanity_check_g && !object->sanity_checked) {
+                MPI_Comm mpi_comm; /* File's communicator */
 
-            /* Check if MPIO driver is used */
-            if (H5F_HAS_FEATURE(f, H5FD_FEAT_HAS_MPI)) {
+                /* Retrieve the file communicator */
+                if (MPI_COMM_NULL == (mpi_comm = H5F_mpi_get_comm(f)))
+                    HGOTO_ERROR(H5E_PLINE, H5E_CANTGET, FAIL, "can't get MPI communicator");
 
-                /* Sanity check for collectively calling H5Zunregister, if requested */
-                /* (Sanity check assumes that a barrier on one file's comm
-                 *  is sufficient (i.e. that there aren't different comms for
-                 *  different files).  -QAK, 2018/02/14)
-                 */
-                if (H5_coll_api_sanity_check_g && !object->sanity_checked) {
-                    MPI_Comm mpi_comm; /* File's communicator */
+                /* Issue the barrier */
+                if (mpi_comm != MPI_COMM_NULL)
+                    MPI_Barrier(mpi_comm);
 
-                    /* Retrieve the file communicator */
-                    if (H5F_mpi_retrieve_comm(obj_id, H5P_DEFAULT, &mpi_comm) < 0)
-                        HGOTO_ERROR(H5E_PLINE, H5E_CANTGET, FAIL, "can't get MPI communicator");
-
-                    /* Issue the barrier */
-                    if (mpi_comm != MPI_COMM_NULL)
-                        MPI_Barrier(mpi_comm);
-
-                    /* Set the "sanity checked" flag */
-                    object->sanity_checked = true;
-                } /* end if */
-            }     /* end if */
-        }
-#endif /* H5_HAVE_PARALLEL */
+                /* Set the "sanity checked" flag */
+                object->sanity_checked = true;
+            } /* end if */
+        }     /* end if */
+#endif        /* H5_HAVE_PARALLEL */
 
         /* Call the flush routine for mounted file hierarchies */
-        vol_cb_args_specific.op_type             = H5VL_FILE_FLUSH;
-        vol_cb_args_specific.args.flush.obj_type = H5I_FILE;
-        vol_cb_args_specific.args.flush.scope    = H5F_SCOPE_GLOBAL;
-
-        /* Flush the object */
-        if (H5VL_file_specific(vol_obj, &vol_cb_args_specific, H5P_DATASET_XFER_DEFAULT, NULL) < 0)
-            HGOTO_ERROR(H5E_FILE, H5E_CANTFLUSH, FAIL, "unable to flush file hierarchy");
-
+        if (H5F_flush_mounts((H5F_t *)obj_ptr) < 0)
+            HGOTO_ERROR(H5E_PLINE, H5E_CANTFLUSH, FAIL, "unable to flush file hierarchy");
     } /* end if */
 
 done:
@@ -1719,7 +1659,7 @@ H5Zget_filter_info(H5Z_filter_t filter, unsigned *filter_config_flags /*out*/)
     herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE2("e", "Zf*Iu", filter, filter_config_flags);
+    H5TRACE2("e", "Zfx", filter, filter_config_flags);
 
     /* Get the filter info */
     if (H5Z_get_filter_info(filter, filter_config_flags) < 0)

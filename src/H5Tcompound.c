@@ -25,6 +25,7 @@
 /* Headers */
 /***********/
 #include "H5private.h"   /*generic functions			  */
+#include "H5CXprivate.h" /*API Contexts                            */
 #include "H5Eprivate.h"  /*error handling			  */
 #include "H5Iprivate.h"  /*ID functions		   		  */
 #include "H5MMprivate.h" /*memory management			  */

@@ -326,15 +326,11 @@ usage(const char *prog)
                    "      (Alternate compact form of subsetting is described in the Reference Manual)\n");
     PRINTVALSTREAM(rawoutstream, "\n");
     PRINTVALSTREAM(rawoutstream, "--------------- Option Argument Conventions ---------------\n");
+    PRINTVALSTREAM(rawoutstream, "  D - is the file driver to use in opening the file. Acceptable values\n");
     PRINTVALSTREAM(
         rawoutstream,
-        "  D - is the file driver to use in opening the file. Acceptable values are available from\n");
-    PRINTVALSTREAM(
-        rawoutstream,
-        "      "
-        "https://portal.hdfgroup.org/documentation/hdf5-docs/registered_virtual_file_drivers_vfds.html.\n");
-    PRINTVALSTREAM(rawoutstream,
-                   "      Without the file driver flag, the file will be opened with each driver in\n");
+        "      are \"sec2\", \"family\", \"split\", \"multi\", \"direct\", and \"stream\". Without\n");
+    PRINTVALSTREAM(rawoutstream, "      the file driver flag, the file will be opened with each driver in\n");
     PRINTVALSTREAM(rawoutstream, "      turn and in the order specified above until one driver succeeds\n");
     PRINTVALSTREAM(rawoutstream, "      in opening the file.\n");
     PRINTVALSTREAM(rawoutstream,
@@ -1093,7 +1089,7 @@ parse_start:
                  * for subsetting: "--start", "--stride", "--count", and "--block"
                  * which can come in any order. If we run out of parameters (EOF)
                  * or run into one which isn't a subsetting parameter (NOT s, S,
-                 * c, or K), then we exit the do-while loop, set the subset_info
+                 * c, or K), then we exit the do-while look, set the subset_info
                  * to the structure we've been filling. If we've reached the end
                  * of the options, we exit the parsing (goto parse_end) otherwise,
                  * since we've "read" the next option, we need to parse it. So we
@@ -1173,8 +1169,7 @@ end_collect:
 
                 vfd_info_g.info = &ros3_fa_g;
 #else
-                error_msg(
-                    "Read-Only S3 VFD is not available unless enabled when HDF5 is configured and built.\n");
+                error_msg("Read-Only S3 VFD not enabled.\n");
                 h5tools_setstatus(EXIT_FAILURE);
                 goto done;
 #endif
@@ -1193,7 +1188,7 @@ end_collect:
 
                 vfd_info_g.info = &hdfs_fa_g;
 #else
-                error_msg("HDFS VFD is not available unless enabled when HDF5 is configured and built.\n");
+                error_msg("HDFS VFD not enabled.\n");
                 h5tools_setstatus(EXIT_FAILURE);
                 goto done;
 #endif
@@ -1239,7 +1234,7 @@ end_collect:
     }
 
     /* If the file uses the onion VFD, get the revision number */
-    if (vfd_info_g.type == VFD_BY_NAME && vfd_info_g.u.name && !strcmp(vfd_info_g.u.name, "onion")) {
+    if (vfd_info_g.u.name && !strcmp(vfd_info_g.u.name, "onion")) {
 
         if (vfd_info_g.info) {
             if (!strcmp(vfd_info_g.info, "revision_count"))
@@ -1362,7 +1357,7 @@ main(int argc, char *argv[])
         goto done;
     }
 
-    /* Enable error reporting if --enable-error-stack command line option is specified */
+    /* enable error reporting if command line option */
     h5tools_error_report();
 
     /* Initialize indexing options */
@@ -1474,7 +1469,7 @@ main(int argc, char *argv[])
                                 xml_dtd_uri_g);
                 }
                 else {
-                    /*  TODO: make -url option work in this case (may need new option) */
+                    /*  TO DO: make -url option work in this case (may need new option) */
                     char *ns;
                     char *indx;
 

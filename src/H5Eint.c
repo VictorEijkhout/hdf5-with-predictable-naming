@@ -709,7 +709,8 @@ H5E__push_stack(H5E_t *estack, const char *file, const char *func, unsigned line
 
     /* Check for 'default' error stack */
     if (estack == NULL)
-        if (NULL == (estack = H5E__get_my_stack()))
+        if (NULL == (estack = H5E__get_my_stack())) /*lint !e506 !e774 Make lint 'constant value Boolean' in
+                                                       non-threaded case */
             HGOTO_DONE(FAIL);
 
     /*
@@ -730,13 +731,13 @@ H5E__push_stack(H5E_t *estack, const char *file, const char *func, unsigned line
 
     if (estack->nused < H5E_NSLOTS) {
         /* Increment the IDs to indicate that they are used in this stack */
-        if (H5I_inc_ref_noherr(cls_id, false) < 0)
+        if (H5I_inc_ref(cls_id, false) < 0)
             HGOTO_DONE(FAIL);
         estack->slot[estack->nused].cls_id = cls_id;
-        if (H5I_inc_ref_noherr(maj_id, false) < 0)
+        if (H5I_inc_ref(maj_id, false) < 0)
             HGOTO_DONE(FAIL);
         estack->slot[estack->nused].maj_num = maj_id;
-        if (H5I_inc_ref_noherr(min_id, false) < 0)
+        if (H5I_inc_ref(min_id, false) < 0)
             HGOTO_DONE(FAIL);
         estack->slot[estack->nused].min_num = min_id;
         /* The 'func' & 'file' strings are statically allocated (by the compiler)
@@ -826,7 +827,8 @@ H5E_clear_stack(H5E_t *estack)
 
     /* Check for 'default' error stack */
     if (estack == NULL)
-        if (NULL == (estack = H5E__get_my_stack()))
+        if (NULL == (estack = H5E__get_my_stack())) /*lint !e506 !e774 Make lint 'constant value Boolean' in
+                                                       non-threaded case */
             HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, FAIL, "can't get current error stack");
 
     /* Empty the error stack */

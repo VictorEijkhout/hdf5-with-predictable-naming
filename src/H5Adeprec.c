@@ -35,6 +35,7 @@
 #include "H5private.h"   /* Generic Functions                        */
 #include "H5Apkg.h"      /* Attributes                               */
 #include "H5CXprivate.h" /* API Contexts                             */
+#include "H5Dprivate.h"  /* Datasets                                 */
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5Iprivate.h"  /* IDs                                      */
 #include "H5Opkg.h"      /* Object headers                           */

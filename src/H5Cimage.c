@@ -40,6 +40,7 @@
 #include "H5Fpkg.h"      /* Files				*/
 #include "H5FDprivate.h" /* File drivers				*/
 #include "H5FLprivate.h" /* Free Lists                           */
+#include "H5MFprivate.h" /* File memory management		*/
 #include "H5MMprivate.h" /* Memory management			*/
 
 /****************/

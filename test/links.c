@@ -100,8 +100,6 @@ static const char *FILENAME[] = {"links0",
                                  TMPDIR "extlinks21D", /* 49: */
                                  TMPDIR "extlinks21E", /* 50: */
                                  "extlinks21E",        /* 51: (same as #50, only without the TMPDIR prefix) */
-                                 "extlinks22",         /* 52: */
-                                 "extlinks22A",        /* 53: */
                                  NULL};
 
 #define FAMILY_SIZE    1024
@@ -633,6 +631,8 @@ cklinks(hid_t fapl, bool new_format)
     if ((file = H5Fopen(filename, H5F_ACC_RDONLY, fapl)) < 0)
         FAIL_STACK_ERROR;
 
+    //! [H5Otoken_cmp_snip]
+
     /* Hard link */
     if (H5Oget_info_by_name3(file, "d1", &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
@@ -654,9 +654,6 @@ cklinks(hid_t fapl, bool new_format)
         puts("    expected file location.");
         TEST_ERROR;
     } /* end if */
-
-    //! [H5Otoken_cmp_snip]
-
     if (H5Lexists(file, "/", H5P_DEFAULT) != true)
         FAIL_STACK_ERROR;
     if (H5Lexists(file, "d1", H5P_DEFAULT) != true)
@@ -9537,7 +9534,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-external_set_elink_acc_flags(const char *driver_name, hid_t fapl, bool new_format)
+external_set_elink_acc_flags(const char *env_h5_drvr, hid_t fapl, bool new_format)
 {
     hid_t file1 = H5I_INVALID_HID, file2 = H5I_INVALID_HID, group = H5I_INVALID_HID,
           subgroup = H5I_INVALID_HID, gapl = H5I_INVALID_HID;
@@ -9671,7 +9668,7 @@ external_set_elink_acc_flags(const char *driver_name, hid_t fapl, bool new_forma
         TEST_ERROR;
 
     /* Only run this part with VFDs that support SWMR */
-    if (H5FD__supports_swmr_test(driver_name)) {
+    if (H5FD__supports_swmr_test(env_h5_drvr)) {
 
         /* Reopen file1, with read-write and SWMR-write access */
         /* Only supported under the latest file format */
@@ -9822,225 +9819,6 @@ error:
     H5E_END_TRY
     return FAIL;
 } /* end external_set_elink_acc_flags() */
-
-/*-------------------------------------------------------------------------
- * Function:    external_link_inherit_locking
- *
- * Purpose:     Test that opening a file through an external link using a
- *              default FAPL will cause that file to inherit the parent
- *              file's file locking settings.
- *
- * Return:      Success:    0
- *              Failure:    1
- *
- *-------------------------------------------------------------------------
- */
-static int
-external_link_inherit_locking(hid_t fapl_id, bool new_format)
-{
-    htri_t use_locking_env         = FAIL;
-    htri_t ignore_disabled_env     = FAIL;
-    hid_t  fid                     = H5I_INVALID_HID;
-    hid_t  tmp_fid                 = H5I_INVALID_HID;
-    hid_t  gid                     = H5I_INVALID_HID;
-    hid_t  ext_fid                 = H5I_INVALID_HID;
-    hid_t  file_fapl               = H5I_INVALID_HID;
-    hid_t  tmp_fapl                = H5I_INVALID_HID;
-    bool   use_locking             = true;
-    bool   ignore_disabled_locking = false;
-    char  *filename                = NULL;
-    char  *ext_filename            = NULL;
-
-    if (new_format)
-        TESTING("inheriting of file locking settings (w/new group format)");
-    else
-        TESTING("inheriting of file locking settings");
-
-    /* Get the settings for the file locking environment variables */
-    h5_check_file_locking_env_var(&use_locking_env, &ignore_disabled_env);
-
-    /* Check that external links are registered with the library */
-    if (H5Lis_registered(H5L_TYPE_EXTERNAL) != true)
-        TEST_ERROR;
-
-    if (NULL == (filename = malloc(NAME_BUF_SIZE)))
-        TEST_ERROR;
-    if (NULL == (ext_filename = malloc(NAME_BUF_SIZE)))
-        TEST_ERROR;
-
-    if ((file_fapl = H5Pcopy(fapl_id)) < 0)
-        TEST_ERROR;
-
-    /* Create external file */
-    h5_fixname(FILENAME[53], file_fapl, ext_filename, NAME_BUF_SIZE);
-    if ((ext_fid = H5Fcreate(ext_filename, H5F_ACC_TRUNC, H5P_DEFAULT, file_fapl)) < 0)
-        TEST_ERROR;
-    if (H5Fclose(ext_fid) < 0)
-        TEST_ERROR;
-
-    /* Create main file and link to external file */
-    h5_fixname(FILENAME[52], file_fapl, filename, NAME_BUF_SIZE);
-    if ((fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, file_fapl)) < 0)
-        TEST_ERROR;
-    if (H5Lcreate_external(ext_filename, "/", fid, "ext_link", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-    if (H5Fclose(fid) < 0)
-        TEST_ERROR;
-
-    /* Test for file locking on unless disabled by environment variable */
-    if (use_locking_env != false) {
-        /* Set file locking on */
-        if (H5Pset_file_locking(file_fapl, true, true) < 0)
-            TEST_ERROR;
-
-        /* Open main file */
-        if ((fid = H5Fopen(filename, H5F_ACC_RDWR, file_fapl)) < 0)
-            TEST_ERROR;
-
-        /* Make sure that locking setting retrieved from access plist
-         * matches what we set.
-         */
-        if ((tmp_fapl = H5Fget_access_plist(fid)) < 0)
-            TEST_ERROR;
-        if (H5Pget_file_locking(tmp_fapl, &use_locking, &ignore_disabled_locking) < 0)
-            TEST_ERROR;
-        if (use_locking != true)
-            TEST_ERROR;
-        /* Check for "ignore disabled file locks" setting being on, unless
-         * disabled by environment variable
-         */
-        if (ignore_disabled_env != false && ignore_disabled_locking != true)
-            TEST_ERROR;
-        if (H5Pclose(tmp_fapl) < 0)
-            TEST_ERROR;
-
-        /* Open external file through link */
-        if ((gid = H5Gopen2(fid, "ext_link", H5P_DEFAULT)) < 0)
-            TEST_ERROR;
-
-        /* Get file ID for external file */
-        if ((tmp_fid = H5Iget_file_id(gid)) < 0)
-            TEST_ERROR;
-
-        /* Make sure that locking setting retrieved from external file's
-         * access plist matches what we set.
-         */
-        if ((tmp_fapl = H5Fget_access_plist(tmp_fid)) < 0)
-            TEST_ERROR;
-        if (H5Pget_file_locking(tmp_fapl, &use_locking, &ignore_disabled_locking) < 0)
-            TEST_ERROR;
-        if (use_locking != true)
-            TEST_ERROR;
-        /* Check for "ignore disabled file locks" setting being on, unless
-         * disabled by environment variable
-         */
-        if (ignore_disabled_env != false && ignore_disabled_locking != true)
-            TEST_ERROR;
-        if (H5Pclose(tmp_fapl) < 0)
-            TEST_ERROR;
-
-        if (H5Gclose(gid) < 0)
-            TEST_ERROR;
-        if (H5Fclose(tmp_fid) < 0)
-            TEST_ERROR;
-        if (H5Fclose(fid) < 0)
-            TEST_ERROR;
-    }
-
-    /* Test for file locking off unless force enabled by environment variable */
-    if (use_locking_env != true) {
-        /* Set file locking off */
-        if (H5Pset_file_locking(file_fapl, false, false) < 0)
-            TEST_ERROR;
-
-        /* Open main file */
-        if ((fid = H5Fopen(filename, H5F_ACC_RDWR, file_fapl)) < 0)
-            TEST_ERROR;
-
-        /* Make sure that locking setting retrieved from access plist
-         * matches what we set.
-         */
-        if ((tmp_fapl = H5Fget_access_plist(fid)) < 0)
-            TEST_ERROR;
-        if (H5Pget_file_locking(tmp_fapl, &use_locking, &ignore_disabled_locking) < 0)
-            TEST_ERROR;
-        if (use_locking != false)
-            TEST_ERROR;
-        /* Check for "ignore disabled file locks" setting being off, unless
-         * force enabled by environment variable
-         */
-        if (ignore_disabled_env != true && ignore_disabled_locking != false)
-            TEST_ERROR;
-        if (H5Pclose(tmp_fapl) < 0)
-            TEST_ERROR;
-
-        /* Open external file through link */
-        if ((gid = H5Gopen2(fid, "ext_link", H5P_DEFAULT)) < 0)
-            TEST_ERROR;
-
-        /* Get file ID for external file */
-        if ((tmp_fid = H5Iget_file_id(gid)) < 0)
-            TEST_ERROR;
-
-        /* Make sure that locking setting retrieved from external file's
-         * access plist matches what we set.
-         */
-        if ((tmp_fapl = H5Fget_access_plist(tmp_fid)) < 0)
-            TEST_ERROR;
-        if (H5Pget_file_locking(tmp_fapl, &use_locking, &ignore_disabled_locking) < 0)
-            TEST_ERROR;
-        if (use_locking != false)
-            TEST_ERROR;
-        /* Check for "ignore disabled file locks" setting being off, unless
-         * force enabled by environment variable
-         */
-        if (ignore_disabled_env != true && ignore_disabled_locking != false)
-            TEST_ERROR;
-        if (H5Pclose(tmp_fapl) < 0)
-            TEST_ERROR;
-
-        if (H5Gclose(gid) < 0)
-            TEST_ERROR;
-        if (H5Fclose(tmp_fid) < 0)
-            TEST_ERROR;
-        if (H5Fclose(fid) < 0)
-            TEST_ERROR;
-    }
-
-    if (H5Fdelete(ext_filename, file_fapl) < 0)
-        TEST_ERROR;
-    if (H5Fdelete(filename, file_fapl) < 0)
-        TEST_ERROR;
-
-    if (H5Pclose(file_fapl) < 0)
-        TEST_ERROR;
-
-    free(ext_filename);
-    ext_filename = NULL;
-    free(filename);
-    filename = NULL;
-
-    PASSED();
-
-    return SUCCEED;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Pclose(tmp_fapl);
-        H5Pclose(file_fapl);
-        H5Fclose(ext_fid);
-        H5Gclose(gid);
-        H5Fclose(tmp_fid);
-        H5Fclose(fid);
-    }
-    H5E_END_TRY
-
-    free(ext_filename);
-    free(filename);
-
-    return FAIL;
-}
 
 /*-------------------------------------------------------------------------
  * Function:    external_set_elink_cb
@@ -12663,7 +12441,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-external_symlink(const char *driver_name, hid_t fapl, bool new_format)
+external_symlink(const char *env_h5_drvr, hid_t fapl, bool new_format)
 {
 #ifdef H5_HAVE_SYMLINK
     hid_t file1      = H5I_INVALID_HID;
@@ -12698,7 +12476,8 @@ external_symlink(const char *driver_name, hid_t fapl, bool new_format)
     /* Skip test when using VFDs that can't provide a POSIX compatible file
      *  descriptor.
      */
-    have_posix_compat_vfd = (bool)(!strcmp(driver_name, "sec2") || !strcmp(driver_name, "core"));
+    have_posix_compat_vfd = (bool)(!strcmp(env_h5_drvr, "sec2") || !strcmp(env_h5_drvr, "core") ||
+                                   !strcmp(env_h5_drvr, "nomatch"));
     if (!have_posix_compat_vfd) {
         SKIPPED();
         puts("    Current VFD doesn't support POSIX I/O calls");
@@ -22845,253 +22624,6 @@ error:
 } /* end timestamps() */
 
 /*-------------------------------------------------------------------------
- * Function:    link_path_handling
- *
- * Purpose:     Create hard and soft links by relative and absolute paths
- *
- * Return:      Success:        0
- *              Failure:        -1
- *-------------------------------------------------------------------------
- */
-static int
-link_path_handling(hid_t fapl, bool new_format)
-{
-
-    hid_t file_id = (H5I_INVALID_HID);
-    hid_t grp1 = (H5I_INVALID_HID), grp2 = (H5I_INVALID_HID);
-    char  filename[NAME_BUF_SIZE];
-
-    if (new_format)
-        TESTING("H5Lcreate path handling (w/new group format)");
-    else
-        TESTING("H5Lcreate path handling");
-
-    /* Create file */
-    h5_fixname(FILENAME[0], fapl, filename, sizeof(filename));
-
-    if ((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
-        TEST_ERROR;
-
-    /* Create two groups */
-    if ((grp1 = H5Gcreate2(file_id, "grp1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-    if ((grp2 = H5Gcreate2(grp1, "grp2", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-
-    /* Create hard link to grp1 that resides in grp2 by relative path */
-    if (H5Lcreate_hard(file_id, "grp1", grp1, "grp2/relative_hard_link", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "relative_hard_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Create soft link to grp1 that resides in grp2 by relative path */
-    if (H5Lcreate_soft("/grp1", grp1, "grp2/relative_soft_link", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "relative_soft_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Create hard link to grp1 that resides in grp2 by absolute path */
-    if (H5Lcreate_hard(file_id, "grp1", grp1, "/grp1/grp2/absolute_hard_link", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "absolute_hard_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Create soft link to grp1 that resides in grp2 by absolute path */
-    if (H5Lcreate_soft("/grp1", grp1, "/grp1/grp2/absolute_soft_link", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "absolute_soft_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Close groups and file */
-    if (H5Gclose(grp1) < 0)
-        TEST_ERROR;
-    if (H5Gclose(grp2) < 0)
-        TEST_ERROR;
-    if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
-
-    PASSED();
-    return SUCCEED;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Gclose(grp1);
-        H5Gclose(grp2);
-        H5Fclose(file_id);
-    }
-    H5E_END_TRY
-    return FAIL;
-}
-
-/*-------------------------------------------------------------------------
- * Function:    ext_link_path_handling
- *
- * Purpose:     Create external links by relative and absolute paths
- *
- * Return:      Success:        0
- *              Failure:        -1
- *-------------------------------------------------------------------------
- */
-static int
-ext_link_path_handling(hid_t fapl, bool new_format)
-{
-
-    hid_t file_id = (H5I_INVALID_HID);
-    hid_t grp1 = (H5I_INVALID_HID), grp2 = (H5I_INVALID_HID);
-    char  filename[NAME_BUF_SIZE];
-
-    if (new_format)
-        TESTING("H5Lcreate external link path handling (w/new group format)");
-    else
-        TESTING("H5Lcreate external link path handling");
-
-    /* Create file */
-    h5_fixname(FILENAME[0], fapl, filename, sizeof(filename));
-
-    if ((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
-        TEST_ERROR;
-
-    /* Create two groups */
-    if ((grp1 = H5Gcreate2(file_id, "grp1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-    if ((grp2 = H5Gcreate2(grp1, "grp2", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-
-    /* Create external link to nonexistent object by relative path */
-    if (H5Lcreate_external("nonexistent_file", "nonexistent_object", grp1, "grp2/relative_ext_link",
-                           H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "relative_ext_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Create external link to nonexistent object by absolute path */
-    if (H5Lcreate_external("nonexistent_file", "nonexistent_object", grp1, "/grp1/grp2/relative_soft_link",
-                           H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "relative_soft_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Close groups and file */
-    if (H5Gclose(grp1) < 0)
-        TEST_ERROR;
-    if (H5Gclose(grp2) < 0)
-        TEST_ERROR;
-    if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
-
-    PASSED();
-    return SUCCEED;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Gclose(grp1);
-        H5Gclose(grp2);
-        H5Fclose(file_id);
-    }
-    H5E_END_TRY
-    return FAIL;
-}
-
-/*-------------------------------------------------------------------------
- * Function:    ud_link_path_handling
- *
- * Purpose:     Create user-defined links by relative and absolute paths
- *
- * Return:      Success:        0
- *              Failure:        -1
- *-------------------------------------------------------------------------
- */
-static int
-ud_link_path_handling(hid_t fapl, bool new_format)
-{
-
-    hid_t       file_id = (H5I_INVALID_HID);
-    hid_t       grp1 = (H5I_INVALID_HID), grp2 = (H5I_INVALID_HID);
-    char        filename[NAME_BUF_SIZE];
-    H5L_info2_t li;
-
-    if (new_format)
-        TESTING("H5Lcreate ud link path handling (w/new group format)");
-    else
-        TESTING("H5Lcreate ud link path handling");
-
-    /* Create file */
-    h5_fixname(FILENAME[0], fapl, filename, sizeof(filename));
-
-    if ((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0)
-        TEST_ERROR;
-
-    /* Create two groups */
-    if ((grp1 = H5Gcreate2(file_id, "grp1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-    if ((grp2 = H5Gcreate2(grp1, "grp2", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
-
-    /* Check that UD hard links are not registered */
-    if (H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != false)
-        TEST_ERROR;
-
-    /* Register "user-defined hard links" with the library */
-    if (H5Lregister(UD_hard_class) < 0)
-        TEST_ERROR;
-
-    /* Check that UD hard links are registered */
-    if (H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != true)
-        TEST_ERROR;
-
-    if (H5Lget_info2(file_id, "grp1", &li, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    /* Create user-defined (hard) link to grp1 by relative path */
-    if (H5Lcreate_ud(grp1, "grp2/relative_ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-                     sizeof(li.u.token), H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "relative_ud_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Create user-defined (hard) link to grp1 by absolute path */
-    if (H5Lcreate_ud(grp1, "/grp1/grp2/absolute_ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-                     sizeof(li.u.token), H5P_DEFAULT, H5P_DEFAULT) < 0)
-        TEST_ERROR;
-
-    if (H5Lexists(grp2, "absolute_ud_link", H5P_DEFAULT) <= 0)
-        TEST_ERROR;
-
-    /* Close groups and file */
-    if (H5Gclose(grp1) < 0)
-        TEST_ERROR;
-    if (H5Gclose(grp2) < 0)
-        TEST_ERROR;
-    if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
-    if (H5Lunregister((H5L_type_t)UD_HARD_TYPE) < 0)
-        TEST_ERROR;
-
-    PASSED();
-    return SUCCEED;
-
-error:
-    H5E_BEGIN_TRY
-    {
-        H5Gclose(grp1);
-        H5Gclose(grp2);
-        H5Fclose(file_id);
-        H5Lunregister((H5L_type_t)UD_HARD_TYPE);
-    }
-    H5E_END_TRY
-    return FAIL;
-}
-
-/*-------------------------------------------------------------------------
  * Function:    main
  *
  * Purpose:     Test links
@@ -23107,10 +22639,12 @@ main(void)
     unsigned    new_format; /* Whether to use the new format or not */
     unsigned    minimize_dset_oh;
     unsigned    efc;         /* Whether to use the external file cache */
-    const char *driver_name; /* File Driver value from environment */
+    const char *env_h5_drvr; /* File Driver value from environment */
     bool        driver_is_default_compatible;
 
-    driver_name = h5_get_test_driver_name();
+    env_h5_drvr = getenv(HDF5_DRIVER);
+    if (env_h5_drvr == NULL)
+        env_h5_drvr = "nomatch";
 
     h5_reset();
     fapl = h5_fileaccess();
@@ -23163,7 +22697,6 @@ main(void)
             nerrors += ck_new_links(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += long_links(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += toomany(my_fapl, new_format) < 0 ? 1 : 0;
-            nerrors += link_path_handling(my_fapl, new_format) < 0 ? 1 : 0;
 
             /* Test new H5L link creation routine */
             nerrors += test_lcpl(my_fapl, new_format);
@@ -23179,7 +22712,7 @@ main(void)
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
 
             /* Skip external link tests for splitter VFD, which has external link-related bugs */
-            if (strcmp(driver_name, "splitter")) {
+            if (strcmp(env_h5_drvr, "splitter")) {
 
                 /* tests for external link */
                 /* Test external file cache first, so it sees the default efc setting on the fapl
@@ -23194,7 +22727,7 @@ main(void)
                 /* This test cannot run with the EFC because the EFC cannot currently
                  * reopen a cached file with a different intent
                  */
-                nerrors += external_set_elink_acc_flags(driver_name, my_fapl, new_format) < 0 ? 1 : 0;
+                nerrors += external_set_elink_acc_flags(env_h5_drvr, my_fapl, new_format) < 0 ? 1 : 0;
 
                 /* Try external link tests both with and without the external file cache */
                 for (efc = false; efc <= true; efc++) {
@@ -23253,7 +22786,6 @@ main(void)
 
                     nerrors += external_set_elink_fapl2(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_set_elink_fapl3(new_format) < 0 ? 1 : 0;
-                    nerrors += external_link_inherit_locking(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_set_elink_cb(my_fapl, new_format) < 0 ? 1 : 0;
 #ifdef H5_HAVE_WINDOW_PATH
                     nerrors += external_link_win1(my_fapl, new_format) < 0 ? 1 : 0;
@@ -23266,13 +22798,12 @@ main(void)
                     nerrors += external_link_win8(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_link_win9(my_fapl, new_format) < 0 ? 1 : 0;
 #endif
-                    nerrors += external_symlink(driver_name, my_fapl, new_format) < 0 ? 1 : 0;
+                    nerrors += external_symlink(env_h5_drvr, my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_copy_invalid_object(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_dont_fail_to_source(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_open_twice(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_link_with_committed_datatype(my_fapl, new_format) < 0 ? 1 : 0;
                     nerrors += external_link_public_macros(my_fapl, new_format) < 0 ? 1 : 0;
-                    nerrors += ext_link_path_handling(my_fapl, new_format) < 0 ? 1 : 0;
                 } /* with/without external file cache */
             }
 
@@ -23295,7 +22826,6 @@ main(void)
             nerrors += ud_callbacks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
             nerrors += ud_link_errors(my_fapl, new_format) < 0 ? 1 : 0;
-            nerrors += ud_link_path_handling(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += lapl_udata(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += lapl_nlinks(my_fapl, new_format) < 0 ? 1 : 0;
 #ifndef H5_NO_DEPRECATED_SYMBOLS

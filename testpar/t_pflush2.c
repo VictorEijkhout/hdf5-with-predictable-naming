@@ -20,8 +20,7 @@
 
 #include "h5test.h"
 
-static const char *FLUSH_FILENAME[]   = {"flush", NULL};
-static const char *NOFLUSH_FILENAME[] = {"noflush", NULL};
+static const char *FILENAME[] = {"flush", "noflush", NULL};
 
 static int *data_g = NULL;
 
@@ -132,11 +131,12 @@ main(int argc, char *argv[])
     hid_t       fapl_id2 = H5I_INVALID_HID;
     H5E_auto2_t func;
     char        name[1024];
-    const char *driver_name;
-    int         mpi_size;
-    int         mpi_rank;
-    MPI_Comm    comm = MPI_COMM_WORLD;
-    MPI_Info    info = MPI_INFO_NULL;
+    const char *envval = NULL;
+
+    int      mpi_size;
+    int      mpi_rank;
+    MPI_Comm comm = MPI_COMM_WORLD;
+    MPI_Info info = MPI_INFO_NULL;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(comm, &mpi_size);
@@ -146,9 +146,11 @@ main(int argc, char *argv[])
         TESTING("H5Fflush (part2 with flush)");
 
     /* Don't run using the split VFD */
-    driver_name = h5_get_test_driver_name();
+    envval = getenv(HDF5_DRIVER);
+    if (envval == NULL)
+        envval = "nomatch";
 
-    if (!strcmp(driver_name, "split")) {
+    if (!strcmp(envval, "split")) {
         if (mpi_rank == 0) {
             SKIPPED();
             puts("    Test not compatible with current Virtual File Driver");
@@ -171,7 +173,7 @@ main(int argc, char *argv[])
         goto error;
 
     /* Check the case where the file was flushed */
-    h5_fixname(FLUSH_FILENAME[0], fapl_id1, name, sizeof(name));
+    h5_fixname(FILENAME[0], fapl_id1, name, sizeof(name));
     if (check_test_file(name, sizeof(name), fapl_id1)) {
         H5_FAILED();
         goto error;
@@ -188,7 +190,7 @@ main(int argc, char *argv[])
     H5Eget_auto2(H5E_DEFAULT, &func, NULL);
     H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
 
-    h5_fixname(NOFLUSH_FILENAME[0], fapl_id2, name, sizeof(name));
+    h5_fixname(FILENAME[1], fapl_id2, name, sizeof(name));
     if (check_test_file(name, sizeof(name), fapl_id2)) {
         if (mpi_rank == 0)
             PASSED();
@@ -200,8 +202,8 @@ main(int argc, char *argv[])
 
     H5Eset_auto2(H5E_DEFAULT, func, NULL);
 
-    h5_clean_files(FLUSH_FILENAME, fapl_id1);
-    h5_clean_files(NOFLUSH_FILENAME, fapl_id2);
+    h5_clean_files(&FILENAME[0], fapl_id1);
+    h5_clean_files(&FILENAME[1], fapl_id2);
 
     if (data_g) {
         free(data_g);

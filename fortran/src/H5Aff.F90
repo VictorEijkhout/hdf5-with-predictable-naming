@@ -591,8 +591,8 @@ CONTAINS
     INTEGER, INTENT(OUT) :: hdferr
 
     INTERFACE
-       INTEGER(C_INT) FUNCTION H5Aclose(attr_id) BIND(C, NAME='H5Aclose')
-         IMPORT :: HID_T, C_INT
+       INTEGER FUNCTION H5Aclose(attr_id) BIND(C, NAME='H5Aclose')
+         IMPORT :: HID_T
          IMPLICIT NONE
          INTEGER(HID_T), INTENT(IN), VALUE :: attr_id
        END FUNCTION H5Aclose

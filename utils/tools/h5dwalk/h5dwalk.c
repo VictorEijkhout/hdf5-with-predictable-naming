@@ -766,7 +766,6 @@ fill_file_list(mfu_flist new_flist, const char *config_filename, int myrank, int
         char       *eol = strchr(linebuf, '\n');
         if (eol)
             *eol = '\0';
-        memset(&statbuf, 0, sizeof(h5_stat_t));
         if (HDstat(linebuf, &statbuf) == 0) {
             if (myrank == (index % size)) {
                 mfu_flist_insert_stat((flist_t *)new_flist, linebuf, O_RDONLY, &statbuf);
@@ -1210,10 +1209,10 @@ MFU_PRED_EXEC(mfu_flist flist, uint64_t idx, void *arg)
     snprintf(cmdline, sizeof(cmdline), "\n---------\nCommand:");
     b_offset = strlen(cmdline);
     for (k = 0; k < count; k++) {
-        snprintf(&cmdline[b_offset], sizeof(cmdline) - b_offset, " %s", argv[k]);
+        sprintf(&cmdline[b_offset], " %s", argv[k]);
         b_offset = strlen(cmdline);
     }
-    snprintf(&cmdline[b_offset], sizeof(cmdline) - b_offset, "\n");
+    sprintf(&cmdline[b_offset], "\n");
     run_command(count, argv, cmdline, fname);
 
     mfu_free(argv);

@@ -133,18 +133,11 @@ endif ()
 message (STATUS "COMMAND Error: ${TEST_ERROR}")
 
 # remove special output
-if (EXISTS "${TEST_FOLDER}/${TEST_OUTPUT}")
-  file (READ ${TEST_FOLDER}/${TEST_OUTPUT} TEST_STREAM)
-  string (FIND "${TEST_STREAM}" "_pmi_alps" TEST_FIND_RESULT)
-  if (TEST_FIND_RESULT GREATER -1)
-    string (REGEX REPLACE "^.*_pmi_alps[^\n]+\n" "" TEST_STREAM "${TEST_STREAM}")
-    file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} ${TEST_STREAM})
-  endif ()
-  string (FIND "${TEST_STREAM}" "ulimit -s" TEST_FIND_RESULT)
-  if (TEST_FIND_RESULT GREATER -1)
-    string (REGEX REPLACE "^.*ulimit -s[^\n]+\n" "" TEST_STREAM "${TEST_STREAM}")
-    file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} ${TEST_STREAM})
-  endif ()
+file (READ ${TEST_FOLDER}/${TEST_OUTPUT} TEST_STREAM)
+string (FIND TEST_STREAM "_pmi_alps" TEST_FIND_RESULT)
+if (TEST_FIND_RESULT GREATER -1)
+  string (REGEX REPLACE "^.*_pmi_alps[^\n]+\n" "" TEST_STREAM "${TEST_STREAM}")
+  file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} ${TEST_STREAM})
 endif ()
 
 # remove special error output
@@ -155,7 +148,7 @@ else ()
   # the error stack remains in the .err file
   file (READ ${TEST_FOLDER}/${TEST_OUTPUT}.err TEST_STREAM)
 endif ()
-string (FIND "${TEST_STREAM}" "no version information available" TEST_FIND_RESULT)
+string (FIND TEST_STREAM "no version information available" TEST_FIND_RESULT)
 if (TEST_FIND_RESULT GREATER -1)
   string (REGEX REPLACE "^.*no version information available[^\n]+\n" "" TEST_STREAM "${TEST_STREAM}")
   # write back the changes to the original files
@@ -167,7 +160,7 @@ if (TEST_FIND_RESULT GREATER -1)
 endif ()
 
 # if the output file needs Storage text removed
-if (TEST_MASK_STORE)
+if (TEST_MASK)
   file (READ ${TEST_FOLDER}/${TEST_OUTPUT} TEST_STREAM)
   string (REGEX REPLACE "Storage:[^\n]+\n" "Storage:   <details removed for portability>\n" TEST_STREAM "${TEST_STREAM}")
   file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} "${TEST_STREAM}")
@@ -205,16 +198,8 @@ if (TEST_MASK_ERROR)
 endif ()
 
 # remove text from the output file
-if (TEST_MASK)
-  file (READ ${TEST_FOLDER}/${TEST_OUTPUT} TEST_STREAM)
-  string (REGEX REPLACE "${TEST_MASK}" "" TEST_STREAM "${TEST_STREAM}")
-  file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} "${TEST_STREAM}")
-endif ()
-
-# replace text from the output file
 if (TEST_FILTER)
   file (READ ${TEST_FOLDER}/${TEST_OUTPUT} TEST_STREAM)
-  message (STATUS "TEST_FILTER: ${TEST_FILTER} TEST_FILTER_REPLACE: ${TEST_FILTER_REPLACE}")
   string (REGEX REPLACE "${TEST_FILTER}" "${TEST_FILTER_REPLACE}" TEST_STREAM "${TEST_STREAM}")
   file (WRITE ${TEST_FOLDER}/${TEST_OUTPUT} "${TEST_STREAM}")
 endif ()

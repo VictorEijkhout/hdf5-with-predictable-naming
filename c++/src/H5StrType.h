@@ -72,7 +72,7 @@ class H5_DLLCPP StrType : public AtomType {
     StrType(const StrType &original);
 
     // Noop destructor.
-    virtual ~StrType() override = default;
+    virtual ~StrType() override;
 
 }; // end of StrType
 } // namespace H5

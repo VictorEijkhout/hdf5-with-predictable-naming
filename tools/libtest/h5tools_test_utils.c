@@ -544,7 +544,7 @@ test_populate_ros3_fa(void)
 
 #ifndef H5_HAVE_ROS3_VFD
     puts(" -SKIP-");
-    puts("    Test is skipped unless HDF5 is configured and built with the Read-Only S3 VFD enabled.");
+    puts("    Read-Only S3 VFD not enabled");
     fflush(stdout);
     return 0;
 #else
@@ -983,28 +983,28 @@ test_set_configured_fapl(void)
             "(common) H5P_DEFAULT with no struct should succeed",
             1,
             UTIL_TEST_DEFAULT,
-            H5_DEFAULT_VFD_NAME,
+            "sec2",
             NULL,
         },
         {
             "(common) H5P_DEFAULT with (ignored) struct should succeed",
             1,
             UTIL_TEST_DEFAULT,
-            H5_DEFAULT_VFD_NAME,
+            "sec2",
             &wrong_fa,
         },
         {
             "(common) provided fapl entry should not fail",
             1,
             UTIL_TEST_CREATE,
-            H5_DEFAULT_VFD_NAME,
+            "sec2",
             NULL,
         },
         {
             "(common) provided fapl entry should not fail; ignores struct",
             1,
             UTIL_TEST_CREATE,
-            H5_DEFAULT_VFD_NAME,
+            "sec2",
             &wrong_fa,
         },
         {

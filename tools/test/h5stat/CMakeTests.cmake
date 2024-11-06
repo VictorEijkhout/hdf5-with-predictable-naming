@@ -95,17 +95,17 @@
 
   macro (ADD_H5_TEST resultfile resultcode)
     # If using memchecker add tests without using scripts
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5STAT-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5stat> ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5STAT-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5stat${tgt_file_ext}> ${ARGN})
       if (${resultcode})
         set_tests_properties (H5STAT-${resultfile} PROPERTIES WILL_FAIL "true")
       endif ()
-    else (HDF5_USING_ANALYSIS_TOOL)
+    else (HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5STAT-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5stat>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5stat${tgt_file_ext}>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -117,24 +117,21 @@
     set_tests_properties (H5STAT-${resultfile} PROPERTIES
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
     )
-    if ("H5STAT-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5STAT-${resultfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
   macro (ADD_H5_ERR_TEST resultfile resultcode)
     # If using memchecker add tests without using scripts
-    if (HDF5_USING_ANALYSIS_TOOL)
-      add_test (NAME H5STAT-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5stat> ${ARGN})
+    if (HDF5_ENABLE_USING_MEMCHECKER)
+      add_test (NAME H5STAT-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5stat${tgt_file_ext}> ${ARGN})
       if (${resultcode})
         set_tests_properties (H5STAT-${resultfile} PROPERTIES WILL_FAIL "true")
       endif ()
-    else (HDF5_USING_ANALYSIS_TOOL)
+    else (HDF5_ENABLE_USING_MEMCHECKER)
       add_test (
           NAME H5STAT-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5stat>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5stat${tgt_file_ext}>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -147,9 +144,6 @@
     set_tests_properties (H5STAT-${resultfile} PROPERTIES
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
     )
-    if ("H5STAT-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
-      set_tests_properties (H5STAT-${resultfile} PROPERTIES DISABLED true)
-    endif ()
   endmacro ()
 
 ##############################################################################

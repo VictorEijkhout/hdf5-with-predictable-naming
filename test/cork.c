@@ -2229,12 +2229,13 @@ main(void)
 
     for (swmr = 0; swmr <= 1; swmr++) {
         if (swmr) {
-            const char *driver_name = h5_get_test_driver_name();
+            char *driver = NULL;
 
             /* Skip these tests if SWMR I/O is not supported for the VFD specified
              * by the environment variable.
              */
-            if (!H5FD__supports_swmr_test(driver_name)) {
+            driver = getenv(HDF5_DRIVER);
+            if (!H5FD__supports_swmr_test(driver)) {
                 puts("-- SKIPPED SWMR tests for SWMR-incompatible VFD --");
                 continue;
             }

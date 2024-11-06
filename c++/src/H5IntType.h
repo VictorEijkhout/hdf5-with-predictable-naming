@@ -60,7 +60,7 @@ class H5_DLLCPP IntType : public AtomType {
     IntType(const IntType &original);
 
     // Noop destructor.
-    virtual ~IntType() override = default;
+    virtual ~IntType() override;
 
 }; // end of IntType
 } // namespace H5

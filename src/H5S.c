@@ -614,10 +614,6 @@ H5S__extent_copy_real(H5S_extent_t *dst, const H5S_extent_t *src, bool copy_max)
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTCOPY, FAIL, "can't copy shared information");
 
 done:
-    if (ret_value < 0)
-        if (dst->size)
-            dst->size = H5FL_ARR_FREE(hsize_t, dst->size);
-
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S__extent_copy_real() */
 
@@ -880,7 +876,7 @@ H5Sget_simple_extent_dims(hid_t space_id, hsize_t dims[] /*out*/, hsize_t maxdim
     int    ret_value = -1;
 
     FUNC_ENTER_API((-1))
-    H5TRACE3("Is", "i*h*h", space_id, dims, maxdims);
+    H5TRACE3("Is", "ixx", space_id, dims, maxdims);
 
     /* Check args */
     if (NULL == (ds = (H5S_t *)H5I_object_verify(space_id, H5I_DATASPACE)))
@@ -1222,8 +1218,7 @@ H5S_set_extent_simple(H5S_t *space, unsigned rank, const hsize_t *dims, const hs
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Check args */
-    if (rank > H5S_MAX_RANK)
-        HGOTO_ERROR(H5E_DATASPACE, H5E_BADRANGE, FAIL, "dataspace rank too large: %u", rank);
+    assert(rank <= H5S_MAX_RANK);
 
     /* shift out of the previous state to a "simple" dataspace.  */
     if (H5S__extent_release(&space->extent) < 0)
@@ -1594,30 +1589,6 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_decode() */
-
-/*-------------------------------------------------------------------------
- * Function:    H5S_get_simple_extent
- *
- * Purpose:     Internal function for retrieving the extent for a dataspace object
- *
- * Return:      Success:    Pointer to the extent for a dataspace (not copied)
- *              Failure:    NULL
- *
- * Note:        This routine participates in the "Inlining C function pointers"
- *              pattern, don't call it directly, use the appropriate macro
- *              defined in H5Sprivate.h.
- *
- *-------------------------------------------------------------------------
- */
-const H5S_extent_t *
-H5S_get_simple_extent(const H5S_t *space)
-{
-    FUNC_ENTER_NOAPI_NOINIT_NOERR
-
-    assert(space);
-
-    FUNC_LEAVE_NOAPI(&space->extent)
-} /* end H5S_get_simple_extent() */
 
 /*-------------------------------------------------------------------------
  * Function:    H5S_get_simple_extent_type

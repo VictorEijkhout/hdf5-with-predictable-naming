@@ -199,4 +199,12 @@ ObjCreatPropList::getAttrCrtOrder() const
     return (crt_order_flags);
 }
 
+//--------------------------------------------------------------------------
+// Function:    ObjCreatPropList destructor
+///\brief       Noop destructor
+//--------------------------------------------------------------------------
+ObjCreatPropList::~ObjCreatPropList()
+{
+}
+
 } // namespace H5

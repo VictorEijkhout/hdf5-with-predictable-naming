@@ -83,7 +83,7 @@
  * to be much more common than internal implementations.
  *
  * A list of VOL connectors can be found here:
- * <a href="https://portal.hdfgroup.org/documentation/hdf5-docs/registered_vol_connectors.html">
+ * <a href="https://portal.hdfgroup.org/display/support/Registered+VOL+Connectors">
  * Registered VOL Connectors</a>
  *
  * This list is incomplete and only includes the VOL connectors that have been registered with
@@ -606,21 +606,15 @@
  * fact, implement some of this functionality as it is possible to mimic the native
  * HDF5 connector, however this will probably not be true for most non-native
  * VOL connectors.
- * <div>
  * \snippet{doc} tables/volAPIs.dox vol_native_table
- * </div>
  *
  * \subsubsection subsubsec_vol_compat_indep  List of HDF5 VOL-Independent API Calls
  * These HDF5 API calls do not depend on a particular VOL connector being loaded.
- * <div>
  * \snippet{doc} tables/volAPIs.dox vol_independent_table
- * </div>
  *
  * \subsubsection subsubsec_vol_compat_opt List of Native VOL Optional Operation Values By Subclass
  * These values can be passed to the opt type parameter of H5VLquery optional().
- * <div>
  * \snippet{doc} tables/volAPIs.dox vol_optional_table
- * </div>
  *
  *
  *

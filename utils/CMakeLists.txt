@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.18)
 project (HDF5_UTILS C)
 
-if (NOT HDF5_EXTERNALLY_CONFIGURED AND BUILD_TESTING)
+if (BUILD_TESTING)
   add_subdirectory (test)
 endif ()
 

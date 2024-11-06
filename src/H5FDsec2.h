@@ -11,26 +11,18 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Purpose:	The public header file for the POSOX I/O (sec2 - "POSIX section 2")
- *          virtual file driver (VFD)
+ * Purpose:	The public header file for the sec2 driver
  */
 #ifndef H5FDsec2_H
 #define H5FDsec2_H
 
-/** Initializer for the sec2 VFD */
-#define H5FD_SEC2 (H5FDperform_init(H5FD_sec2_init))
-
-/** Identifier for the sec2 VFD */
+#define H5FD_SEC2       (H5FDperform_init(H5FD_sec2_init))
 #define H5FD_SEC2_VALUE H5_VFD_SEC2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** @private
- *
- * \brief Private initializer for the sec2 VFD
- */
 H5_DLL hid_t H5FD_sec2_init(void);
 
 /**
@@ -46,6 +38,7 @@ H5_DLL hid_t H5FD_sec2_init(void);
  *          #H5FD_SEC2 driver.
  *
  * \since 1.4.0
+ *
  */
 H5_DLL herr_t H5Pset_fapl_sec2(hid_t fapl_id);
 

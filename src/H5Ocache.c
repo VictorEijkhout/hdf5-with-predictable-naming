@@ -31,8 +31,10 @@
 #include "H5private.h"   /* Generic Functions           */
 #include "H5Eprivate.h"  /* Error handling              */
 #include "H5FLprivate.h" /* Free lists                  */
+#include "H5MFprivate.h" /* File memory management      */
 #include "H5MMprivate.h" /* Memory management           */
 #include "H5Opkg.h"      /* Object headers              */
+#include "H5WBprivate.h" /* Wrapped Buffers             */
 
 /****************/
 /* Local Macros */
@@ -308,10 +310,6 @@ H5O__cache_deserialize(const void *image, size_t len, void *_udata, bool *dirty)
     if (H5O__chunk_deserialize(oh, udata->common.addr, udata->chunk0_size, (const uint8_t *)image, len,
                                &(udata->common), dirty) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTINIT, NULL, "can't deserialize first object header chunk");
-
-    /* Check for corruption in object header # of messages */
-    if (oh->version == H5O_VERSION_1 && udata->v1_pfx_nmesgs < oh->nmesgs)
-        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, NULL, "bad object header message count");
 
     /* Note that we've loaded the object header from the file */
     udata->made_attempt = true;

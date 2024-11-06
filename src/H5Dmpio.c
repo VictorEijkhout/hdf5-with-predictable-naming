@@ -30,11 +30,11 @@
 #include "H5Fprivate.h"  /* File access       */
 #include "H5FDprivate.h" /* File drivers      */
 #include "H5FLprivate.h" /* Free Lists        */
+#include "H5Iprivate.h"  /* IDs               */
 #include "H5MMprivate.h" /* Memory management */
 #include "H5Oprivate.h"  /* Object headers    */
 #include "H5Pprivate.h"  /* Property lists    */
 #include "H5Sprivate.h"  /* Dataspaces        */
-#include "H5SLprivate.h" /* Skip Lists                               */
 #include "H5VMprivate.h" /* Vector            */
 
 #ifdef H5_HAVE_PARALLEL
@@ -615,7 +615,7 @@ H5D__mpio_debug_init(void)
         H5D__mpio_parse_debug_str(debug_str);
 
     if (H5DEBUG(D))
-        debug_stream = stdout;
+        debug_stream = H5DEBUG(D);
 
     H5D_mpio_debug_inited = true;
 
@@ -911,8 +911,7 @@ H5D__mpio_get_no_coll_cause_strings(char *local_cause, size_t local_cause_len, c
             case H5D_MPIO_COLLECTIVE:
             case H5D_MPIO_NO_COLLECTIVE_MAX_CAUSE:
             default:
-                cause_str = "invalid or unknown no collective cause reason";
-                assert(0 && "invalid or unknown no collective cause reason");
+                assert(0 && "invalid no collective cause reason");
                 break;
         }
 
@@ -1412,7 +1411,7 @@ done:
         fprintf(debug_log_file, "##############\n\n");
         if (EOF == fclose(debug_log_file))
             HDONE_ERROR(H5E_IO, H5E_CLOSEERROR, FAIL, "couldn't close debugging log file");
-        debug_stream = H5DEBUG(D) ? stdout : NULL;
+        debug_stream = H5DEBUG(D);
     }
 #endif
 
@@ -3279,7 +3278,7 @@ H5D__mpio_collective_filtered_chunk_io_setup(const H5D_io_info_t *io_info, const
                                (H5MM_free_t)H5D__chunk_mem_free,
                                (void *)&di[dset_idx].dset->shared->dcpl_cache.pline,
                                &di[dset_idx].dset->shared->dcpl_cache.fill, di[dset_idx].dset->shared->type,
-                               0, curr_dset_info->file_chunk_size) < 0)
+                               di[dset_idx].dset->shared->type_id, 0, curr_dset_info->file_chunk_size) < 0)
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTINIT, FAIL, "can't initialize fill value buffer");
 
             curr_dset_info->fb_info_init = true;
@@ -3783,10 +3782,6 @@ H5D__mpio_redistribute_shared_chunks_int(H5D_filtered_collective_io_info_t *chun
         counts_disps_array = H5MM_xfree(counts_disps_array);
     }
 
-    /* No useful work to do - exit */
-    if (coll_chunk_list_num_entries == 0)
-        HGOTO_DONE(SUCCEED);
-
     /*
      * Phase 2 - Involved ranks now redistribute any shared chunks to new
      * owners as necessary.
@@ -4070,6 +4065,7 @@ H5D__mpio_share_chunk_modification_data(H5D_filtered_collective_io_info_t *chunk
                                         int mpi_rank, int H5_ATTR_NDEBUG_UNUSED mpi_size,
                                         unsigned char ***chunk_msg_bufs, int *chunk_msg_bufs_len)
 {
+#if H5_CHECK_MPI_VERSION(3, 0)
     H5D_filtered_collective_chunk_info_t *chunk_table       = NULL;
     H5S_sel_iter_t                       *mem_iter          = NULL;
     unsigned char                       **msg_send_bufs     = NULL;
@@ -4304,12 +4300,20 @@ H5D__mpio_share_chunk_modification_data(H5D_filtered_collective_io_info_t *chunk
          * post a non-blocking receive to receive it
          */
         if (msg_flag) {
+#if H5_CHECK_MPI_VERSION(3, 0)
             MPI_Count msg_size = 0;
 
             if (MPI_SUCCESS != (mpi_code = MPI_Get_elements_x(&status, MPI_BYTE, &msg_size)))
                 HMPI_GOTO_ERROR(FAIL, "MPI_Get_elements_x failed", mpi_code)
 
             H5_CHECK_OVERFLOW(msg_size, MPI_Count, int);
+#else
+            int msg_size = 0;
+
+            if (MPI_SUCCESS != (mpi_code = MPI_Get_elements(&status, MPI_BYTE, &msg_size)))
+                HMPI_GOTO_ERROR(FAIL, "MPI_Get_elements failed", mpi_code)
+#endif
+
             if (msg_size <= 0)
                 HGOTO_ERROR(H5E_DATASET, H5E_BADVALUE, FAIL, "invalid chunk modification message size");
 
@@ -4462,6 +4466,13 @@ done:
 #endif
 
     FUNC_LEAVE_NOAPI(ret_value)
+#else
+    FUNC_ENTER_PACKAGE
+    HERROR(
+        H5E_DATASET, H5E_WRITEERROR,
+        "unable to send chunk modification data between MPI ranks - MPI version < 3 (MPI_Ibarrier missing)")
+    FUNC_LEAVE_NOAPI(FAIL)
+#endif
 } /* end H5D__mpio_share_chunk_modification_data() */
 
 /*-------------------------------------------------------------------------

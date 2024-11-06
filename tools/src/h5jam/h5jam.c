@@ -162,7 +162,7 @@ main(int argc, char *argv[])
     hsize_t   startub;
     hsize_t   where;
     hsize_t   newubsize;
-    HDoff_t   fsize;
+    off_t     fsize;
     h5_stat_t sbuf;
     h5_stat_t sbuf2;
     int       res;
@@ -245,7 +245,6 @@ main(int argc, char *argv[])
         goto done;
     }
 
-    memset(&sbuf, 0, sizeof(h5_stat_t));
     res = HDfstat(ufid, &sbuf);
     if (res < 0) {
         error_msg("Can't stat file \"%s\"\n", ub_file);
@@ -253,7 +252,7 @@ main(int argc, char *argv[])
         goto done;
     }
 
-    fsize = (HDoff_t)sbuf.st_size;
+    fsize = (off_t)sbuf.st_size;
 
     h5fid = HDopen(input_file, O_RDONLY);
     if (h5fid < 0) {
@@ -262,7 +261,6 @@ main(int argc, char *argv[])
         goto done;
     }
 
-    memset(&sbuf2, 0, sizeof(h5_stat_t));
     res = HDfstat(h5fid, &sbuf2);
     if (res < 0) {
         error_msg("Can't stat file \"%s\"\n", input_file);
@@ -394,7 +392,6 @@ copy_some_to_file(int infid, int outfid, hsize_t starting, hsize_t startout, ssi
     } /* end if */
 
     if (limit < 0) {
-        memset(&sbuf, 0, sizeof(h5_stat_t));
         res = HDfstat(infid, &sbuf);
         if (res < 0) {
             error_msg("Can't stat file \n");

@@ -115,20 +115,11 @@ host_triplet = @host@
 noinst_PROGRAMS = H5match_types$(EXEEXT) H5_buildiface$(EXEEXT)
 TESTS =
 
-# Splitter VFD currently can't be tested with the h5_fileaccess()
-# approach due to it trying to lock the same W/O file when two
-# files are created/opened with the same FAPL that has the VFD
-# set on it. When tested with the environment variable and a
-# default FAPL, the VFD appends "_wo" to the filename when the
-# W/O path isn't specified, which works for all the tests.
-# VFD_LIST += splitter
-
 # log VFD currently has file space allocation bugs
 # VFD_LIST += log
-
-# Not currently tested with VFD tests
-# VFD_LIST += onion
 @DIRECT_VFD_CONDITIONAL_TRUE@am__append_2 = direct
+@ROS3_VFD_CONDITIONAL_TRUE@am__append_3 = ros3
+@HDFS_VFD_CONDITIONAL_TRUE@am__append_4 = hdfs
 subdir = fortran/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/aclocal_fc.m4 \
@@ -469,7 +460,7 @@ am__DIST_COMMON = $(srcdir)/H5config_f.inc.in \
 	$(top_srcdir)/bin/test-driver $(top_srcdir)/config/commence.am \
 	$(top_srcdir)/config/conclude.am \
 	$(top_srcdir)/config/conclude_fc.am \
-	$(top_srcdir)/config/lt_vers.am
+	$(top_srcdir)/config/lt_vers.am README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADD_PARALLEL_FILES = @ADD_PARALLEL_FILES@
@@ -593,7 +584,6 @@ FCFLAGS_f90 = @FCFLAGS_f90@
 FCLIBS = @FCLIBS@
 FC_VERSION = @FC_VERSION@
 FGREP = @FGREP@
-FORTRAN_C_BOOL_IS_UNIQUE = @FORTRAN_C_BOOL_IS_UNIQUE@
 FORTRAN_C_LONG_DOUBLE_IS_UNIQUE = @FORTRAN_C_LONG_DOUBLE_IS_UNIQUE@
 FORTRAN_HAVE_C_LONG_DOUBLE = @FORTRAN_HAVE_C_LONG_DOUBLE@
 FSEARCH_DIRS = @FSEARCH_DIRS@
@@ -623,11 +613,9 @@ H5_UTILS_TEST_BUILDDIR = @H5_UTILS_TEST_BUILDDIR@
 H5_VERSION = @H5_VERSION@
 HADDR_T = @HADDR_T@
 HAVE_Fortran_INTEGER_SIZEOF_16 = @HAVE_Fortran_INTEGER_SIZEOF_16@
-HAVE_ISO_FORTRAN_ENV = @HAVE_ISO_FORTRAN_ENV@
 HAVE_LIBHDFS = @HAVE_LIBHDFS@
 HAVE_MERCURY = @HAVE_MERCURY@
 HAVE_PTHREAD = @HAVE_PTHREAD@
-HAVE__FLOAT16 = @HAVE__FLOAT16@
 HDF5_DOXYGEN = @HDF5_DOXYGEN@
 HDF5_DOXY_WARNINGS = @HDF5_DOXY_WARNINGS@
 HDF5_HL = @HDF5_HL@
@@ -684,7 +672,6 @@ MANIFEST_TOOL = @MANIFEST_TOOL@
 MAP_API = @MAP_API@
 MIRROR_VFD = @MIRROR_VFD@
 MKDIR_P = @MKDIR_P@
-MPI_LOGICAL_KIND = @MPI_LOGICAL_KIND@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -713,7 +700,6 @@ PAC_FORTRAN_NATIVE_INTEGER_SIZEOF = @PAC_FORTRAN_NATIVE_INTEGER_SIZEOF@
 PAC_FORTRAN_NATIVE_REAL_KIND = @PAC_FORTRAN_NATIVE_REAL_KIND@
 PAC_FORTRAN_NATIVE_REAL_SIZEOF = @PAC_FORTRAN_NATIVE_REAL_SIZEOF@
 PAC_FORTRAN_NUM_INTEGER_KINDS = @PAC_FORTRAN_NUM_INTEGER_KINDS@
-PAC_MPI_LOGICAL_KIND = @PAC_MPI_LOGICAL_KIND@
 PARALLEL = @PARALLEL@
 PARALLEL_FILTERED_WRITES = @PARALLEL_FILTERED_WRITES@
 PARALLEL_TOOLS = @PARALLEL_TOOLS@
@@ -731,7 +717,6 @@ SEARCH = @SEARCH@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SHOW_ALL_WARNINGS = @SHOW_ALL_WARNINGS@
 SIZE_T = @SIZE_T@
 STATIC_EXEC = @STATIC_EXEC@
 STATIC_SHARED = @STATIC_SHARED@
@@ -873,29 +858,29 @@ CHECK_CLEANFILES = *.chkexe *.chklog
 # See libtool versioning documentation online.
 # After making changes, run bin/reconfigure to update other configure related
 # files like Makefile.in.
-LT_VERS_INTERFACE = 314
+LT_VERS_INTERFACE = 313
+LT_VERS_AGE = 3
 LT_VERS_REVISION = 0
-LT_VERS_AGE = 4
 LT_CXX_VERS_INTERFACE = 310
-LT_CXX_VERS_REVISION = 4
+LT_CXX_VERS_REVISION = 3
 LT_CXX_VERS_AGE = 0
-LT_F_VERS_INTERFACE = 313
+LT_F_VERS_INTERFACE = 312
 LT_F_VERS_REVISION = 0
-LT_F_VERS_AGE = 3
+LT_F_VERS_AGE = 2
 LT_HL_VERS_INTERFACE = 310
-LT_HL_VERS_REVISION = 4
+LT_HL_VERS_REVISION = 3
 LT_HL_VERS_AGE = 0
 LT_HL_CXX_VERS_INTERFACE = 310
-LT_HL_CXX_VERS_REVISION = 4
+LT_HL_CXX_VERS_REVISION = 3
 LT_HL_CXX_VERS_AGE = 0
 LT_HL_F_VERS_INTERFACE = 310
-LT_HL_F_VERS_REVISION = 4
+LT_HL_F_VERS_REVISION = 3
 LT_HL_F_VERS_AGE = 0
 LT_JAVA_VERS_INTERFACE = 310
-LT_JAVA_VERS_REVISION = 4
+LT_JAVA_VERS_REVISION = 3
 LT_JAVA_VERS_AGE = 0
 LT_TOOLS_VERS_INTERFACE = 310
-LT_TOOLS_VERS_REVISION = 4
+LT_TOOLS_VERS_REVISION = 3
 LT_TOOLS_VERS_AGE = 0
 AM_FCLIBS = $(LIBHDF5)
 
@@ -964,8 +949,8 @@ TEST_PROG_CHKEXE = $(TEST_PROG:=.chkexe_)
 TEST_PROG_PARA_CHKEXE = $(TEST_PROG_PARA:=.chkexe_)
 TEST_SCRIPT_CHKSH = $(TEST_SCRIPT:=.chkexe_)
 TEST_SCRIPT_PARA_CHKSH = $(TEST_SCRIPT_PARA:=.chkexe_)
-VFD_LIST = sec2 stdio core core_paged split multi family \
-	$(am__append_2)
+VFD_LIST = sec2 stdio core core_paged split multi family splitter \
+	$(am__append_2) $(am__append_3) $(am__append_4)
 
 # Test with just the native connector, with a single pass-through connector
 # and with a doubly-stacked pass-through.
@@ -1576,7 +1561,6 @@ install-data-local:
 	fi
 	$(CP) $(top_builddir)/$(subdir)/H5f90i_gen.h $(DESTDIR)$(includedir)/.
 	$(CP) $(top_srcdir)/fortran/src/H5f90i.h $(DESTDIR)$(includedir)/.
-	$(CP) $(top_builddir)/$(subdir)/H5config_f.inc $(DESTDIR)$(includedir)/.
 
 uninstall-local:
 	@if test -n "$(F9XMODEXT)" -a "X$(F9XMODEXT)" != "Xo"; then      \
@@ -1586,7 +1570,6 @@ uninstall-local:
 	fi;								\
 	$(RM) $(DESTDIR)$(bindir)/$(H5FC_NAME)
 	$(RM) $(DESTDIR)$(includedir)/H5f90i*.h
-	$(RM) $(DESTDIR)$(includedir)/H5config_f.inc
 
 # Also install and uninstall (uninstall-local above) h5fc script
 install-exec-local:
@@ -1610,11 +1593,10 @@ H5_gen.F90: H5_buildiface$(EXEEXT)
 # modules they depend upon are actually made. *sigh*
 H5f90global.lo:      $(srcdir)/H5f90global.F90 H5fortran_types.lo
 H5_buildiface.lo:    $(srcdir)/H5_buildiface.F90
-H5fortkit.lo:        $(srcdir)/H5fortkit.F90 H5fortran_types.lo
 H5_ff.lo:            $(srcdir)/H5_ff.F90 H5Fff.lo H5f90global.lo
 H5Aff.lo:            $(srcdir)/H5Aff.F90 H5f90global.lo
 H5Dff.lo:            $(srcdir)/H5Dff.F90 H5f90global.lo H5_ff.lo H5Sff.lo
-H5Eff.lo:            $(srcdir)/H5Eff.F90 H5f90global.lo H5fortkit.lo
+H5Eff.lo:            $(srcdir)/H5Eff.F90 H5f90global.lo
 H5ESff.lo:           $(srcdir)/H5ESff.F90 H5f90global.lo
 H5Fff.lo:            $(srcdir)/H5Fff.F90 H5f90global.lo
 H5Gff.lo:            $(srcdir)/H5Gff.F90 H5f90global.lo H5Pff.lo
@@ -1622,7 +1604,7 @@ H5Iff.lo:            $(srcdir)/H5Iff.F90 H5f90global.lo
 H5Lff.lo:            $(srcdir)/H5Lff.F90 H5f90global.lo
 H5Off.lo:            $(srcdir)/H5Off.F90 H5f90global.lo
 H5Pff.lo:            $(srcdir)/H5Pff.F90 H5f90global.lo H5fortkit.lo
-H5Rff.lo:            $(srcdir)/H5Rff.F90 H5f90global.lo H5fortkit.lo
+H5Rff.lo:            $(srcdir)/H5Rff.F90 H5f90global.lo
 H5Sff.lo:            $(srcdir)/H5Sff.F90 H5f90global.lo
 H5Tff.lo:            $(srcdir)/H5Tff.F90 H5f90global.lo
 H5VLff.lo:           $(srcdir)/H5VLff.F90 H5f90global.lo H5fortkit.lo
@@ -1761,15 +1743,15 @@ $(TEST_PROG_CHKEXE) $(TEST_PROG_PARA_CHKEXE) dummy.chkexe_:
                 if test -n "$(HDF5_VOL_CONNECTOR)"; then \
                   echo "VOL connector: $(HDF5_VOL_CONNECTOR)" | tee -a $${log}; \
                 fi; \
-                if test -n "$(HDF5_TEST_DRIVER)"; then \
-                  echo "Virtual file driver (VFD): $(HDF5_TEST_DRIVER)" | tee -a $${log}; \
+                if test -n "$(HDF5_DRIVER)"; then \
+                  echo "Virtual file driver (VFD): $(HDF5_DRIVER)" | tee -a $${log}; \
                 fi; \
               else \
                 if test -n "$(HDF5_VOL_CONNECTOR)"; then \
                   echo "VOL connector: $(HDF5_VOL_CONNECTOR)" >> $${log}; \
                 fi; \
-                if test -n "$(HDF5_TEST_DRIVER)"; then \
-                  echo "Virtual file driver (VFD): $(HDF5_TEST_DRIVER)" >> $${log}; \
+                if test -n "$(HDF5_DRIVER)"; then \
+                  echo "Virtual file driver (VFD): $(HDF5_DRIVER)" >> $${log}; \
                 fi; \
               fi; \
               if test -n "$(REALTIMEOUTPUT)"; then \
@@ -1886,23 +1868,20 @@ build-check-p: $(LIB) $(PROGS) $(chk_TESTS)
 @MIRROR_VFD_CONDITIONAL_TRUE@  # Mirror VFD needs network configuration, etc. and isn't easy to set
 @MIRROR_VFD_CONDITIONAL_TRUE@  # reasonable defaults for that info.
 @MIRROR_VFD_CONDITIONAL_TRUE@  # VFD_LIST += mirror
-@ROS3_VFD_CONDITIONAL_TRUE@  # This would require a custom test suite
-@ROS3_VFD_CONDITIONAL_TRUE@  # VFD_LIST += ros3
-@HDFS_VFD_CONDITIONAL_TRUE@  # This would require a custom test suite
-@HDFS_VFD_CONDITIONAL_TRUE@  # VFD_LIST += hdfs
-@SUBFILING_VFD_CONDITIONAL_TRUE@  # Subfiling has a few VFD test failures to be resolved
+@SUBFILING_VFD_CONDITIONAL_TRUE@  # Several VFD tests fail with Subfiling since it
+@SUBFILING_VFD_CONDITIONAL_TRUE@  # doesn't currently support collective I/O
 @SUBFILING_VFD_CONDITIONAL_TRUE@  # VFD_LIST += subfiling
 
 # Run test with different Virtual File Driver
 check-vfd: $(LIB) $(PROGS) $(chk_TESTS)
-	@for vfd in $(VFD_LIST) dummy; do                                          \
-	    if test $$vfd != dummy; then                                           \
-	        echo "============================";                               \
-	        echo "Testing Virtual File Driver $$vfd";                          \
-	        echo "============================";                               \
-	        $(MAKE) $(AM_MAKEFLAGS) check-clean || exit 1;                     \
-	        HDF5_TEST_DRIVER=$$vfd $(MAKE) $(AM_MAKEFLAGS) check || exit 1;    \
-	    fi;                                                                    \
+	@for vfd in $(VFD_LIST) dummy; do                                     \
+	    if test $$vfd != dummy; then                                      \
+	        echo "============================";                          \
+	        echo "Testing Virtual File Driver $$vfd";                     \
+	        echo "============================";                          \
+	        $(MAKE) $(AM_MAKEFLAGS) check-clean || exit 1;                \
+	        HDF5_DRIVER=$$vfd $(MAKE) $(AM_MAKEFLAGS) check || exit 1;    \
+	    fi;                                                               \
 	done
 
 # Run test with different passthrough Virtual Object Layer Connector

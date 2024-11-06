@@ -7,7 +7,7 @@ add_subdirectory (lib)
 add_subdirectory (src)
 
 #-- Add the tests
-if (NOT HDF5_EXTERNALLY_CONFIGURED AND BUILD_TESTING)
+if (BUILD_TESTING)
   add_subdirectory (test)
 
 # --------------------------------------------------------------------

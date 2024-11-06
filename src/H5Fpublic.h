@@ -75,7 +75,7 @@
 #define H5F_OBJ_FILE     (0x0001u) /**< File objects */
 #define H5F_OBJ_DATASET  (0x0002u) /**< Dataset objects */
 #define H5F_OBJ_GROUP    (0x0004u) /**< Group objects */
-#define H5F_OBJ_DATATYPE (0x0008u) /**< Datatype objects */
+#define H5F_OBJ_DATATYPE (0x0008u) /**< Named datatype objects */
 #define H5F_OBJ_ATTR     (0x0010u) /**< Attribute objects */
 #define H5F_OBJ_ALL      (H5F_OBJ_FILE | H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR)
 #define H5F_OBJ_LOCAL                                                                                        \
@@ -241,20 +241,6 @@ typedef struct H5F_retry_info_t {
  */
 typedef herr_t (*H5F_flush_cb_t)(hid_t object_id, void *udata);
 
-/*
- * These are the bits that can be passed to the `flags' argument of
- * H5Pset_relax_file_integrity_checks(). Use the bit-wise OR operator (|) to
- * combine them as needed.
- */
-#define H5F_RFIC_UNUSUAL_NUM_UNUSED_NUMERIC_BITS                                                             \
-    (0x0001u) /**< Suppress errors for numeric datatypes with an unusually                                   \
-               *   high number of unused bits.  See documentation for                                        \
-               *   H5Pset_relax_file_integrity_checks for details. */
-#define H5F_RFIC_ALL                                                                                         \
-    (H5F_RFIC_UNUSUAL_NUM_UNUSED_NUMERIC_BITS) /**< Suppress all format integrity check errors.  See         \
-                                                *   documentation for H5Pset_relax_file_integrity_checks     \
-                                                *   for details. */
-
 /*********************/
 /* Public Prototypes */
 /*********************/
@@ -368,9 +354,6 @@ H5_DLL hid_t H5Fcreate(const char *filename, unsigned flags, hid_t fcpl_id, hid_
  * --------------------------------------------------------------------------
  * \ingroup ASYNC
  * \async_variant_of{H5Fcreate}
- *
- * \since 1.12.0
- *
  */
 #ifndef H5_DOXYGEN
 H5_DLL hid_t H5Fcreate_async(const char *app_file, const char *app_func, unsigned app_line,
@@ -467,10 +450,7 @@ H5_DLL hid_t H5Fcreate_async(const char *filename, unsigned flags, hid_t fcpl_id
  *
  * \version 1.10.0 The #H5F_ACC_SWMR_WRITE and #H5F_ACC_SWMR_READ flags were added.
  *
- * \since 1.0.0
- *
  * \see H5Fclose()
- *
  *
  */
 H5_DLL hid_t H5Fopen(const char *filename, unsigned flags, hid_t fapl_id);
@@ -478,9 +458,6 @@ H5_DLL hid_t H5Fopen(const char *filename, unsigned flags, hid_t fapl_id);
  * --------------------------------------------------------------------------
  * \ingroup ASYNC
  * \async_variant_of{H5Fopen}
- *
- * \since 1.12.0
- *
  */
 #ifndef H5_DOXYGEN
 H5_DLL hid_t H5Fopen_async(const char *app_file, const char *app_func, unsigned app_line,
@@ -512,17 +489,12 @@ H5_DLL hid_t H5Fopen_async(const char *filename, unsigned flags, hid_t access_pl
  *       active \p file_id. E.g., one cannot close a file with H5Fclose() on
  *       \p file_id then use H5Freopen() on \p file_id to reopen it.
  *
- * \since 1.0.0
- *
  */
 H5_DLL hid_t H5Freopen(hid_t file_id);
 /**
  * --------------------------------------------------------------------------
  * \ingroup ASYNC
  * \async_variant_of{H5Freopen}
- *
- * \since 1.12.0
- *
  */
 #ifndef H5_DOXYGEN
 H5_DLL hid_t H5Freopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t file_id,
@@ -561,17 +533,12 @@ H5_DLL hid_t H5Freopen_async(hid_t file_id, hid_t es_id);
  *            that, the OS is responsible for ensuring that the data is
  *            actually flushed to disk.
  *
- * \since 1.0.0
- *
  */
 H5_DLL herr_t H5Fflush(hid_t object_id, H5F_scope_t scope);
 /**
  * --------------------------------------------------------------------------
  * \ingroup ASYNC
  * \async_variant_of{H5Fflush}
- *
- * \since 1.12.0
- *
  */
 #ifndef H5_DOXYGEN
 H5_DLL herr_t H5Fflush_async(const char *app_file, const char *app_func, unsigned app_line, hid_t object_id,
@@ -619,8 +586,6 @@ H5_DLL herr_t H5Fflush_async(hid_t object_id, H5F_scope_t scope, hid_t es_id);
  *       before calling H5Fclose. It is generally recommended to do so in all
  *       cases.
  *
- * \since 1.0.0
- *
  * \see H5Fopen()
  *
  */
@@ -629,9 +594,6 @@ H5_DLL herr_t H5Fclose(hid_t file_id);
  * --------------------------------------------------------------------------
  * \ingroup ASYNC
  * \async_variant_of{H5Fclose}
- *
- * \since 1.12.0
- *
  */
 #ifndef H5_DOXYGEN
 H5_DLL herr_t H5Fclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t file_id,
@@ -694,8 +656,6 @@ H5_DLL herr_t H5Fdelete(const char *filename, hid_t fapl_id);
  *          The creation property list identifier should be released with
  *          H5Pclose().
  *
- * \since 1.0.0
- *
  */
 H5_DLL hid_t H5Fget_create_plist(hid_t file_id);
 /**
@@ -708,8 +668,6 @@ H5_DLL hid_t H5Fget_create_plist(hid_t file_id);
  *
  * \details H5Fget_access_plist() returns the file access property list
  *          identifier of the specified file.
- *
- * \since 1.0.0
  *
  */
 H5_DLL hid_t H5Fget_access_plist(hid_t file_id);
@@ -754,13 +712,6 @@ H5_DLL herr_t H5Fget_intent(hid_t file_id, unsigned *intent);
  *          file identifier \p file_id and the pointer \p fnumber to the file
  *          number.
  *
- *          This file number is the same for all open instances of the same
- *          file, as long as 1. The active VFD implements the file comparison operator,
- *          and 2. The current filesystem is able to determine if the same file is opened more
- *          than once. If these conditions are not met, it is the application's
- *          responsibility to avoid opening multiple handles into the same file,
- *          which results in undefined behavior.
- *
  * \since 1.12.0
  *
  */
@@ -781,8 +732,7 @@ H5_DLL herr_t H5Fget_fileno(hid_t file_id, unsigned long *fileno);
  *          object identifiers for the file.
  *
  *          To retrieve a count of open identifiers for open objects in all
- *          HDF5 application files that are currently open, as well as transient
- *          datatype objects that are not associated with any file, pass the value
+ *          HDF5 application files that are currently open, pass the value
  *          #H5F_OBJ_ALL in \p file_id.
  *
  *          The types of objects to be counted are specified in types as
@@ -798,8 +748,6 @@ H5_DLL herr_t H5Fget_fileno(hid_t file_id, unsigned long *fileno);
  * \version 1.6.5 #H5F_OBJ_LOCAL has been added as a qualifier on the types
  *                of objects to be counted. #H5F_OBJ_LOCAL restricts the
  *                search to objects opened through current file identifier.
- *
- * \since 1.6.0
  *
  */
 H5_DLL ssize_t H5Fget_obj_count(hid_t file_id, unsigned types);
@@ -894,8 +842,6 @@ H5_DLL herr_t H5Fget_vfd_handle(hid_t file_id, hid_t fapl, void **file_handle);
  *       proper value to pass for \p plist is #H5P_DEFAULT, indicating the
  *       default file mount property list.
  *
- * \since 1.0.0
- *
  */
 H5_DLL herr_t H5Fmount(hid_t loc, const char *name, hid_t child, hid_t plist);
 /**
@@ -917,8 +863,6 @@ H5_DLL herr_t H5Fmount(hid_t loc, const char *name, hid_t child, hid_t plist);
  *          mount point was opened before the mount then it is the group in the
  *          parent; if it was opened after the mount then it is the root group
  *          of the child.
- *
- * \since 1.0.0
  *
  */
 H5_DLL herr_t H5Funmount(hid_t loc, const char *name);
@@ -1123,8 +1067,6 @@ H5_DLL herr_t H5Fset_mdc_config(hid_t file_id, const H5AC_cache_config_t *config
  *          See the overview of the metadata cache in the special topics section of the user manual for
  *          details on the metadata cache and its adaptive resize algorithms.
  *
- * \since 1.8.0
- *
  */
 H5_DLL herr_t H5Fget_mdc_hit_rate(hid_t file_id, double *hit_rate_ptr);
 /**
@@ -1156,8 +1098,6 @@ H5_DLL herr_t H5Fget_mdc_hit_rate(hid_t file_id, double *hit_rate_ptr);
  *          Current size can exceed maximum size under certain conditions. See the overview of the
  *          metadata cache in the special topics section of the user manual for a discussion of this.
  *
- * \since 1.8.0
- *
  */
 H5_DLL herr_t H5Fget_mdc_size(hid_t file_id, size_t *max_size_ptr, size_t *min_clean_size_ptr,
                               size_t *cur_size_ptr, int *cur_num_entries_ptr);
@@ -1186,8 +1126,6 @@ H5_DLL herr_t H5Fget_mdc_size(hid_t file_id, size_t *max_size_ptr, size_t *min_c
  * documentation,
  * you should not be using this API call.
  * \endparblock
- *
- * \since 1.8.0
  *
  */
 H5_DLL herr_t H5Freset_mdc_hit_rate_stats(hid_t file_id);

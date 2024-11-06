@@ -427,11 +427,6 @@ print_native_type(h5tools_str_t *buffer, hid_t type, int ind)
         else if (H5Tequal(type, H5T_NATIVE_ULLONG) == true) {
             h5tools_str_append(buffer, "native unsigned long long");
         }
-#ifdef H5_HAVE__FLOAT16
-        else if (H5Tequal(type, H5T_NATIVE_FLOAT16) == true) {
-            h5tools_str_append(buffer, "native _Float16");
-        }
-#endif
         else if (H5Tequal(type, H5T_NATIVE_FLOAT) == true) {
             h5tools_str_append(buffer, "native float");
         }
@@ -556,13 +551,7 @@ print_native_type(h5tools_str_t *buffer, hid_t type, int ind)
 static bool
 print_ieee_type(h5tools_str_t *buffer, hid_t type, int ind)
 {
-    if (H5Tequal(type, H5T_IEEE_F16BE) == true) {
-        h5tools_str_append(buffer, "IEEE 16-bit big-endian float");
-    }
-    else if (H5Tequal(type, H5T_IEEE_F16LE) == true) {
-        h5tools_str_append(buffer, "IEEE 16-bit little-endian float");
-    }
-    else if (H5Tequal(type, H5T_IEEE_F32BE) == true) {
+    if (H5Tequal(type, H5T_IEEE_F32BE) == true) {
         h5tools_str_append(buffer, "IEEE 32-bit big-endian float");
     }
     else if (H5Tequal(type, H5T_IEEE_F32LE) == true) {
@@ -2869,8 +2858,7 @@ main(int argc, char *argv[])
 
             vfd_info.info = &ros3_fa;
 #else
-            fprintf(rawerrorstream, "Error: Read-Only S3 VFD is not available unless enabled when HDF5 is "
-                                    "configured and built.\n\n");
+            fprintf(rawerrorstream, "Error: Read-Only S3 VFD is not enabled\n\n");
             usage();
             leave(EXIT_FAILURE);
 #endif
@@ -2893,9 +2881,7 @@ main(int argc, char *argv[])
 
             vfd_info.info = &hdfs_fa;
 #else
-            fprintf(
-                rawerrorstream,
-                "Error: The HDFS VFD is not available unless enabled when HDF5 is configured and built.\n\n");
+            fprintf(rawerrorstream, "Error: The HDFS VFD is not enabled\n\n");
             usage();
             leave(EXIT_FAILURE);
 #endif

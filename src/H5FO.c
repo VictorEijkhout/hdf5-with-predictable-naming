@@ -25,7 +25,6 @@
 #include "H5FLprivate.h" /* Free lists                           */
 #include "H5FOprivate.h" /* File objects                         */
 #include "H5Oprivate.h"  /* Object headers		  	*/
-#include "H5SLprivate.h" /* Skip Lists                               */
 
 /* Private typedefs */
 

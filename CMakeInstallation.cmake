@@ -57,6 +57,13 @@ set (HDF5_INCLUDES_BUILD_TIME
 )
 
 #-----------------------------------------------------------------------------
+# Set variables needed for installation
+#-----------------------------------------------------------------------------
+set (HDF5_VERSION_STRING ${HDF5_PACKAGE_VERSION})
+set (HDF5_VERSION_MAJOR  ${HDF5_PACKAGE_VERSION_MAJOR})
+set (HDF5_VERSION_MINOR  ${HDF5_PACKAGE_VERSION_MINOR})
+
+#-----------------------------------------------------------------------------
 # Configure the hdf5-config.cmake file for the build directory
 #-----------------------------------------------------------------------------
 set (INCLUDE_INSTALL_DIR ${HDF5_INSTALL_INCLUDE_DIR})
@@ -134,10 +141,6 @@ install (
 #-----------------------------------------------------------------------------
 option (HDF5_PACK_EXAMPLES  "Package the HDF5 Library Examples Compressed File" OFF)
 if (HDF5_PACK_EXAMPLES)
-  if (DEFINED CMAKE_TOOLCHAIN_FILE)
-    get_filename_component(TOOLCHAIN ${CMAKE_TOOLCHAIN_FILE} NAME)
-    set(CTEST_TOOLCHAIN_FILE "\${CTEST_SOURCE_DIRECTORY}/config/toolchain/${TOOLCHAIN}")
-  endif ()
   configure_file (
       ${HDF_RESOURCES_DIR}/examples/HDF5_Examples.cmake.in
       ${HDF5_BINARY_DIR}/HDF5_Examples.cmake @ONLY
@@ -148,8 +151,53 @@ if (HDF5_PACK_EXAMPLES)
       COMPONENT hdfdocuments
   )
 
+  option (EXAMPLES_DOWNLOAD "Download to use released examples files" OFF)
+  if (EXAMPLES_DOWNLOAD)
+    option (EXAMPLES_USE_RELEASE_NAME "Use the released examples artifact name" OFF)
+    if (EXAMPLES_USE_RELEASE_NAME)
+      set (EXAMPLES_NAME ${EXAMPLES_TGZ_ORIGNAME})
+    else ()
+      set (EXAMPLES_NAME ${HDF5_EXAMPLES_COMPRESSED})
+    endif ()
+    if (NOT EXAMPLES_USE_LOCALCONTENT)
+      set (EXAMPLES_URL ${EXAMPLES_TGZ_ORIGPATH}/${EXAMPLES_NAME})
+      file (DOWNLOAD ${EXAMPLES_URL} ${HDF5_BINARY_DIR}/${HDF5_EXAMPLES_COMPRESSED} STATUS EX_DL)
+      message (STATUS "Examples file is ${EXAMPLES_URL} STATUS=${EX_DL}")
+    else ()
+      set (EXAMPLES_URL ${TGZPATH}/${EXAMPLES_NAME})
+      file (COPY_FILE ${EXAMPLES_URL} ${HDF5_BINARY_DIR}/${HDF5_EXAMPLES_COMPRESSED} RESULT EX_DL)
+      message (STATUS "Examples file is ${EXAMPLES_URL} RESULT=${EX_DL}")
+    endif ()
+    if (EXISTS "${HDF5_BINARY_DIR}/${HDF5_EXAMPLES_COMPRESSED}")
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar xzf ${HDF5_EXAMPLES_COMPRESSED}
+          WORKING_DIRECTORY ${HDF5_BINARY_DIR}
+          COMMAND_ECHO STDOUT
+      )
+    endif ()
+  else ()
+    if (EXISTS "${HDF5_EXAMPLES_COMPRESSED_DIR}/${HDF5_EXAMPLES_COMPRESSED}")
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar xzf ${HDF5_EXAMPLES_COMPRESSED_DIR}/${HDF5_EXAMPLES_COMPRESSED}
+          WORKING_DIRECTORY ${HDF5_BINARY_DIR}
+          COMMAND_ECHO STDOUT
+      )
+    endif ()
+  endif ()
+  get_filename_component (EX_LAST_EXT ${HDF5_EXAMPLES_COMPRESSED} LAST_EXT)
+  if (${EX_LAST_EXT} STREQUAL ".zip")
+    get_filename_component (EX_DIR_NAME ${HDF5_EXAMPLES_COMPRESSED} NAME_WLE)
+  else ()
+    get_filename_component (EX_DIR_NAME ${HDF5_EXAMPLES_COMPRESSED} NAME_WLE)
+    get_filename_component (EX_DIR_NAME ${EX_DIR_NAME} NAME_WLE)
+  endif ()
+  execute_process(
+      COMMAND ${CMAKE_COMMAND} -E rename ${EX_DIR_NAME} HDF5Examples
+      WORKING_DIRECTORY ${HDF5_BINARY_DIR}
+      COMMAND_ECHO STDOUT
+  )
   install (
-    DIRECTORY ${HDF5_SOURCE_DIR}/HDF5Examples
+    DIRECTORY ${HDF5_BINARY_DIR}/HDF5Examples
     DESTINATION ${HDF5_INSTALL_DATA_DIR}
     USE_SOURCE_PERMISSIONS
     COMPONENT hdfdocuments
@@ -247,10 +295,10 @@ endif ()
 if (NOT HDF5_EXTERNALLY_CONFIGURED AND NOT HDF5_NO_PACKAGES)
   set (CPACK_PACKAGE_VENDOR "HDF_Group")
   set (CPACK_PACKAGE_NAME "${HDF5_PACKAGE_NAME}")
-  if (NOT WIN32 OR HDF5_VERS_SUBRELEASE MATCHES "^[0-9]+$")
-    set (CPACK_PACKAGE_VERSION "${HDF5_PACKAGE_VERSION_STRING}")
-  else ()
+  if (CDASH_LOCAL)
     set (CPACK_PACKAGE_VERSION "${HDF5_PACKAGE_VERSION}")
+  else ()
+    set (CPACK_PACKAGE_VERSION "${HDF5_PACKAGE_VERSION_STRING}")
   endif ()
   set (CPACK_PACKAGE_VERSION_MAJOR "${HDF5_PACKAGE_VERSION_MAJOR}")
   set (CPACK_PACKAGE_VERSION_MINOR "${HDF5_PACKAGE_VERSION_MINOR}")
@@ -356,10 +404,7 @@ if (NOT HDF5_EXTERNALLY_CONFIGURED AND NOT HDF5_NO_PACKAGES)
     endif ()
   elseif (APPLE)
     list (APPEND CPACK_GENERATOR "STGZ")
-    option (HDF5_PACK_MACOSX_DMG  "Package the HDF5 Library using DragNDrop" OFF)
-    if (HDF5_PACK_MACOSX_DMG)
-      list (APPEND CPACK_GENERATOR "DragNDrop")
-    endif ()
+    list (APPEND CPACK_GENERATOR "DragNDrop")
     set (CPACK_COMPONENTS_ALL_IN_ONE_PACKAGE ON)
     set (CPACK_PACKAGING_INSTALL_PREFIX "/${CPACK_PACKAGE_INSTALL_DIRECTORY}")
     set (CPACK_PACKAGE_ICON "${HDF_RESOURCES_DIR}/hdf.icns")
@@ -459,6 +504,7 @@ The HDF5 data model, file format, API, library, and tools are open and distribut
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${ZLIB_INCLUDE_DIR_GEN};HDF5_ZLIB;ALL;/")
         else ()
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${ZLIB_INCLUDE_DIR_GEN};HDF5_ZLIB;libraries;/")
+          set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${ZLIB_INCLUDE_DIR_GEN};HDF5_ZLIB;headers;/")
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${ZLIB_INCLUDE_DIR_GEN};HDF5_ZLIB;configinstall;/")
         endif ()
       endif ()
@@ -467,6 +513,7 @@ The HDF5 data model, file format, API, library, and tools are open and distribut
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${SZIP_INCLUDE_DIR_GEN};SZIP;ALL;/")
         else ()
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${SZIP_INCLUDE_DIR_GEN};SZIP;libraries;/")
+          set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${SZIP_INCLUDE_DIR_GEN};SZIP;headers;/")
           set (CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${SZIP_INCLUDE_DIR_GEN};SZIP;configinstall;/")
         endif ()
       endif ()

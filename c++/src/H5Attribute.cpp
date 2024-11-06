@@ -605,16 +605,4 @@ Attribute::~Attribute()
     }
 }
 
-//--------------------------------------------------------------------------
-// Function:    Copy assignment operator
-Attribute &
-Attribute::operator=(const Attribute &original)
-{
-    if (&original != this) {
-        setId(original.id);
-    }
-
-    return *this;
-}
-
 } // namespace H5

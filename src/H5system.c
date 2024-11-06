@@ -339,20 +339,13 @@ Wsetenv(const char *name, const char *value, int overwrite)
      * value is non-zero), then return an error code.
      */
     if (!overwrite) {
-#ifndef H5_HAVE_MINGW
         size_t  bufsize;
         errno_t err;
 
         err = getenv_s(&bufsize, NULL, 0, name);
         if (err || bufsize)
             return (int)err;
-#else
-        /* MinGW doesn't have getenv_s() */
-        char *test = getenv(name);
-        if (*test)
-            return FAIL;
-#endif
-    }
+    } /* end if */
 
     return (int)_putenv_s(name, value);
 } /* end Wsetenv() */
@@ -521,21 +514,27 @@ error:
 } /* end H5_get_utf16_str() */
 
 /*-------------------------------------------------------------------------
- * Function:     Wopen
+ * Function:     Wopen_utf8
  *
- * Purpose:      Equivalent of open(2) for use on Windows. Necessary to
- *               handle code pages and Unicode on that platform.
+ * Purpose:      UTF-8 equivalent of open(2) for use on Windows.
+ *               Converts a UTF-8 input path to UTF-16 and then opens the
+ *               file via _wopen() under the hood
  *
  * Return:       Success:    A POSIX file descriptor
  *               Failure:    -1
+ *
  *-------------------------------------------------------------------------
  */
 int
-Wopen(const char *path, int oflag, ...)
+Wopen_utf8(const char *path, int oflag, ...)
 {
     int      fd    = -1;   /* POSIX file descriptor to be returned */
     wchar_t *wpath = NULL; /* UTF-16 version of the path */
     int      pmode = 0;    /* mode (optionally set via variable args) */
+
+    /* Convert the input UTF-8 path to UTF-16 */
+    if (NULL == (wpath = H5_get_utf16_str(path)))
+        goto done;
 
     /* _O_BINARY must be set in Windows to avoid CR-LF <-> LF EOL
      * transformations when performing I/O. Note that this will
@@ -552,83 +551,47 @@ Wopen(const char *path, int oflag, ...)
         va_end(vl);
     }
 
-    /* First try opening the file with the normal POSIX open() call.
-     * This will handle ASCII without additional processing as well as
-     * systems where code pages are being used instead of true Unicode.
-     */
-    if ((fd = open(path, oflag, pmode)) >= 0) {
-        /* If this succeeds, we're done */
-        goto done;
-    }
-
-    if (errno == ENOENT) {
-        /* Not found, reset errno and try with UTF-16 */
-        errno = 0;
-    }
-    else {
-        /* Some other error (like permissions), so just exit */
-        goto done;
-    }
-
-    /* Convert the input UTF-8 path to UTF-16 */
-    if (NULL == (wpath = H5_get_utf16_str(path)))
-        goto done;
-
-    /* Open the file using a UTF-16 path */
+    /* Open the file */
     fd = _wopen(wpath, oflag, pmode);
 
 done:
-    H5MM_xfree(wpath);
+    if (wpath)
+        H5MM_xfree((void *)wpath);
 
     return fd;
-} /* end Wopen() */
+} /* end Wopen_utf8() */
 
 /*-------------------------------------------------------------------------
- * Function:     Wremove
+ * Function:     Wremove_utf8
  *
- * Purpose:      Equivalent of remove(3) for use on Windows. Necessary to
- *               handle code pages and Unicode on that platform.
+ * Purpose:      UTF-8 equivalent of remove(3) for use on Windows.
+ *               Converts a UTF-8 input path to UTF-16 and then opens the
+ *               file via _wremove() under the hood
  *
  * Return:       Success:    0
  *               Failure:    -1
+ *
  *-------------------------------------------------------------------------
  */
 int
-Wremove(const char *path)
+Wremove_utf8(const char *path)
 {
     wchar_t *wpath = NULL; /* UTF-16 version of the path */
     int      ret   = -1;
 
-    /* First try removing the file with the normal POSIX remove() call.
-     * This will handle ASCII without additional processing as well as
-     * systems where code pages are being used instead of true Unicode.
-     */
-    if ((ret = remove(path)) >= 0) {
-        /* If this succeeds, we're done */
-        goto done;
-    }
-
-    if (errno == ENOENT) {
-        /* Not found, reset errno and try with UTF-16 */
-        errno = 0;
-    }
-    else {
-        /* Some other error (like permissions), so just exit */
-        goto done;
-    }
-
     /* Convert the input UTF-8 path to UTF-16 */
     if (NULL == (wpath = H5_get_utf16_str(path)))
         goto done;
 
-    /* Remove the file using a UTF-16 path */
+    /* Open the file */
     ret = _wremove(wpath);
 
 done:
-    H5MM_xfree(wpath);
+    if (wpath)
+        H5MM_xfree((void *)wpath);
 
     return ret;
-} /* end Wremove() */
+} /* end Wremove_utf8() */
 
 #endif /* H5_HAVE_WIN32_API */
 
@@ -844,12 +807,13 @@ H5_nanosleep(uint64_t nanosec)
 
 #ifdef H5_HAVE_WIN32_API
     DWORD dwMilliseconds = (DWORD)ceil(nanosec / 1.0e6);
+    DWORD ignore;
 
     /* Windows can't sleep at a ns resolution. Best we can do is ~1 ms. We
      * don't care about the return value since the second parameter
      * (bAlertable) is false, so it will always be zero.
      */
-    SleepEx(dwMilliseconds, false);
+    ignore = SleepEx(dwMilliseconds, false);
 
 #else
 
