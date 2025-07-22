@@ -113,7 +113,7 @@ typedef struct H5FD_stdio_t {
     DWORD nFileIndexHigh;
     DWORD dwVolumeSerialNumber;
 
-    HANDLE      hFile; /* Native windows file handle */
+    HANDLE hFile; /* Native windows file handle */
 #endif /* H5_HAVE_WIN32_API */
 } H5FD_stdio_t;
 
@@ -291,8 +291,6 @@ herr_t
 H5Pset_fapl_stdio(hid_t fapl_id)
 {
     static const char *func = "H5FDset_fapl_stdio"; /*for error reporting*/
-
-    /*NO TRACE*/
 
     /* Clear the error stack */
     H5Eclear2(H5E_DEFAULT);

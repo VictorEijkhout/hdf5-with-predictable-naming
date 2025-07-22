@@ -20,18 +20,14 @@
 /* Headers */
 /***********/
 #include "H5private.h"   /* Generic Functions                        */
-#include "H5ACprivate.h" /* Metadata cache                           */
 #include "H5CXprivate.h" /* API Contexts                             */
-#include "H5Dprivate.h"  /* Datasets                                 */
 #include "H5Eprivate.h"  /* Error handling                           */
-#include "H5Gprivate.h"  /* Groups                                   */
 #include "H5HGprivate.h" /* Global Heaps                             */
 #include "H5Iprivate.h"  /* IDs                                      */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Oprivate.h"  /* Object headers                           */
 #include "H5Rpkg.h"      /* References                               */
 #include "H5Sprivate.h"  /* Dataspaces                               */
-#include "H5Tprivate.h"  /* Datatypes                                */
 
 #include "H5VLnative_private.h" /* Native VOL connector                     */
 
@@ -841,7 +837,7 @@ H5R__get_attr_name(const H5R_ref_priv_t *ref, char *buf, size_t size)
         buf[copy_len] = '\0';
     }
 
-    ret_value = (ssize_t)(attr_name_len + 1);
+    ret_value = (ssize_t)(attr_name_len);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5R__get_attr_name() */
@@ -960,7 +956,10 @@ H5R__decode(const unsigned char *buf, size_t *nbytes, H5R_ref_priv_t *ref)
     const uint8_t *p        = (const uint8_t *)buf;
     size_t         buf_size = 0, decode_size = 0;
     uint8_t        flags;
-    herr_t         ret_value = SUCCEED;
+    bool           decoded_filename  = false; /* Whether filename was decoded, for error handling */
+    bool           decoded_attrname  = false; /* Whether attribute name was decoded, for error handling */
+    bool           decoded_dataspace = false; /* Whether dataspace was decoded, for error handling */
+    herr_t         ret_value         = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
@@ -994,6 +993,7 @@ H5R__decode(const unsigned char *buf, size_t *nbytes, H5R_ref_priv_t *ref)
         /* Decode file name */
         H5R_DECODE(H5R__decode_string, &ref->info.obj.filename, p, buf_size, decode_size,
                    "Cannot decode filename");
+        decoded_filename = true;
     }
     else
         ref->info.obj.filename = NULL;
@@ -1001,22 +1001,28 @@ H5R__decode(const unsigned char *buf, size_t *nbytes, H5R_ref_priv_t *ref)
     switch (ref->type) {
         case H5R_OBJECT2:
             break;
+
         case H5R_DATASET_REGION2:
             /* Decode dataspace */
             H5R_DECODE(H5R__decode_region, &ref->info.reg.space, p, buf_size, decode_size,
                        "Cannot decode region");
+            decoded_dataspace = true;
             break;
+
         case H5R_ATTR:
             /* Decode attribute name */
             H5R_DECODE(H5R__decode_string, &ref->info.attr.name, p, buf_size, decode_size,
                        "Cannot decode attribute name");
+            decoded_attrname = true;
             break;
+
         case H5R_OBJECT1:
         case H5R_DATASET_REGION1:
         case H5R_BADTYPE:
         case H5R_MAXTYPE:
             assert("invalid reference type" && 0);
             HGOTO_ERROR(H5E_REFERENCE, H5E_UNSUPPORTED, FAIL, "internal error (invalid reference type)");
+
         default:
             assert("unknown reference type" && 0);
             HGOTO_ERROR(H5E_REFERENCE, H5E_UNSUPPORTED, FAIL, "internal error (unknown reference type)");
@@ -1035,6 +1041,22 @@ H5R__decode(const unsigned char *buf, size_t *nbytes, H5R_ref_priv_t *ref)
     *nbytes = decode_size;
 
 done:
+    if (ret_value < 0) {
+        if (decoded_filename) {
+            H5MM_xfree(ref->info.obj.filename);
+            ref->info.obj.filename = NULL;
+        }
+        if (decoded_attrname) {
+            H5MM_xfree(ref->info.attr.name);
+            ref->info.attr.name = NULL;
+        }
+        if (decoded_dataspace) {
+            if (H5S_close(ref->info.reg.space) < 0)
+                HDONE_ERROR(H5E_REFERENCE, H5E_CLOSEERROR, FAIL, "unable to release dataspace");
+            ref->info.reg.space = NULL;
+        }
+    }
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5R__decode() */
 
@@ -1179,7 +1201,7 @@ H5R__decode_region(const unsigned char *buf, size_t *nbytes, H5S_t **space_ptr)
     const uint8_t *p_end    = p + *nbytes - 1;
     size_t         buf_size = 0;
     unsigned       rank;
-    H5S_t         *space;
+    H5S_t         *space     = NULL;
     herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
@@ -1220,6 +1242,10 @@ H5R__decode_region(const unsigned char *buf, size_t *nbytes, H5S_t **space_ptr)
     *space_ptr = space;
 
 done:
+    if (ret_value < 0)
+        if (space && H5S_close(space) < 0)
+            HDONE_ERROR(H5E_REFERENCE, H5E_CLOSEERROR, FAIL, "unable to release dataspace");
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5R__decode_region() */
 

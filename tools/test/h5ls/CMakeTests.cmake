@@ -35,6 +35,8 @@
       textlink.h5
       textlinksrc.h5
       textlinktar.h5
+      tfloat16.h5
+      tfloat16_be.h5
       tgroup.h5
       tgrp_comments.h5
       tgrpnullspace.h5
@@ -49,13 +51,6 @@
       tudlink.h5
       tvldtypes1.h5
   )
-
-  set (LIST_ERR_TEST_FILES
-      nosuchfile.err
-      textlinksrc-nodangle-1.err
-      tgroup-1.err
-  )
-
   set (LIST_OTHER_TEST_FILES
       help-1.ls
       help-2.ls
@@ -88,6 +83,10 @@
       textlinksrc-7-old.ls
       textlinksrc-nodangle-1.ls
       textlinksrc-nodangle-2.ls
+      tfloat16.ls
+      tfloat16_nosupport.ls
+      tfloat16_be.ls
+      tfloat16_be_nosupport.ls
       tgroup.ls
       tgroup-1.ls
       tgroup-2.ls
@@ -130,9 +129,6 @@
   foreach (listothers ${LIST_OTHER_TEST_FILES})
     HDFTEST_COPY_FILE("${PROJECT_SOURCE_DIR}/expected/${listothers}" "${PROJECT_BINARY_DIR}/testfiles/${listothers}" "h5ls_files")
   endforeach ()
-  foreach (listerrfiles ${LIST_ERR_TEST_FILES})
-    HDFTEST_COPY_FILE("${PROJECT_SOURCE_DIR}/errfiles/${listerrfiles}" "${PROJECT_BINARY_DIR}/testfiles/${listerrfiles}" "h5ls_files")
-  endforeach ()
   add_custom_target(h5ls_files ALL COMMENT "Copying files needed by h5ls tests" DEPENDS ${h5ls_files_list})
 
 ##############################################################################
@@ -144,7 +140,7 @@
   macro (ADD_H5_TEST resultfile resultcode)
     # If using memchecker add tests without using scripts
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME H5LS-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5ls${tgt_file_ext}> ${ARGN})
+      add_test (NAME H5LS-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5ls> ${ARGN})
       set_tests_properties (H5LS-${resultfile} PROPERTIES
           WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles"
       )
@@ -157,7 +153,7 @@
           NAME H5LS-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls${tgt_file_ext}>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -169,12 +165,15 @@
     set_tests_properties (H5LS-${resultfile} PROPERTIES
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles"
     )
+    if ("H5LS-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+      set_tests_properties (H5LS-${resultfile} PROPERTIES DISABLED true)
+    endif ()
   endmacro ()
 
-  macro (ADD_H5_ERR_TEST resultfile resultcode)
+  macro (ADD_H5_ERR_TEST resultfile resultcode result_errcheck)
     # If using memchecker add tests without using scripts
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME H5LS-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5ls${tgt_file_ext}> ${ARGN})
+      add_test (NAME H5LS-${resultfile} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5ls> ${ARGN})
       set_tests_properties (H5LS-${resultfile} PROPERTIES WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles")
       if ("${resultcode}" STREQUAL "1")
         set_tests_properties (H5LS-${resultfile} PROPERTIES WILL_FAIL "true")
@@ -184,19 +183,23 @@
           NAME H5LS-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls${tgt_file_ext}>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles"
               -D "TEST_OUTPUT=${resultfile}.out"
               -D "TEST_EXPECT=${resultcode}"
               -D "TEST_REFERENCE=${resultfile}.ls"
-              -D "TEST_ERRREF=${resultfile}.err"
-              -P "${HDF_RESOURCES_DIR}/runTest.cmake"
+              -D "TEST_ERRREF=${result_errcheck}"
+              -D "TEST_SKIP_COMPARE=true"
+              -P "${HDF_RESOURCES_DIR}/grepTest.cmake"
       )
     endif ()
     set_tests_properties (H5LS-${resultfile} PROPERTIES
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles"
     )
+    if ("H5LS-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+      set_tests_properties (H5LS-${resultfile} PROPERTIES DISABLED true)
+    endif ()
   endmacro ()
 
   macro (ADD_H5_UD_TEST testname resultcode resultfile)
@@ -205,7 +208,7 @@
           NAME H5LS_UD-${testname}-${resultfile}
           COMMAND "${CMAKE_COMMAND}"
               -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls${tgt_file_ext}>"
+              -D "TEST_PROGRAM=$<TARGET_FILE:h5ls>"
               -D "TEST_ARGS=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}/testfiles"
               -D "TEST_OUTPUT=${resultfile}.out"
@@ -219,6 +222,9 @@
       set_tests_properties (H5LS_UD-${testname}-${resultfile} PROPERTIES
           WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/testfiles"
       )
+      if ("H5LS_UD-${testname}-${resultfile}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+        set_tests_properties (H5LS_UD-${testname}-${resultfile} PROPERTIES DISABLED true)
+      endif ()
     endif ()
   endmacro ()
 
@@ -252,10 +258,13 @@
   ADD_H5_TEST (tgroup 0 -w80 tgroup.h5)
   ADD_H5_TEST (tgroup-3 0 -w80 tgroup.h5/g1)
 
+  # test page buffer cache command
+  ADD_H5_TEST (tall-pbc 0 -w80 --page-buffer-size=8192 tall.h5)
+
   # test for displaying groups
   # The following combination of arguments is expected to return an error message
   # and return value 1
-  ADD_H5_ERR_TEST (tgroup-1 1 -w80 -r -g tgroup.h5)
+  ADD_H5_ERR_TEST (tgroup-1 1 "option not compatible" -w80 -r -g tgroup.h5)
   ADD_H5_TEST (tgroup-2 0 -w80 -g tgroup.h5/g1)
 
   # test for files with groups that have long comments
@@ -296,13 +305,40 @@
   # tests for no-dangling-links
   # if this option is given on dangling link, h5ls should return exit code 1
   # when used alone , expect to print out help and return exit code 1
-  ADD_H5_ERR_TEST (textlinksrc-nodangle-1 1 -w80 --no-dangling-links textlinksrc.h5)
+  ADD_H5_ERR_TEST (textlinksrc-nodangle-1 1 "no-dangling-links must be used" -w80 --no-dangling-links textlinksrc.h5)
   # external dangling link - expected exit code 1
   ADD_H5_TEST (textlinksrc-nodangle-2 1 -w80 --follow-symlinks --no-dangling-links textlinksrc.h5)
   # soft dangling link - expected exit code 1
   ADD_H5_TEST (tsoftlinks-nodangle-1 1 -w80 --follow-symlinks --no-dangling-links tsoftlinks.h5)
   # when used file with no dangling links - expected exit code 0
   ADD_H5_TEST (thlinks-nodangle-1 0 -w80 --follow-symlinks --no-dangling-links thlink.h5)
+
+  # tests for _Float16 type
+  if (${${HDF_PREFIX}_HAVE__FLOAT16})
+    # If support is available for _Float16 type, the second test
+    # will fail as the type will be printed out as "native _Float16"
+    # rather than "IEEE 16-bit little-endian float".
+    if (H5_WORDS_BIGENDIAN)
+      ADD_H5_TEST (tfloat16_be 0 -w80 -v tfloat16_be.h5)
+      ADD_H5_TEST (tfloat16_be_nosupport 0 -w80 -v tfloat16_be.h5)
+      set_tests_properties (H5LS-tfloat16_be_nosupport PROPERTIES WILL_FAIL "true")
+    else ()
+      ADD_H5_TEST (tfloat16 0 -w80 -v tfloat16.h5)
+      ADD_H5_TEST (tfloat16_nosupport 0 -w80 -v tfloat16.h5)
+      set_tests_properties (H5LS-tfloat16_nosupport PROPERTIES WILL_FAIL "true")
+    endif ()
+  else ()
+    # If support is NOT available for _Float16 type, the first two tests
+    # will fail as the types will be printed out as
+    # "IEEE 16-bit little-endian float" and "IEEE 16-bit big-endian float"
+    # rather than "native _Float16"
+    ADD_H5_TEST (tfloat16 0 -w80 -v tfloat16.h5)
+    set_tests_properties (H5LS-tfloat16 PROPERTIES WILL_FAIL "true")
+    ADD_H5_TEST (tfloat16_be 0 -w80 -v tfloat16_be.h5)
+    set_tests_properties (H5LS-tfloat16_be PROPERTIES WILL_FAIL "true")
+    ADD_H5_TEST (tfloat16_nosupport 0 -w80 -v tfloat16.h5)
+    ADD_H5_TEST (tfloat16_be_nosupport 0 -w80 -v tfloat16_be.h5)
+  endif ()
 
 # test for wildcards in filename (does not work with cmake)
 #  ADD_H5_TEST (tstarfile 0 -w80 t*link.h5)
@@ -358,7 +394,7 @@
   endif ()
 
   # test for non-existing file
-  ADD_H5_ERR_TEST (nosuchfile 1 nosuchfile.h5)
+  ADD_H5_ERR_TEST (nosuchfile 1 "unable to open file" nosuchfile.h5)
 
   # test for variable length data types in verbose mode
   if (H5_WORDS_BIGENDIAN)

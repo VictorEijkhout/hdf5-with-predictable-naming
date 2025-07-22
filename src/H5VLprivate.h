@@ -96,6 +96,7 @@ H5_DLL void          *H5VL_object_data(const H5VL_object_t *vol_obj);
 H5_DLL void          *H5VL_object_unwrap(const H5VL_object_t *vol_obj);
 H5_DLL void          *H5VL_object_verify(hid_t id, H5I_type_t obj_type);
 H5_DLL H5VL_object_t *H5VL_vol_object(hid_t id);
+H5_DLL H5VL_object_t *H5VL_vol_object_verify(hid_t id, H5I_type_t obj_type);
 H5_DLL H5VL_object_t *H5VL_create_object(void *object, H5VL_t *vol_connector);
 H5_DLL H5VL_object_t *H5VL_create_object_using_vol_id(H5I_type_t type, void *obj, hid_t connector_id);
 H5_DLL hsize_t        H5VL_object_inc_rc(H5VL_object_t *obj);
@@ -177,18 +178,12 @@ H5_DLL void  *H5VL_dataset_create(const H5VL_object_t *vol_obj, const H5VL_loc_p
                                   hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id, void **req);
 H5_DLL void  *H5VL_dataset_open(const H5VL_object_t *vol_obj, const H5VL_loc_params_t *loc_params,
                                 const char *name, hid_t dapl_id, hid_t dxpl_id, void **req);
-H5_DLL herr_t H5VL_dataset_read(size_t count, const H5VL_object_t *vol_obj[], hid_t mem_type_id[],
+H5_DLL herr_t H5VL_dataset_read(size_t count, void *obj[], H5VL_t *connector, hid_t mem_type_id[],
                                 hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id, void *buf[],
                                 void **req);
-H5_DLL herr_t H5VL_dataset_read_direct(size_t count, void *obj[], H5VL_t *connector, hid_t mem_type_id[],
-                                       hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id,
-                                       void *buf[], void **req);
-H5_DLL herr_t H5VL_dataset_write(size_t count, const H5VL_object_t *vol_obj[], hid_t mem_type_id[],
+H5_DLL herr_t H5VL_dataset_write(size_t count, void *obj[], H5VL_t *connector, hid_t mem_type_id[],
                                  hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id,
                                  const void *buf[], void **req);
-H5_DLL herr_t H5VL_dataset_write_direct(size_t count, void *obj[], H5VL_t *connector, hid_t mem_type_id[],
-                                        hid_t mem_space_id[], hid_t file_space_id[], hid_t dxpl_id,
-                                        const void *buf[], void **req);
 H5_DLL herr_t H5VL_dataset_get(const H5VL_object_t *vol_obj, H5VL_dataset_get_args_t *args, hid_t dxpl_id,
                                void **req);
 H5_DLL herr_t H5VL_dataset_specific(const H5VL_object_t *cls, H5VL_dataset_specific_args_t *args,

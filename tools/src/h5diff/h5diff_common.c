@@ -24,7 +24,7 @@ static int check_d_input(const char *);
  * Command-line options: The user can specify short or long-named
  * parameters.
  */
-static const char            *s_opts   = "cd:ehln:p:qrv*xA:CE:NS*V";
+static const char            *s_opts   = "cd:ehln:p:qrv*xA:CE:K:NS*V";
 static struct h5_long_options l_opts[] = {{"compare", no_arg, 'c'},
                                           {"delta", require_arg, 'd'},
                                           {"use-system-epsilon", no_arg, 'e'},
@@ -39,6 +39,7 @@ static struct h5_long_options l_opts[] = {{"compare", no_arg, 'c'},
                                           {"exclude-attribute", require_arg, 'A'},
                                           {"no-compact-subset", no_arg, 'C'},
                                           {"exclude-path", require_arg, 'E'},
+                                          {"page-buffer-size", require_arg, 'K'},
                                           {"nan", no_arg, 'N'},
                                           {"enable-error-stack", optional_arg, 'S'},
                                           {"version", no_arg, 'V'},
@@ -136,6 +137,9 @@ parse_command_line(int argc, const char *const *argv, const char **fname1, const
     /* initially no not-comparable. */
     /**this is bad in mixing option with results**/
     opts->not_cmp = 0;
+
+    /* init for page buffer cache size option */
+    opts->page_cache = 0;
 
     /* init for exclude-path option */
     exclude_head = NULL;
@@ -318,6 +322,10 @@ parse_command_line(int argc, const char *const *argv, const char **fname1, const
 
             case 'e':
                 opts->use_system_epsilon = 1;
+                break;
+
+            case 'K':
+                opts->page_cache = strtoul(H5_optarg, NULL, 0);
                 break;
 
             case '1':
@@ -623,6 +631,8 @@ usage(void)
     PRINTVALSTREAM(rawoutstream, "   -q, --quiet\n");
     PRINTVALSTREAM(rawoutstream, "         Quiet mode. Do not produce output.\n");
     PRINTVALSTREAM(rawoutstream,
+                   "   --page-buffer-size=N    Set the page buffer cache size, N=non-negative integers\n");
+    PRINTVALSTREAM(rawoutstream,
                    "   --vol-value-1           Value (ID) of the VOL connector to use for opening the\n");
     PRINTVALSTREAM(rawoutstream, "                           first HDF5 file specified\n");
     PRINTVALSTREAM(rawoutstream,
@@ -813,7 +823,7 @@ usage(void)
                    "      specified group) and generates a report of objects that appear in only\n");
     PRINTVALSTREAM(rawoutstream,
                    "      one group or in both groups. Common objects are then compared recursively.\n");
-    PRINTVALSTREAM(rawoutstream, "  2) Datasets\n");
+    PRINTVALSTREAM(rawoutstream, "  2) Attributes and Datasets\n");
     PRINTVALSTREAM(rawoutstream,
                    "      Array rank and dimensions, datatypes, and data values are compared.\n");
     PRINTVALSTREAM(rawoutstream, "  3) Datatypes\n");

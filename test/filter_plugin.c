@@ -847,10 +847,7 @@ test_creating_groups_using_plugins(hid_t fid)
 
     /* Create multiple groups under the top-level group */
     for (i = 0; i < N_SUBGROUPS; i++) {
-        char *sp = subgroup_name;
-
-        sp += snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX);
-        sprintf(sp, "%d", i);
+        snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX "%d", i);
 
         if ((sub_gid = H5Gcreate2(gid, subgroup_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0)
             TEST_ERROR;
@@ -906,10 +903,7 @@ test_opening_groups_using_plugins(hid_t fid)
 
     /* Open all the sub-groups under the top-level group */
     for (i = 0; i < N_SUBGROUPS; i++) {
-        char *sp = subgroup_name;
-
-        sp += snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX);
-        sprintf(sp, "%d", i);
+        snprintf(subgroup_name, sizeof(subgroup_name), SUBGROUP_PREFIX "%d", i);
 
         if ((sub_gid = H5Gopen2(gid, subgroup_name, H5P_DEFAULT)) < 0)
             TEST_ERROR;
@@ -1447,7 +1441,7 @@ main(void)
         hid_t my_fapl_id;
 
         /* Testing setup */
-        h5_reset();
+        h5_test_init();
 
         /* Get a VFD-dependent filename */
         if ((old_ff_fapl_id = h5_fileaccess()) < 0)
@@ -1497,7 +1491,7 @@ main(void)
                 TEST_ERROR;
         }
 
-        /* Restore the default error handler (set in h5_reset()) */
+        /* Restore the default error handler (set in h5_test_init()) */
         h5_restore_err();
 
         /*******************************************************************/
@@ -1507,7 +1501,7 @@ main(void)
         puts("\nTesting reading data with with dynamic plugin filters:");
 
         /* Close the library so that all loaded plugin libraries are unloaded */
-        h5_reset();
+        h5_test_init();
         if ((old_ff_fapl_id = h5_fileaccess()) < 0)
             TEST_ERROR;
 
@@ -1548,7 +1542,7 @@ main(void)
                 TEST_ERROR;
         }
 
-        /* Restore the default error handler (set in h5_reset()) */
+        /* Restore the default error handler (set in h5_test_init()) */
         h5_restore_err();
 
         /*******************************************************************/
@@ -1556,7 +1550,7 @@ main(void)
         /*******************************************************************/
 
         /* Close the library so that all loaded plugin libraries are unloaded */
-        h5_reset();
+        h5_test_init();
         if ((old_ff_fapl_id = h5_fileaccess()) < 0)
             TEST_ERROR;
 
@@ -1594,7 +1588,7 @@ main(void)
                 TEST_ERROR;
         }
         else {
-            /* Restore the default error handler (set in h5_reset()) */
+            /* Restore the default error handler (set in h5_test_init()) */
             h5_restore_err();
 
             if (H5Pclose(old_ff_fapl_id) < 0)

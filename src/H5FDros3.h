@@ -11,20 +11,26 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
- * Read-Only S3 Virtual File Driver (VFD)
- *
- * Purpose:    The public header file for the ros3 driver.
+ * Purpose:	The public header file for the read-only S3 (ros3) virtual file driver (VFD)
  */
 #ifndef H5FDros3_H
 #define H5FDros3_H
 
 #ifdef H5_HAVE_ROS3_VFD
-#define H5FD_ROS3       (H5FDperform_init(H5FD_ros3_init))
+
+/** Initializer for the ros3 VFD \since 1.8.22 */
+#define H5FD_ROS3 (H5FDperform_init(H5FD_ros3_init))
+
+/** Identifier for the ros3 VFD \since 1.14.0 */
 #define H5FD_ROS3_VALUE H5_VFD_ROS3
+
 #else
+/** Initializer for the ros3 VFD (disabled) \since 1.8.22 */
 #define H5FD_ROS3       (H5I_INVALID_HID)
+
+/** Identifier for the ros3 VFD (disabled) \since 1.14.0 */
 #define H5FD_ROS3_VALUE H5_VFD_INVALID
-#endif /* H5_HAVE_ROS3_VFD */
+#endif
 
 #ifdef H5_HAVE_ROS3_VFD
 
@@ -80,26 +86,32 @@
 /**
  * \def H5FD_ROS3_MAX_REGION_LEN
  * Maximum string length for specifying the region of the S3 bucket.
+ *
+ * \since 1.10.6
  */
 #define H5FD_ROS3_MAX_REGION_LEN 32
 /**
  * \def H5FD_ROS3_MAX_SECRET_ID_LEN
  * Maximum string length for specifying the security ID.
+ *
+ * \since 1.10.6
  */
 #define H5FD_ROS3_MAX_SECRET_ID_LEN 128
 /**
  * \def H5FD_ROS3_MAX_SECRET_KEY_LEN
  * Maximum string length for specifying the security key.
+ *
+ * \since 1.10.6
  */
 #define H5FD_ROS3_MAX_SECRET_KEY_LEN 128
 /**
  * \def H5FD_ROS3_MAX_SECRET_TOK_LEN
  * Maximum string length for specifying the session/security token.
  */
-#define H5FD_ROS3_MAX_SECRET_TOK_LEN 1024
+#define H5FD_ROS3_MAX_SECRET_TOK_LEN 4096
 
 /**
- *\struct H5FD_ros3_fapl_t
+ * \struct H5FD_ros3_fapl_t
  * \brief Configuration structure for H5Pset_fapl_ros3() / H5Pget_fapl_ros3().
  *
  * \details H5FD_ros_fapl_t is a public structure that is used to pass
@@ -116,16 +128,17 @@
  * \var hbool_t H5FD_ros3_fapl_t::authenticate
  *      A Boolean which specifies if security credentials should be used for
  *      accessing a S3 bucket.
+ *      If true, `aws_region`, `secret_id`, and `secret_key` must be populated.
+ *      If false, those three components are unused.
  *
  * \var char H5FD_ros3_fapl_t::aws_region[H5FD_ROS3_MAX_REGION_LEN + 1]
- *      A string which specifies the AWS region of the S3 bucket.
+ *      A string which specifies the AWS region of the S3 bucket, e.g. "us-east-1".
  *
  * \var char H5FD_ros3_fapl_t::secret_id[H5FD_ROS3_MAX_SECRET_ID_LEN + 1]
  *      A string which specifies the security ID.
  *
  * \var char H5FD_ros3_fapl_t::secret_key[H5FD_ROS3_MAX_SECRET_KEY_LEN + 1]
  *      A string which specifies the security key.
- *
  */
 typedef struct H5FD_ros3_fapl_t {
     int32_t version;
@@ -139,9 +152,9 @@ typedef struct H5FD_ros3_fapl_t {
 extern "C" {
 #endif
 
-/**
- * \brief Internal routine to initialize #H5FD_ROS3 driver. Not meant to be
- *        called directly by an HDF5 application.
+/** @private
+ *
+ * \brief Private initializer for the ros3 VFD
  */
 H5_DLL hid_t H5FD_ros3_init(void);
 

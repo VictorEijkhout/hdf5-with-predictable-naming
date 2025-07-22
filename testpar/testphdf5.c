@@ -73,7 +73,8 @@ pause_proc(void)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Get_processor_name(mpi_name, &mpi_namelen);
 
-    if (MAINPROCESS)
+    if (MAINPROCESS) {
+        memset(&statbuf, 0, sizeof(h5_stat_t));
         while ((HDstat(greenlight, &statbuf) == -1) && loops < maxloop) {
             if (!loops++) {
                 printf("Proc %d (%*s, %d): to debug, attach %d\n", mpi_rank, mpi_namelen, mpi_name, pid, pid);
@@ -81,7 +82,10 @@ pause_proc(void)
             printf("waiting(%ds) for file %s ...\n", time_int, greenlight);
             fflush(stdout);
             HDsleep(time_int);
+
+            memset(&statbuf, 0, sizeof(h5_stat_t));
         }
+    }
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
@@ -234,7 +238,7 @@ parse_options(int argc, char **argv)
                 nerrors++;
                 return (1);
             }
-        if (mpi_rank == 0) {
+        if (MAINPROCESS) {
             printf("Test filenames are:\n");
             for (i = 0; i < n; i++)
                 printf("    %s\n", filenames[i]);
@@ -301,20 +305,53 @@ int
 main(int argc, char **argv)
 {
     int             mpi_size, mpi_rank; /* mpi variables */
+    int             mpi_code;
     H5Ptest_param_t ndsets_params, ngroups_params;
     H5Ptest_param_t collngroups_params;
     H5Ptest_param_t io_mode_confusion_params;
     H5Ptest_param_t rr_obj_flush_confusion_params;
+#ifdef H5_HAVE_TEST_API
+    int required = MPI_THREAD_MULTIPLE;
+    int provided;
+#endif
 
 #ifndef H5_HAVE_WIN32_API
     /* Un-buffer the stdout and stderr */
-    HDsetbuf(stderr, NULL);
-    HDsetbuf(stdout, NULL);
+    setbuf(stderr, NULL);
+    setbuf(stdout, NULL);
 #endif
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+#ifdef H5_HAVE_TEST_API
+    /* Attempt to initialize with MPI_THREAD_MULTIPLE if possible */
+    if (MPI_SUCCESS != (mpi_code = MPI_Init_thread(&argc, &argv, required, &provided))) {
+        printf("MPI_Init_thread failed with error code %d\n", mpi_code);
+        return -1;
+    }
+#else
+    if (MPI_SUCCESS != (mpi_code = MPI_Init(&argc, &argv))) {
+        printf("MPI_Init failed with error code %d\n", mpi_code);
+        return -1;
+    }
+#endif
+
+    if (MPI_SUCCESS != (mpi_code = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank))) {
+        printf("MPI_Comm_rank failed with error code %d\n", mpi_code);
+        MPI_Finalize();
+        return -1;
+    }
+
+#ifdef H5_HAVE_TEST_API
+    /* Warn about missing MPI_THREAD_MULTIPLE support */
+    if ((provided < required) && MAINPROCESS)
+        printf("** MPI doesn't support MPI_Init_thread with MPI_THREAD_MULTIPLE **\n");
+#endif
+
+    if (MPI_SUCCESS != (mpi_code = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size))) {
+        if (MAINPROCESS)
+            printf("MPI_Comm_size failed with error code %d\n", mpi_code);
+        MPI_Finalize();
+        return -1;
+    }
 
     mpi_rank_framework_g = mpi_rank;
 
@@ -346,18 +383,26 @@ main(int argc, char **argv)
         }
     }
 
+    /* Set up file access property list with parallel I/O access */
+    fapl = H5Pcreate(H5P_FILE_ACCESS);
+    VRFY((fapl >= 0), "H5Pcreate succeeded");
+
+    vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
+
+    /* Get the capability flag of the VOL connector being used */
+    VRFY((H5Pget_vol_cap_flags(fapl, &vol_cap_flags_g) >= 0), "H5Pget_vol_cap_flags succeeded");
+
     /* Initialize testing framework */
     TestInit(argv[0], usage, parse_options);
 
     /* Tests are generally arranged from least to most complexity... */
     AddTest("mpiodup", test_fapl_mpio_dup, NULL, "fapl_mpio duplicate", NULL);
+    AddTest("getdxplmpio", test_get_dxpl_mpio, NULL, "dxpl_mpio get", PARATESTFILE);
 
     AddTest("split", test_split_comm_access, NULL, "dataset using split communicators", PARATESTFILE);
     AddTest("h5oflusherror", test_oflush, NULL, "H5Oflush failure", PARATESTFILE);
 
-#ifdef PB_OUT /* temporary: disable page buffering when parallel */
     AddTest("page_buffer", test_page_buffer_access, NULL, "page buffer usage in parallel", PARATESTFILE);
-#endif
 
     AddTest("props", test_file_properties, NULL, "Coll Metadata file property settings", PARATESTFILE);
 
@@ -367,6 +412,8 @@ main(int argc, char **argv)
             "Invalid libver bounds assertion failure", PARATESTFILE);
 
     AddTest("evictparassert", test_evict_on_close_parallel_unsupp, NULL, "Evict on close in parallel failure",
+            PARATESTFILE);
+    AddTest("fapl_preserve", test_fapl_preserve_hints, NULL, "preserve MPI I/O hints after fapl closed",
             PARATESTFILE);
 
     AddTest("idsetw", dataset_writeInd, NULL, "dataset independent write", PARATESTFILE);
@@ -531,7 +578,6 @@ main(int argc, char **argv)
     TestInfo(argv[0]);
 
     /* setup file access property list */
-    fapl = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
 
     /* Parse command line arguments */
@@ -556,7 +602,8 @@ main(int argc, char **argv)
         TestSummary();
 
     /* Clean up test files */
-    h5_clean_files(FILENAME, fapl);
+    h5_delete_all_test_files(FILENAME, fapl);
+    H5Pclose(fapl);
 
     nerrors += GetTestNumErrs();
 

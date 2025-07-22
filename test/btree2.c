@@ -2903,7 +2903,7 @@ test_insert_lots(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t
     herr_t      ret;                    /* Generic error return value */
 
     /* Initialize random number seed */
-    curr_time = HDtime(NULL);
+    curr_time = time(NULL);
 #if 0
 curr_time=1109170019;
 fprintf(stderr,"curr_time=%lu\n",(unsigned long)curr_time);
@@ -4973,7 +4973,7 @@ test_update_lots(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t
     herr_t           ret;                    /* Generic error return value */
 
     /* Initialize random number seed */
-    curr_time = HDtime(NULL);
+    curr_time = time(NULL);
 #if 0
 curr_time = 1451342093;
 fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
@@ -8598,7 +8598,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static unsigned
-test_remove_lots(const char *env_h5_drvr, hid_t fapl, const H5B2_create_t *cparam)
+test_remove_lots(const char *driver_name, hid_t fapl, const H5B2_create_t *cparam)
 {
     hid_t     file = H5I_INVALID_HID; /* File ID */
     char      filename[1024];         /* Filename to use */
@@ -8619,7 +8619,7 @@ test_remove_lots(const char *env_h5_drvr, hid_t fapl, const H5B2_create_t *cpara
     bool      single_file_vfd;        /* Whether VFD used stores data in a single file */
 
     /* Initialize random number seed */
-    curr_time = HDtime(NULL);
+    curr_time = time(NULL);
 #if 0
 curr_time = 1163537969;
 fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
@@ -8656,7 +8656,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
         TEST_ERROR;
 
     /* Check for VFD which stores data in multiple files */
-    single_file_vfd = !h5_driver_uses_multiple_files(env_h5_drvr, H5_EXCLUDE_NON_MULTIPART_DRIVERS);
+    single_file_vfd = !h5_driver_uses_multiple_files(driver_name, H5_EXCLUDE_NON_MULTIPART_DRIVERS);
     if (single_file_vfd) {
         /* Make a copy of the file in memory, in order to speed up deletion testing */
 
@@ -8665,6 +8665,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
             TEST_ERROR;
 
         /* Retrieve the file's size */
+        memset(&sb, 0, sizeof(h5_stat_t));
         if (HDfstat(fd, &sb) < 0)
             TEST_ERROR;
 
@@ -9914,25 +9915,23 @@ main(void)
     hid_t            fapl    = H5I_INVALID_HID; /* File access property list for data files */
     unsigned         nerrors = 0;               /* Cumulative error count */
     unsigned         reopen;                    /* Whether to reopen B-tree during tests */
-    int              ExpressMode;
-    const char      *envval         = NULL;
+    const char      *driver_name;
     bool             api_ctx_pushed = false; /* Whether API context pushed */
+    int              localTestExpress;       /* localized TestExpress */
 
-    envval = getenv(HDF5_DRIVER);
-    if (envval == NULL)
-        envval = "nomatch";
+    driver_name = h5_get_test_driver_name();
 
     /* Reset library */
-    h5_reset();
-    fapl        = h5_fileaccess();
-    ExpressMode = GetTestExpress();
+    h5_test_init();
+    fapl             = h5_fileaccess();
+    localTestExpress = TestExpress;
 
     /* For the Direct I/O driver, skip intensive tests due to poor performance */
-    if (!strcmp(envval, "direct"))
-        ExpressMode = 2;
+    if (localTestExpress < 2 && !strcmp(driver_name, "direct"))
+        localTestExpress = 2;
 
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
+    if (localTestExpress > 0)
+        printf("***Express test mode %d.  Some tests may be skipped\n", localTestExpress);
 
     /* Initialize v2 B-tree creation parameters */
     init_cparam(&cparam, &cparam2);
@@ -9968,7 +9967,7 @@ main(void)
         nerrors += test_insert_level2_2internal_split(fapl, &cparam, &tparam);
         nerrors += test_insert_level2_3internal_redistrib(fapl, &cparam, &tparam);
         nerrors += test_insert_level2_3internal_split(fapl, &cparam, &tparam);
-        if (ExpressMode > 1)
+        if (localTestExpress > 1)
             printf("***Express test mode on.  test_insert_lots skipped\n");
         else
             nerrors += test_insert_lots(fapl, &cparam, &tparam);
@@ -9982,7 +9981,7 @@ main(void)
         nerrors += test_update_level1_3leaf_redistrib(fapl, &cparam2, &tparam);
         nerrors += test_update_level1_middle_split(fapl, &cparam2, &tparam);
         nerrors += test_update_make_level2(fapl, &cparam2, &tparam);
-        if (ExpressMode > 1)
+        if (localTestExpress > 1)
             printf("***Express test mode on.  test_update_lots skipped\n");
         else
             nerrors += test_update_lots(fapl, &cparam2, &tparam);
@@ -10009,10 +10008,10 @@ main(void)
         nerrors += test_remove_level2_2internal_merge_right(fapl, &cparam, &tparam);
         nerrors += test_remove_level2_3internal_merge(fapl, &cparam, &tparam);
         nerrors += test_remove_level2_collapse_right(fapl, &cparam, &tparam);
-        if (ExpressMode > 1)
+        if (localTestExpress > 1)
             printf("***Express test mode on.  test_remove_lots skipped\n");
         else
-            nerrors += test_remove_lots(envval, fapl, &cparam);
+            nerrors += test_remove_lots(driver_name, fapl, &cparam);
 
         /* Test more complex B-tree queries */
         nerrors += test_find_neighbor(fapl, &cparam, &tparam);

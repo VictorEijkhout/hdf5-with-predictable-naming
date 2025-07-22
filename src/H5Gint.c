@@ -30,6 +30,7 @@
 /***********/
 #include "H5private.h"   /* Generic Functions                        */
 #include "H5Eprivate.h"  /* Error handling                           */
+#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5FOprivate.h" /* File objects                             */
 #include "H5Gpkg.h"      /* Groups                                   */
 #include "H5Iprivate.h"  /* IDs                                      */
@@ -436,10 +437,6 @@ H5G_open(const H5G_loc_t *loc)
 
     /* Check if group was already open */
     if ((shared_fo = (H5G_shared_t *)H5FO_opened(grp->oloc.file, grp->oloc.addr)) == NULL) {
-
-        /* Clear any errors from H5FO_opened() */
-        H5E_clear_stack(NULL);
-
         /* Open the group object */
         if (H5G__open_oid(grp) < 0)
             HGOTO_ERROR(H5E_SYM, H5E_NOTFOUND, NULL, "not found");
@@ -505,7 +502,8 @@ static herr_t
 H5G__open_oid(H5G_t *grp)
 {
     bool   obj_opened = false;
-    herr_t ret_value  = SUCCEED;
+    htri_t msg_exists;
+    herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
@@ -522,8 +520,14 @@ H5G__open_oid(H5G_t *grp)
     obj_opened = true;
 
     /* Check if this object has the right message(s) to be treated as a group */
-    if ((H5O_msg_exists(&(grp->oloc), H5O_STAB_ID) <= 0) && (H5O_msg_exists(&(grp->oloc), H5O_LINFO_ID) <= 0))
-        HGOTO_ERROR(H5E_SYM, H5E_CANTOPENOBJ, FAIL, "not a group");
+    if ((msg_exists = H5O_msg_exists(&(grp->oloc), H5O_STAB_ID)) < 0)
+        HGOTO_ERROR(H5E_SYM, H5E_CANTGET, FAIL, "can't check if symbol table message exists");
+    if (!msg_exists) {
+        if ((msg_exists = H5O_msg_exists(&(grp->oloc), H5O_LINFO_ID)) < 0)
+            HGOTO_ERROR(H5E_SYM, H5E_CANTGET, FAIL, "can't check if link info message exists");
+        if (!msg_exists)
+            HGOTO_ERROR(H5E_SYM, H5E_CANTOPENOBJ, FAIL, "not a group");
+    }
 
 done:
     if (ret_value < 0) {
@@ -1376,3 +1380,24 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5G__get_info_by_idx() */
+
+/*-------------------------------------------------------------------------
+ * Function: H5G_get_gcpl_id
+ *
+ * Purpose:  Quick and dirty routine to retrieve the
+ *           gcpl_id (group creation property list) from the
+ *           group creation operation struct
+ *
+ * Return:   'gcpl_id' on success/abort on failure (shouldn't fail)
+ *-------------------------------------------------------------------------
+ */
+hid_t
+H5G_get_gcpl_id(const H5G_obj_create_t *g)
+{
+    /* Use FUNC_ENTER_NOAPI_NOINIT_NOERR here to avoid performance issues */
+    FUNC_ENTER_NOAPI_NOINIT_NOERR
+
+    assert(g);
+
+    FUNC_LEAVE_NOAPI(g->gcpl_id);
+} /* end H5G_get_gcpl_id() */

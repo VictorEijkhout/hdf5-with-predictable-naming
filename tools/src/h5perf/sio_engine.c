@@ -53,12 +53,6 @@
     } while (0)
 
 /* POSIX I/O macros */
-#ifdef H5_HAVE_WIN32_API
-/* Can't link against the library, so this test will use the older, non-Unicode
- * _open() call on Windows.
- */
-#define HDopen(S, F, ...) _open(S, F | _O_BINARY, __VA_ARGS__)
-#endif /* H5_HAVE_WIN32_API */
 #define POSIXCREATE(fn)     HDopen(fn, O_CREAT | O_TRUNC | O_RDWR, 0600)
 #define POSIXOPEN(fn, F)    HDopen(fn, F, 0600)
 #define POSIXCLOSE(F)       HDclose(F)
@@ -349,6 +343,7 @@ sio_create_filename(iotype iot, const char *base_name, char *fullname, size_t si
              * handled below. */
             h5_stat_t buf;
 
+            memset(&buf, 0, sizeof(h5_stat_t));
             if (HDstat(fullname, &buf) < 0)
                 /* The directory doesn't exist just yet */
                 if (HDmkdir(fullname, 0755) < 0 && errno != EEXIST) {

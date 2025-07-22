@@ -207,7 +207,7 @@ test_many(hid_t file)
     } /* end for */
     PASSED();
 
-    /* Create a bunch of names and unlink them from the midle */
+    /* Create a bunch of names and unlink them from the middle */
     TESTING("outward unlink");
     for (i = 0; i < how_many; i++) {
         snprintf(name, sizeof(name), "obj_%05d", i);
@@ -529,7 +529,7 @@ test_filespace(hid_t fapl)
     char    objname[128];      /* Name of object to create */
     hsize_t dims[FILESPACE_NDIMS] = {FILESPACE_DIM0, FILESPACE_DIM1, FILESPACE_DIM2}; /* Dataset dimensions */
     hsize_t chunk_dims[FILESPACE_NDIMS]     = {FILESPACE_CHUNK0, FILESPACE_CHUNK1,
-                                           FILESPACE_CHUNK2}; /* Chunk dimensions */
+                                               FILESPACE_CHUNK2}; /* Chunk dimensions */
     hsize_t attr_dims[FILESPACE_ATTR_NDIMS] = {FILESPACE_ATTR_DIM0,
                                                FILESPACE_ATTR_DIM1}; /* Attribute dimensions */
     int    *data                            = NULL;                  /* Pointer to dataset buffer */
@@ -2906,10 +2906,10 @@ main(void)
     double rdcc_w0;
 
     /* Set the random # seed */
-    HDsrandom((unsigned)HDtime(NULL));
+    HDsrandom((unsigned)time(NULL));
 
     /* Open */
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     /* Copy the file access property list */

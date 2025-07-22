@@ -298,7 +298,8 @@ h5init_types_c(hid_t_f *types, hid_t_f *floatingtypes, hid_t_f *integertypes)
         return ret_value;
     if ((integertypes[26] = (hid_t_f)H5Tcopy(H5T_C_S1)) < 0)
         return ret_value;
-
+    if ((integertypes[27] = (hid_t_f)H5Tcopy(H5T_STD_REF)) < 0)
+        return ret_value;
     /*
      *  Define Fortran H5T_STRING type to store non-fixed size strings
      */
@@ -566,17 +567,17 @@ h5init_flags_c(int_f *h5d_flags, size_t_f *h5d_size_flags, int_f *h5e_flags, hid
     h5fd_flags[20] = (int_f)SELECT_IOC_TOTAL;
     h5fd_flags[21] = (int_f)ioc_selection_options;
 #else
-    h5fd_flags[11]    = 0;
-    h5fd_flags[12]    = 0;
-    h5fd_flags[13]    = 0;
-    h5fd_flags[14]    = 0;
-    h5fd_flags[15]    = 0;
-    h5fd_flags[16]    = 0;
-    h5fd_flags[17]    = 0;
-    h5fd_flags[18]    = 0;
-    h5fd_flags[19]    = 0;
-    h5fd_flags[20]    = 0;
-    h5fd_flags[21]    = 0;
+    h5fd_flags[11] = 0;
+    h5fd_flags[12] = 0;
+    h5fd_flags[13] = 0;
+    h5fd_flags[14] = 0;
+    h5fd_flags[15] = 0;
+    h5fd_flags[16] = 0;
+    h5fd_flags[17] = 0;
+    h5fd_flags[18] = 0;
+    h5fd_flags[19] = 0;
+    h5fd_flags[20] = 0;
+    h5fd_flags[21] = 0;
 #endif
 
     /*
@@ -766,11 +767,20 @@ h5init_flags_c(int_f *h5d_flags, size_t_f *h5d_size_flags, int_f *h5e_flags, hid
      */
     h5r_flags[0] = (int_f)H5R_OBJECT;
     h5r_flags[1] = (int_f)H5R_DATASET_REGION;
+    h5r_flags[2] = (int_f)H5R_BADTYPE;
+    h5r_flags[3] = (int_f)H5R_OBJECT1;
+    h5r_flags[4] = (int_f)H5R_DATASET_REGION1;
+    h5r_flags[5] = (int_f)H5R_OBJECT2;
+    h5r_flags[6] = (int_f)H5R_DATASET_REGION2;
+    h5r_flags[7] = (int_f)H5R_ATTR;
+    h5r_flags[8] = (int_f)H5R_MAXTYPE;
 
     /*
      *  H5S flags
      */
     h5s_hid_flags[0] = (hid_t_f)H5S_ALL;
+    h5s_hid_flags[1] = (hid_t_f)H5S_BLOCK;
+    h5s_hid_flags[2] = (hid_t_f)H5S_PLIST;
 
     h5s_hsize_flags[0] = (hsize_t_f)H5S_UNLIMITED;
 
@@ -795,6 +805,9 @@ h5init_flags_c(int_f *h5d_flags, size_t_f *h5d_size_flags, int_f *h5e_flags, hid
     h5s_flags[15] = (int_f)H5S_SEL_POINTS;
     h5s_flags[16] = (int_f)H5S_SEL_HYPERSLABS;
     h5s_flags[17] = (int_f)H5S_SEL_ALL;
+
+    h5s_flags[18] = (int_f)H5S_SEL_ITER_GET_SEQ_LIST_SORTED;
+    h5s_flags[19] = (int_f)H5S_SEL_ITER_SHARE_WITH_DATASPACE;
 
     /*
      *  H5T flags

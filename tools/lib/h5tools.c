@@ -79,20 +79,12 @@ const char *volnames[] = {
  *
  */
 const char *drivernames[] = {
-    [SEC2_VFD_IDX]      = "sec2",
-    [DIRECT_VFD_IDX]    = "direct",
-    [LOG_VFD_IDX]       = "log",
-    [WINDOWS_VFD_IDX]   = "windows",
-    [STDIO_VFD_IDX]     = "stdio",
-    [CORE_VFD_IDX]      = "core",
-    [FAMILY_VFD_IDX]    = "family",
-    [SPLIT_VFD_IDX]     = "split",
-    [MULTI_VFD_IDX]     = "multi",
-    [MPIO_VFD_IDX]      = "mpio",
-    [ROS3_VFD_IDX]      = "ros3",
-    [HDFS_VFD_IDX]      = "hdfs",
-    [SUBFILING_VFD_IDX] = H5FD_SUBFILING_NAME,
-    [ONION_VFD_IDX]     = "onion",
+    [SEC2_VFD_IDX] = "sec2",       [DIRECT_VFD_IDX] = "direct", [LOG_VFD_IDX] = "log",
+    [WINDOWS_VFD_IDX] = "windows", [STDIO_VFD_IDX] = "stdio",   [CORE_VFD_IDX] = "core",
+    [FAMILY_VFD_IDX] = "family",   [SPLIT_VFD_IDX] = "split",   [MULTI_VFD_IDX] = "multi",
+    [MPIO_VFD_IDX] = "mpio",       [MIRROR_VFD_IDX] = "mirror", [SPLITTER_VFD_IDX] = "splitter",
+    [ROS3_VFD_IDX] = "ros3",       [HDFS_VFD_IDX] = "hdfs",     [SUBFILING_VFD_IDX] = H5FD_SUBFILING_NAME,
+    [ONION_VFD_IDX] = "onion",
 };
 
 #define NUM_VOLS    (sizeof(volnames) / sizeof(volnames[0]))
@@ -477,7 +469,7 @@ h5tools_set_error_file(const char *fname, int is_bin)
  *           negative - failed
  *-------------------------------------------------------------------------
  */
-static herr_t
+herr_t
 h5tools_set_fapl_vfd(hid_t fapl_id, h5tools_vfd_info_t *vfd_info)
 {
     herr_t ret_value = SUCCEED;
@@ -587,16 +579,8 @@ h5tools_set_fapl_vfd(hid_t fapl_id, h5tools_vfd_info_t *vfd_info)
             }
             else if (!strcmp(vfd_info->u.name, drivernames[SUBFILING_VFD_IDX])) {
 #if defined(H5_HAVE_PARALLEL) && defined(H5_HAVE_SUBFILING_VFD)
-                int mpi_initialized, mpi_finalized;
-
-                /* check if MPI is available. */
-                MPI_Initialized(&mpi_initialized);
-                MPI_Finalized(&mpi_finalized);
-
-                if (mpi_initialized && !mpi_finalized) {
-                    if (H5Pset_fapl_subfiling(fapl_id, (const H5FD_subfiling_config_t *)vfd_info->info) < 0)
-                        H5TOOLS_GOTO_ERROR(FAIL, "H5Pset_fapl_subfiling() failed");
-                }
+                if (H5Pset_fapl_subfiling(fapl_id, (const H5FD_subfiling_config_t *)vfd_info->info) < 0)
+                    H5TOOLS_GOTO_ERROR(FAIL, "H5Pset_fapl_subfiling() failed");
 #else
                 H5TOOLS_GOTO_ERROR(FAIL, "The Subfiling VFD is not enabled");
 #endif
@@ -626,9 +610,20 @@ h5tools_set_fapl_vfd(hid_t fapl_id, h5tools_vfd_info_t *vfd_info)
              *
              * Currently, driver configuration strings are unsupported.
              */
-            if (H5Pset_driver_by_value(fapl_id, vfd_info->u.value, (const char *)vfd_info->info) < 0)
-                H5TOOLS_GOTO_ERROR(FAIL, "can't load VFD plugin by driver value '%ld'",
-                                   (long int)vfd_info->u.value);
+
+            if (vfd_info->u.value == H5_VFD_SUBFILING) {
+#if defined(H5_HAVE_PARALLEL) && defined(H5_HAVE_SUBFILING_VFD)
+                if (H5Pset_fapl_subfiling(fapl_id, (const H5FD_subfiling_config_t *)vfd_info->info) < 0)
+                    H5TOOLS_GOTO_ERROR(FAIL, "H5Pset_fapl_subfiling() failed");
+#else
+                H5TOOLS_GOTO_ERROR(FAIL, "The Subfiling VFD is not enabled");
+#endif
+            }
+            else {
+                if (H5Pset_driver_by_value(fapl_id, vfd_info->u.value, (const char *)vfd_info->info) < 0)
+                    H5TOOLS_GOTO_ERROR(FAIL, "can't load VFD plugin by driver value '%ld'",
+                                       (long int)vfd_info->u.value);
+            }
             break;
 
         default:
@@ -655,7 +650,7 @@ done:
  *           negative - failed
  *-------------------------------------------------------------------------
  */
-static herr_t
+herr_t
 h5tools_set_fapl_vol(hid_t fapl_id, h5tools_vol_info_t *vol_info)
 {
     htri_t connector_is_registered;
@@ -751,9 +746,9 @@ done:
 }
 
 /*-------------------------------------------------------------------------
- * Function: h5tools_get_fapl
+ * Function: h5tools_get_new_fapl
  *
- * Purpose:  Copies an input fapl and then sets a VOL and/or a VFD on it.
+ * Purpose:  Copies an input fapl.
  *
  *           The returned fapl must be closed by the caller.
  *
@@ -762,7 +757,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-h5tools_get_fapl(hid_t prev_fapl_id, h5tools_vol_info_t *vol_info, h5tools_vfd_info_t *vfd_info)
+h5tools_get_new_fapl(hid_t prev_fapl_id)
 {
     hid_t new_fapl_id = H5I_INVALID_HID;
     hid_t ret_value   = H5I_INVALID_HID;
@@ -779,16 +774,6 @@ h5tools_get_fapl(hid_t prev_fapl_id, h5tools_vol_info_t *vol_info, h5tools_vfd_i
         if ((new_fapl_id = H5Pcopy(prev_fapl_id)) < 0)
             H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "H5Pcopy failed");
     }
-
-    /* Set non-default VOL connector, if requested */
-    if (vol_info)
-        if (h5tools_set_fapl_vol(new_fapl_id, vol_info) < 0)
-            H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to set VOL on FAPL");
-
-    /* Set non-default virtual file driver, if requested */
-    if (vfd_info)
-        if (h5tools_set_fapl_vfd(new_fapl_id, vfd_info) < 0)
-            H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to set VFD on FAPL");
 
     ret_value = new_fapl_id;
 
@@ -1031,8 +1016,22 @@ h5tools_fopen(const char *fname, unsigned flags, hid_t fapl_id, bool use_specifi
                 vfd_info.u.name = drivernames[drivernum];
 
                 /* Get a fapl reflecting the selected VOL connector and VFD */
-                if ((tmp_fapl_id = h5tools_get_fapl(fapl_id, &vol_info, &vfd_info)) < 0)
+                if ((tmp_fapl_id = h5tools_get_new_fapl(fapl_id)) < 0)
                     continue;
+
+                if (h5tools_set_fapl_vol(tmp_fapl_id, &vol_info) < 0) {
+                    /* Close the temporary fapl */
+                    H5Pclose(tmp_fapl_id);
+                    tmp_fapl_id = H5I_INVALID_HID;
+                    continue;
+                }
+
+                if (h5tools_set_fapl_vfd(tmp_fapl_id, &vfd_info) < 0) {
+                    /* Close the temporary fapl */
+                    H5Pclose(tmp_fapl_id);
+                    tmp_fapl_id = H5I_INVALID_HID;
+                    continue;
+                }
 
                 /* Can we open the file with this combo? */
                 H5E_BEGIN_TRY
@@ -1056,8 +1055,15 @@ h5tools_fopen(const char *fname, unsigned flags, hid_t fapl_id, bool use_specifi
             /* NOT the native VOL connector */
 
             /* Get a FAPL for the current VOL connector */
-            if ((tmp_fapl_id = h5tools_get_fapl(fapl_id, &vol_info, NULL)) < 0)
+            if ((tmp_fapl_id = h5tools_get_new_fapl(fapl_id)) < 0)
                 continue;
+
+            if (h5tools_set_fapl_vol(tmp_fapl_id, &vol_info) < 0) {
+                /* Close the temporary fapl */
+                H5Pclose(tmp_fapl_id);
+                tmp_fapl_id = H5I_INVALID_HID;
+                continue;
+            }
 
             /* Can we open the file with this connector? */
             if ((fid = h5tools_fopen(fname, flags, tmp_fapl_id, true, drivername, drivername_size)) >= 0) {

@@ -124,7 +124,8 @@ H5_DLL htri_t        H5FD_is_driver_registered_by_name(const char *driver_name, 
 H5_DLL htri_t  H5FD_is_driver_registered_by_value(H5FD_class_value_t driver_value, hid_t *registered_id);
 H5_DLL hid_t   H5FD_get_driver_id_by_name(const char *name, bool is_api);
 H5_DLL hid_t   H5FD_get_driver_id_by_value(H5FD_class_value_t value, bool is_api);
-H5_DLL H5FD_t *H5FD_open(const char *name, unsigned flags, hid_t fapl_id, haddr_t maxaddr);
+H5_DLL herr_t  H5FD_open(bool try, H5FD_t **file, const char *name, unsigned flags, hid_t fapl_id,
+                         haddr_t maxaddr);
 H5_DLL herr_t  H5FD_close(H5FD_t *file);
 H5_DLL int     H5FD_cmp(const H5FD_t *f1, const H5FD_t *f2);
 H5_DLL herr_t  H5FD_driver_query(const H5FD_class_t *driver, unsigned long *flags /*out*/);
@@ -214,6 +215,7 @@ H5_DLL herr_t H5FD_get_mpio_atomicity(H5FD_t *file, bool *flag);
 H5_DLL int      H5FD_mpi_get_rank(H5FD_t *file);
 H5_DLL int      H5FD_mpi_get_size(H5FD_t *file);
 H5_DLL MPI_Comm H5FD_mpi_get_comm(H5FD_t *file);
+H5_DLL MPI_Info H5FD_mpi_get_info(H5FD_t *file);
 H5_DLL herr_t   H5FD_mpi_get_file_sync_required(H5FD_t *file, bool *file_sync_required);
 #endif /* H5_HAVE_PARALLEL */
 

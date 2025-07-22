@@ -231,7 +231,7 @@ import org.slf4j.LoggerFactory;
  * which prints out the HDF5 error stack, as described in the HDF5 C API <i><b>@ref H5Eprint()</b>.</i> This
  * may be used by Java exception handlers to print out the HDF5 error stack. <hr>
  *
- * @version HDF5 1.14.3 <BR>
+ * @version HDF5 1.14.6 <BR>
  *          <b>See also: </b>
  *          @ref HDFARRAY hdf.hdf5lib.HDFArray<br />
  *          @ref HDF5CONST hdf.hdf5lib.HDF5Constants<br />
@@ -273,7 +273,7 @@ public class H5 implements java.io.Serializable {
      * </ul>
      * Make sure to update the versions number when a different library is used.
      */
-    public final static int LIB_VERSION[] = {1, 14, 3};
+    public final static int LIB_VERSION[] = {1, 14, 6};
 
     /**
      * @ingroup JH5
@@ -5348,7 +5348,7 @@ public class H5 implements java.io.Serializable {
     //    herr_t H5Fget_mpi_atomicity(hid_t file_id, hbool_t *flag);
     // #endif /* H5_HAVE_PARALLEL */
 
-    // /**
+    // /*
     // * H5Fget_vfd_handle returns a pointer to the file handle from the
     // low-level file driver
     // * currently being used by the HDF5 library for file I/O.
@@ -5365,7 +5365,7 @@ public class H5 implements java.io.Serializable {
     // H5Fget_vfd_handle(int file_id, int fapl)
     //             throws HDF5LibraryException;
 
-    // /**
+    // /*
     // * H5Fget_mdc_config loads the current metadata cache configuration into
     // * the instance of H5AC_cache_config_t pointed to by the config_ptr
     // parameter.
@@ -5382,7 +5382,7 @@ public class H5 implements java.io.Serializable {
     // public synchronized static native void H5Fget_mdc_config(int file_id, H5AC_cache_config_t config_ptr)
     //             throws HDF5LibraryException, NullPointerException;
 
-    // /**
+    // /*
     // * H5Fset_mdc_config attempts to configure the file's metadata cache
     // according to the configuration supplied.
     // *
@@ -10028,7 +10028,7 @@ public class H5 implements java.io.Serializable {
         throws HDF5LibraryException, IllegalArgumentException;
 
     //    /////  unimplemented /////
-    //    /**
+    //    /*
     //     * H5Pget_vds_file_cache_size retrieves the size of the vds link open file cache.
     //     *
     //     * @param fapl_id
@@ -10043,7 +10043,7 @@ public class H5 implements java.io.Serializable {
     //    public synchronized static native int H5Pget_vds_file_cache_size(long fapl_id) throws
     //    HDF5LibraryException;
     //
-    //    /**
+    //    /*
     //     * H5Pset_vds_file_cache_size sets the number of files that can be held open in an vds link open
     //     * file cache.
     //     *
@@ -10075,10 +10075,9 @@ public class H5 implements java.io.Serializable {
      * @param size
      *            OUT: the offset value and the size of the external file data.
      *
-     *            <pre>
-     *      size[0] = offset // a location to return an offset value
-     *      size[1] = size // a location to return the size of
-     *                // the external file data.
+     * <pre>
+     *    size[0] = offset // a location to return an offset value
+     *    size[1] = size // a location to return the size of the external file data.
      * </pre>
      *
      * @return a non-negative value if successful
@@ -13902,7 +13901,7 @@ public class H5 implements java.io.Serializable {
     public synchronized static native int H5Tencode(long obj_id, byte[] buf, long nalloc)
         throws HDF5LibraryException, NullPointerException;
 
-    // /**
+    // /*
     //  * @ingroup JH5T
     //  *
     //  * H5Tencode converts a data type description into binary form in a buffer.

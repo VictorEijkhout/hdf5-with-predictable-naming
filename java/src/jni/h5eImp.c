@@ -10,12 +10,6 @@
  * help@hdfgroup.org.                                                        *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-/*
- *  For details of the HDF libraries, see the HDF Documentation at:
- *    http://hdfgroup.org/HDF5/doc/
- *
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -26,9 +20,6 @@ extern "C" {
  *
  *  Each routine wraps a single HDF entry point, generally with the
  *  analogous arguments and return codes.
- *
- *  For details of the HDF libraries, see the HDF Documentation at:
- *   http://www.hdfgroup.org/HDF5/doc/
  *
  */
 
@@ -461,7 +452,7 @@ Java_hdf_hdf5lib_H5_H5Eget_1msg(JNIEnv *env, jclass clss, jlong msg_id, jintArra
         H5_LIBRARY_ERROR(ENVONLY);
     namePtr[buf_size] = '\0';
 
-    theArray[0] = error_msg_type;
+    theArray[0] = (jint)error_msg_type;
 
     if (NULL == (str = ENVPTR->NewStringUTF(ENVONLY, namePtr)))
         CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);

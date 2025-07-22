@@ -33,13 +33,17 @@
 #define H5MF_FRIEND /*suppress error about including H5MFpkg      */
 #include "H5MFpkg.h"
 
+#ifdef PB_OUT
 #define NUM_DSETS 5
+#endif
 
 int mpi_size, mpi_rank;
 
+#ifdef PB_OUT
 static int create_file(const char *filename, hid_t fcpl, hid_t fapl, int metadata_write_strategy);
 static int open_file(const char *filename, hid_t fapl, int metadata_write_strategy, hsize_t page_size,
                      size_t page_buffer_size);
+#endif
 
 /*
  * test file access by communicator besides COMM_WORLD.
@@ -71,6 +75,18 @@ test_split_comm_access(void)
     /* set up MPI parameters */
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+    /* Make sure the connector supports the API functions being tested */
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
+        if (MAINPROCESS) {
+            puts("SKIPPED");
+            printf("    API functions for basic file aren't supported with this connector\n");
+            fflush(stdout);
+        }
+
+        return;
+    }
+
     is_old = mpi_rank % 2;
     mrc    = MPI_Comm_split(MPI_COMM_WORLD, is_old, mpi_rank, &comm);
     VRFY((mrc == MPI_SUCCESS), "");
@@ -120,22 +136,29 @@ test_split_comm_access(void)
 void
 test_page_buffer_access(void)
 {
+    const char *filename;
     hid_t       file_id = H5I_INVALID_HID; /* File ID */
     hid_t       fcpl, fapl;
-    size_t      page_count = 0;
-    int         i, num_elements = 200;
-    haddr_t     raw_addr, meta_addr;
-    int        *data;
-    H5F_t      *f = NULL;
     herr_t      ret; /* generic return value */
-    const char *filename;
-    bool        api_ctx_pushed = false; /* Whether API context pushed */
+#ifdef PB_OUT
+    size_t  page_count = 0;
+    int     i, num_elements = 200;
+    haddr_t raw_addr, meta_addr;
+    int    *data;
+    H5F_t  *f              = NULL;
+    bool    api_ctx_pushed = false; /* Whether API context pushed */
+#endif
 
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
     filename = (const char *)GetTestParameters();
 
+    /* Until page buffering is supported in parallel in some form (even if
+     * just for a single MPI process), this test just will just check to
+     * make sure that an error is thrown when page buffering is enabled
+     * with parallel access.
+     */
     if (VERBOSE_MED)
         printf("Page Buffer Usage in Parallel %s\n", filename);
 
@@ -163,6 +186,15 @@ test_page_buffer_access(void)
     ret = H5Pset_coll_metadata_write(fapl, false);
     VRFY((ret >= 0), "");
 
+    /* This should fail due to page buffering not being supported in parallel */
+    H5E_BEGIN_TRY
+    {
+        file_id = H5Fcreate(filename, H5F_ACC_TRUNC, fcpl, fapl);
+    }
+    H5E_END_TRY
+    VRFY((file_id < 0), "H5Fcreate failed");
+
+#ifdef PB_OUT
     ret = create_file(filename, fcpl, fapl, H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED);
     VRFY((ret == 0), "");
     ret = open_file(filename, fapl, H5AC_METADATA_WRITE_STRATEGY__DISTRIBUTED, sizeof(int) * 100,
@@ -430,8 +462,10 @@ test_page_buffer_access(void)
     free(data);
     data = NULL;
     MPI_Barrier(MPI_COMM_WORLD);
+#endif
 }
 
+#ifdef PB_OUT
 static int
 create_file(const char *filename, hid_t fcpl, hid_t fapl, int metadata_write_strategy)
 {
@@ -748,6 +782,7 @@ open_file(const char *filename, hid_t fapl, int metadata_write_strategy, hsize_t
 
     return nerrors;
 }
+#endif
 
 /*
  * NOTE:  See HDFFV-10894 and add tests later to verify MPI-specific properties in the
@@ -771,13 +806,25 @@ test_file_properties(void)
     int         mpi_ret; /* MPI return value */
     int         cmp;     /* Compare value */
 
-    filename = (const char *)GetTestParameters();
-
     /* set up MPI parameters */
     mpi_ret = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     VRFY((mpi_ret >= 0), "MPI_Comm_size succeeded");
     mpi_ret = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     VRFY((mpi_ret >= 0), "MPI_Comm_rank succeeded");
+
+    /* Make sure the connector supports the API functions being tested */
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
+        if (MAINPROCESS) {
+            puts("SKIPPED");
+            printf("    API functions for basic file aren't supported with this connector\n");
+            fflush(stdout);
+        }
+
+        return;
+    }
+
+    filename = (const char *)GetTestParameters();
+
     mpi_ret = MPI_Info_create(&info);
     VRFY((mpi_ret >= 0), "MPI_Info_create succeeded");
     mpi_ret = MPI_Info_set(info, "hdf_info_prop1", "xyz");
@@ -964,6 +1011,18 @@ test_delete(void)
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
+    /* Make sure the connector supports the API functions being tested */
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_MORE)) {
+        if (MAINPROCESS) {
+            puts("SKIPPED");
+            printf("    API functions for basic file or file more aren't supported with this "
+                   "connector\n");
+            fflush(stdout);
+        }
+
+        return;
+    }
+
     /* setup file access plist */
     fapl_id = H5Pcreate(H5P_FILE_ACCESS);
     VRFY((fapl_id != H5I_INVALID_HID), "H5Pcreate");
@@ -1119,3 +1178,105 @@ test_evict_on_close_parallel_unsupp(void)
     ret = H5Pclose(fapl_id);
     VRFY((SUCCEED == ret), "H5Pclose");
 }
+
+/*
+ * Verify that MPI I/O hints are preserved after closing the file access property list
+ * as described in issue #3025
+ * This is a test program from the user.
+ */
+void
+test_fapl_preserve_hints(void)
+{
+    const char *filename;
+    const char *key       = "hdf_info_fapl";
+    const char *value     = "xyz";
+    MPI_Info    info_used = MPI_INFO_NULL;
+    MPI_Info    info      = MPI_INFO_NULL;
+    hid_t       fid       = H5I_INVALID_HID; /* HDF5 file ID */
+    hid_t       fapl_id   = H5I_INVALID_HID; /* File access plist */
+    char        key_used[MPI_MAX_INFO_KEY + 1];
+    char       *value_used = NULL;
+    bool        same       = false;
+    int         flag       = -1;
+    int         nkeys_used;
+    int         i;
+    int         mpi_ret; /* MPI return value */
+    herr_t      ret;     /* Generic return value */
+
+    filename = (const char *)GetTestParameters();
+
+    value_used = malloc(MPI_MAX_INFO_VAL + 1);
+    VRFY(value_used, "malloc succeeded");
+
+    /* set up MPI parameters */
+    mpi_ret = MPI_Info_create(&info);
+    VRFY((mpi_ret >= 0), "MPI_Info_create succeeded");
+
+    mpi_ret = MPI_Info_set(info, key, value);
+    VRFY((mpi_ret == MPI_SUCCESS), "MPI_Info_set succeeded");
+
+    fapl_id = H5Pcreate(H5P_FILE_ACCESS);
+    VRFY((fapl_id != H5I_INVALID_HID), "H5Pcreate");
+
+    ret = H5Pset_fapl_mpio(fapl_id, MPI_COMM_WORLD, info);
+    VRFY((ret >= 0), "H5Pset_fapl_mpio");
+
+    fid = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
+    VRFY((fid != H5I_INVALID_HID), "H5Fcreate succeeded");
+
+    ret = H5Pclose(fapl_id);
+    VRFY((ret >= 0), "H5Pclose succeeded");
+
+    fapl_id = H5Fget_access_plist(fid);
+    VRFY((fapl_id != H5I_INVALID_HID), "H5Fget_access_plist succeeded");
+
+    ret = H5Pget_fapl_mpio(fapl_id, NULL, &info_used);
+    VRFY((ret >= 0), "H5Pget_fapl_mpio succeeded");
+
+    VRFY((info_used != MPI_INFO_NULL), "H5Pget_fapl_mpio");
+
+    mpi_ret = MPI_Info_get_nkeys(info_used, &nkeys_used);
+    VRFY((mpi_ret == MPI_SUCCESS), "MPI_Info_get_nkeys succeeded");
+
+    /* Loop over the # of keys */
+    for (i = 0; i < nkeys_used; i++) {
+
+        /* Memset the buffers to zero */
+        memset(key_used, 0, MPI_MAX_INFO_KEY + 1);
+        memset(value_used, 0, MPI_MAX_INFO_VAL + 1);
+
+        /* Get the nth key */
+        mpi_ret = MPI_Info_get_nthkey(info_used, i, key_used);
+        VRFY((mpi_ret == MPI_SUCCESS), "MPI_Info_get_nthkey succeeded");
+
+        if (!strcmp(key_used, key)) {
+            mpi_ret = MPI_Info_get(info_used, key_used, MPI_MAX_INFO_VAL, value_used, &flag);
+            VRFY((mpi_ret == MPI_SUCCESS), "MPI_Info_get succeeded");
+
+            if (!strcmp(value_used, value)) {
+
+                /* Both key_used and value_used are the same */
+                same = true;
+                break;
+            }
+        }
+    } /* end for */
+
+    VRFY((same == true), "key_used and value_used are the same");
+
+    ret = H5Pclose(fapl_id);
+    VRFY((ret >= 0), "H5Pclose succeeded");
+
+    ret = H5Fclose(fid);
+    VRFY((ret >= 0), "H5Fclose succeeded");
+
+    /* Free the MPI info object */
+    mpi_ret = MPI_Info_free(&info);
+    VRFY((mpi_ret >= 0), "MPI_Info_free succeeded");
+
+    mpi_ret = MPI_Info_free(&info_used);
+    VRFY((mpi_ret >= 0), "MPI_Info_free succeeded");
+
+    free(value_used);
+
+} /* end test_fapl_preserve_hints() */

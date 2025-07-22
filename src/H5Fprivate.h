@@ -101,6 +101,7 @@ typedef struct H5F_t H5F_t;
 #define H5F_VOL_CLS(F)                 ((F)->shared->vol_cls)
 #define H5F_VOL_OBJ(F)                 ((F)->vol_obj)
 #define H5F_USE_FILE_LOCKING(F)        ((F)->shared->use_file_locking)
+#define H5F_RFIC_FLAGS(F)              ((F)->shared->rfic_flags)
 #else /* H5F_MODULE */
 #define H5F_LOW_BOUND(F)                 (H5F_get_low_bound(F))
 #define H5F_HIGH_BOUND(F)                (H5F_get_high_bound(F))
@@ -165,6 +166,7 @@ typedef struct H5F_t H5F_t;
 #define H5F_VOL_CLS(F)                 (H5F_get_vol_cls(F))
 #define H5F_VOL_OBJ(F)                 (H5F_get_vol_obj(F))
 #define H5F_USE_FILE_LOCKING(F)        (H5F_get_use_file_locking(F))
+#define H5F_RFIC_FLAGS(F)              (H5F_get_rfic_flags(F))
 #endif /* H5F_MODULE */
 
 /* Macros to encode/decode offset/length's for storing in the file */
@@ -282,6 +284,7 @@ typedef struct H5F_t H5F_t;
 #define H5F_ACS_MPI_PARAMS_COMM_NAME "mpi_params_comm" /* the MPI communicator */
 #define H5F_ACS_MPI_PARAMS_INFO_NAME "mpi_params_info" /* the MPI info struct */
 #endif                                                 /* H5_HAVE_PARALLEL */
+#define H5F_ACS_RFIC_FLAGS_NAME "rfic_flags"           /* Relaxed file integrity check (RFIC) flags */
 
 /* ======================== File Mount properties ====================*/
 #define H5F_MNT_SYM_LOCAL_NAME "local" /* Whether absolute symlinks local to file. */
@@ -492,7 +495,8 @@ typedef enum H5F_prefix_open_t {
 
 /* Private functions */
 H5_DLL herr_t H5F_init(void);
-H5_DLL H5F_t *H5F_open(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id);
+H5_DLL herr_t H5F_open(bool try, H5F_t **file, const char *name, unsigned flags, hid_t fcpl_id,
+                       hid_t fapl_id);
 H5_DLL herr_t H5F_try_close(H5F_t *f, bool *was_closed /*out*/);
 H5_DLL hid_t  H5F_get_file_id(H5VL_object_t *vol_obj, H5I_type_t obj_type, bool app_ref);
 
@@ -525,7 +529,8 @@ H5_DLL bool    H5F_get_min_dset_ohdr(const H5F_t *f);
 H5_DLL herr_t  H5F_set_min_dset_ohdr(H5F_t *f, bool minimize);
 H5_DLL const H5VL_class_t *H5F_get_vol_cls(const H5F_t *f);
 H5_DLL H5VL_object_t      *H5F_get_vol_obj(const H5F_t *f);
-H5_DLL bool                H5F_get_file_locking(const H5F_t *f);
+H5_DLL bool                H5F_get_use_file_locking(const H5F_t *f);
+H5_DLL uint64_t            H5F_get_rfic_flags(const H5F_t *f);
 
 /* Functions than retrieve values set/cached from the superblock/FCPL */
 H5_DLL haddr_t            H5F_get_base_addr(const H5F_t *f);
@@ -640,6 +645,7 @@ H5_DLL herr_t H5F_eoa_dirty(H5F_t *f);
 #ifdef H5_HAVE_PARALLEL
 H5_DLL int      H5F_mpi_get_rank(const H5F_t *f);
 H5_DLL MPI_Comm H5F_mpi_get_comm(const H5F_t *f);
+H5_DLL MPI_Info H5F_mpi_get_info(const H5F_t *f);
 H5_DLL int      H5F_shared_mpi_get_size(const H5F_shared_t *f_sh);
 H5_DLL int      H5F_mpi_get_size(const H5F_t *f);
 H5_DLL herr_t   H5F_mpi_retrieve_comm(hid_t loc_id, hid_t acspl_id, MPI_Comm *mpi_comm);
@@ -654,7 +660,7 @@ H5_DLL herr_t   H5F_shared_get_mpi_file_sync_required(const H5F_shared_t *f_sh, 
 H5_DLL herr_t H5F_efc_close(H5F_t *parent, H5F_t *file);
 
 /* File prefix routines */
-H5_DLL H5F_t *H5F_prefix_open_file(H5F_t *primary_file, H5F_prefix_open_t prefix_type,
+H5_DLL herr_t H5F_prefix_open_file(bool try, H5F_t **file, H5F_t *primary_file, H5F_prefix_open_t prefix_type,
                                    const char *prop_prefix, const char *file_name, unsigned file_intent,
                                    hid_t fapl_id);
 

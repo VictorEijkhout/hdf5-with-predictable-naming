@@ -21,8 +21,22 @@
 /* Private headers needed by this file */
 #include "H5private.h"
 
-/* Typedef for error stack (defined in H5Epkg.h) */
-typedef struct H5E_t H5E_t;
+/*
+ * When one needs to temporarily disable recording errors while trying
+ * something that's likely or expected to fail.  The code to try can be nested
+ * between these macros like:
+ *
+ *     H5E_PAUSE_ERRORS {
+ *        ...stuff here that's likely to fail...
+ *      } H5E_RESUME_ERRORS
+ *
+ * Warning: don't break, return, or longjmp() from the block of code or
+ *        the error reporting won't be properly restored!
+ *
+ */
+#define H5E_PAUSE_ERRORS H5E_pause_stack();
+
+#define H5E_RESUME_ERRORS H5E_resume_stack();
 
 /*
  * HERROR macro, used to facilitate error reporting between a FUNC_ENTER()
@@ -31,7 +45,7 @@ typedef struct H5E_t H5E_t;
  */
 #define HERROR(maj_id, min_id, ...)                                                                          \
     do {                                                                                                     \
-        H5E_printf_stack(NULL, __FILE__, __func__, __LINE__, H5E_ERR_CLS_g, maj_id, min_id, __VA_ARGS__);    \
+        H5E_printf_stack(__FILE__, __func__, __LINE__, maj_id, min_id, __VA_ARGS__);                         \
     } while (0)
 
 /*
@@ -185,9 +199,11 @@ extern int  H5E_mpi_error_str_len;
 
 /* Library-private functions defined in H5E package */
 H5_DLL herr_t H5E_init(void);
-H5_DLL herr_t H5E_printf_stack(H5E_t *estack, const char *file, const char *func, unsigned line, hid_t cls_id,
-                               hid_t maj_id, hid_t min_id, const char *fmt, ...) H5_ATTR_FORMAT(printf, 8, 9);
-H5_DLL herr_t H5E_clear_stack(H5E_t *estack);
-H5_DLL herr_t H5E_dump_api_stack(bool is_api);
+H5_DLL herr_t H5E_printf_stack(const char *file, const char *func, unsigned line, hid_t maj_idx,
+                               hid_t min_idx, const char *fmt, ...) H5_ATTR_FORMAT(printf, 6, 7);
+H5_DLL herr_t H5E_clear_stack(void);
+H5_DLL herr_t H5E_dump_api_stack(void);
+H5_DLL void   H5E_pause_stack(void);
+H5_DLL void   H5E_resume_stack(void);
 
 #endif /* H5Eprivate_H */

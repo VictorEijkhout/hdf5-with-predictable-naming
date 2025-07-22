@@ -30,18 +30,16 @@
 /***********/
 #include "H5private.h"   /* Generic Functions                        */
 #include "H5Aprivate.h"  /* Attributes                               */
-#include "H5CXprivate.h" /* API Contexts                             */
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5FLprivate.h" /* Free lists                               */
 #include "H5Iprivate.h"  /* IDs                                      */
-#include "H5HGprivate.h" /* Global Heaps                             */
 #include "H5FOprivate.h" /* File objects                             */
 #include "H5Lprivate.h"  /* Links                                    */
 #include "H5MFprivate.h" /* File memory management                   */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Opkg.h"      /* Object headers                           */
 #include "H5Pprivate.h"  /* Property lists                           */
-#include "H5VLprivate.h" /* Virtual Object Layer                     */
+#include "H5SLprivate.h" /* Skip Lists                               */
 
 /****************/
 /* Local Macros */
@@ -360,6 +358,12 @@ H5O__copy_header_real(const H5O_loc_t *oloc_src, H5O_loc_t *oloc_dst /*out*/, H5
 
         /* Get message class to operate on */
         copy_type = mesg_src->type;
+
+        /* Sanity check message for possible corruption */
+        if (H5O_UNKNOWN_ID != mesg_src->type->id && H5O_NULL_ID != mesg_src->type->id)
+            if (0 == mesg_src->raw_size)
+                HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, FAIL, "message of type '%s' has zero size",
+                            mesg_src->type->name);
 
         /* Check for continuation message; these are converted to NULL
          * messages because the destination OH will have only one chunk
@@ -1464,7 +1468,7 @@ H5O__copy_search_comm_dt(H5F_t *file_src, H5O_t *oh_src, H5O_loc_t *oloc_dst /*i
                 if (H5G_loc_find(&dst_root_loc, suggestion->path, &obj_loc /*out*/) < 0)
                     /* Ignore errors - i.e. suggestions not present in
                      * destination file */
-                    H5E_clear_stack(NULL);
+                    H5E_clear_stack();
                 else
                     /* Check object and add to skip list if appropriate */
                     if (H5O__copy_search_comm_dt_check(&obj_oloc, &udata) < 0) {

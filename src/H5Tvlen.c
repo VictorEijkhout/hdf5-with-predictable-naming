@@ -20,7 +20,6 @@
 /****************/
 
 #include "H5Tmodule.h" /* This source code file is part of the H5T module */
-#define H5F_FRIEND     /*suppress error about including H5Fpkg   */
 
 /***********/
 /* Headers */
@@ -28,7 +27,6 @@
 #include "H5private.h"   /* Generic Functions    */
 #include "H5CXprivate.h" /* API Contexts         */
 #include "H5Eprivate.h"  /* Error handling       */
-#include "H5Fpkg.h"      /* File                 */
 #include "H5Iprivate.h"  /* IDs                  */
 #include "H5MMprivate.h" /* Memory management    */
 #include "H5Tpkg.h"      /* Datatypes            */
@@ -146,7 +144,6 @@ H5Tvlen_create(hid_t base_id)
     hid_t  ret_value;   /*return value			*/
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE1("i", "i", base_id);
 
     /* Check args */
     if (NULL == (base = (H5T_t *)H5I_object_verify(base_id, H5I_DATATYPE)))
@@ -334,7 +331,7 @@ H5T__vlen_set_loc(H5T_t *dt, H5VL_object_t *file, H5T_loc_t loc)
                 /* MAXLOC is invalid */
             default:
                 HGOTO_ERROR(H5E_DATATYPE, H5E_BADRANGE, FAIL, "invalid VL datatype location");
-        } /* end switch */ /*lint !e788 All appropriate cases are covered */
+        } /* end switch */
 
         /* Indicate that the location changed */
         ret_value = true;
@@ -503,7 +500,7 @@ H5T__vlen_mem_seq_write(H5VL_object_t H5_ATTR_UNUSED *file, const H5T_vlen_alloc
     if (seq_len) {
         size_t len = seq_len * base_size; /* Sequence size */
 
-        /* Use the user's memory allocation routine is one is defined */
+        /* Use the user's memory allocation routine if one is defined */
         if (vl_alloc_info->alloc_func != NULL) {
             if (NULL == (vl.p = (vl_alloc_info->alloc_func)(len, vl_alloc_info->alloc_info)))
                 HGOTO_ERROR(H5E_DATATYPE, H5E_CANTALLOC, FAIL,
@@ -622,7 +619,7 @@ H5T__vlen_mem_str_setnull(H5VL_object_t H5_ATTR_UNUSED *file, void *_vl, void H5
     /* Set pointer in user's buffer with memcpy, to avoid alignment issues */
     H5MM_memcpy(_vl, &t, sizeof(char *));
 
-    FUNC_LEAVE_NOAPI(SUCCEED) /*lint !e429 The pointer in 't' has been copied */
+    FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5T__vlen_mem_str_setnull() */
 
 /*-------------------------------------------------------------------------
@@ -695,7 +692,7 @@ H5T__vlen_mem_str_write(H5VL_object_t H5_ATTR_UNUSED *file, const H5T_vlen_alloc
     H5MM_memcpy(_vl, &t, sizeof(char *));
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value) /*lint !e429 The pointer in 't' has been copied */
+    FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5T__vlen_mem_str_write() */
 
 /*-------------------------------------------------------------------------
@@ -1035,7 +1032,7 @@ H5T__vlen_reclaim(void *elem, const H5T_t *dt, H5T_vlen_alloc_info_t *alloc_info
             HGOTO_ERROR(H5E_DATATYPE, H5E_BADRANGE, FAIL, "invalid VL datatype class");
             break;
 
-    } /* end switch */ /*lint !e788 All appropriate cases are covered */
+    } /* end switch */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1055,7 +1052,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5T_vlen_reclaim_elmt(void *elem, H5T_t *dt)
+H5T_vlen_reclaim_elmt(void *elem, const H5T_t *dt)
 {
     H5T_vlen_alloc_info_t vl_alloc_info;       /* VL allocation info */
     herr_t                ret_value = SUCCEED; /* return value */

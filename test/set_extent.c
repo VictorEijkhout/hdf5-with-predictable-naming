@@ -110,19 +110,18 @@ main(void)
     unsigned    new_format;  /* Whether to use the latest file format */
     unsigned    chunk_cache; /* Whether to enable chunk caching */
     int         nerrors = 0;
-    const char *env_h5_drvr;     /* File Driver value from environment */
+    const char *driver_name;     /* File Driver value from environment */
     bool        contig_addr_vfd; /* Whether VFD used has a contiguous address space */
 
-    env_h5_drvr = getenv(HDF5_DRIVER);
-    if (env_h5_drvr == NULL)
-        env_h5_drvr = "nomatch";
+    driver_name = h5_get_test_driver_name();
+
     /* Current VFD that does not support contiguous address space */
-    contig_addr_vfd = (bool)(strcmp(env_h5_drvr, "split") != 0 && strcmp(env_h5_drvr, "multi") != 0);
+    contig_addr_vfd = (bool)(strcmp(driver_name, "split") != 0 && strcmp(driver_name, "multi") != 0);
 
     /* Initialize random number seed */
-    HDsrandom((unsigned)HDtime(NULL));
+    HDsrandom((unsigned)time(NULL));
 
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     /* Copy the file access property list */
@@ -1831,10 +1830,10 @@ test_external(hid_t fapl, bool use_select_io)
     if ((dcpl = H5Pcreate(H5P_DATASET_CREATE)) < 0)
         FAIL_STACK_ERROR;
 
-    if (H5Pset_external(dcpl, EXT_FILE_NAME1, (off_t)0, size) < 0)
+    if (H5Pset_external(dcpl, EXT_FILE_NAME1, 0, size) < 0)
         FAIL_STACK_ERROR;
 
-    if (H5Pset_external(dcpl, EXT_FILE_NAME2, (off_t)0, size) < 0)
+    if (H5Pset_external(dcpl, EXT_FILE_NAME2, 0, size) < 0)
         FAIL_STACK_ERROR;
 
     {
@@ -2317,7 +2316,7 @@ test_random_rank4(hid_t fapl, hid_t dcpl, hid_t dxpl, bool do_fillvalue, bool di
     } *wbuf = NULL; /* Write buffer */
     struct {
         hsize_t arr[RAND4_NITER + 1][4];
-    } *dim_log        = NULL;  /* Log of dataset dimensions */
+    }       *dim_log  = NULL;  /* Log of dataset dimensions */
     bool     zero_dim = false; /* Whether a dimension is 0 */
     bool     writing  = true;  /* Whether we're writing to the dset */
     unsigned scalar_iter;      /* Iteration to shrink dset to 1x1x1x1 */
@@ -2535,7 +2534,7 @@ test_random_rank4_vl(hid_t fapl, hid_t dcpl, hid_t dxpl, bool do_fillvalue, bool
     } *wbuf = NULL; /* Write buffer */
     struct {
         hsize_t arr[RAND4_NITER + 1][4];
-    } *dim_log        = NULL;  /* Log of dataset dimensions */
+    }       *dim_log  = NULL;  /* Log of dataset dimensions */
     bool     zero_dim = false; /* Whether a dimension is 0 */
     bool     writing  = true;  /* Whether we're writing to the dset */
     hvl_t    fill_value;       /* Fill value */

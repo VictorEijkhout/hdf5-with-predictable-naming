@@ -5200,7 +5200,7 @@ test_copy_dataset_external(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t
     size = DIM_SIZE_1 * sizeof(int);
     if ((pid = H5Pcreate(H5P_DATASET_CREATE)) < 0)
         TEST_ERROR;
-    if (H5Pset_external(pid, FILE_EXT, (off_t)0, size) < 0)
+    if (H5Pset_external(pid, FILE_EXT, 0, size) < 0)
         TEST_ERROR;
 
     /* create dataset at SRC file */
@@ -17123,25 +17123,21 @@ main(void)
     hid_t       fcpl_shared, ocpl;
     unsigned    max_compact, min_dense;
     int         configuration; /* Configuration of tests. */
-    int         ExpressMode;
-    const char *env_h5_drvr; /* File Driver value from environment */
-    bool        same_file;   /* Whether to run tests that only use one file */
+    const char *driver_name;   /* File Driver value from environment */
+    bool        same_file;     /* Whether to run tests that only use one file */
     bool        driver_is_default_compatible;
 
-    env_h5_drvr = getenv(HDF5_DRIVER);
-    if (env_h5_drvr == NULL)
-        env_h5_drvr = "nomatch";
+    driver_name = h5_get_test_driver_name();
 
     /* Setup */
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     if (h5_driver_is_default_vfd_compatible(fapl, &driver_is_default_compatible) < 0)
         TEST_ERROR;
 
-    ExpressMode = GetTestExpress();
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
+    if (TestExpress > 0)
+        printf("***Express test mode %d.  Some tests may be skipped\n", TestExpress);
 
     /* Copy the file access property list */
     if ((fapl2 = H5Pcopy(fapl)) < 0)
@@ -17292,7 +17288,7 @@ main(void)
                                     false, "H5Ocopy(): expand external link");
 
         /* Splitter VFD currently has external link-related bugs */
-        if (strcmp(env_h5_drvr, "splitter")) {
+        if (strcmp(driver_name, "splitter")) {
             nerrors += test_copy_option(fcpl_src, fcpl_dst, src_fapl, dst_fapl,
                                         H5O_COPY_EXPAND_SOFT_LINK_FLAG | H5O_COPY_EXPAND_EXT_LINK_FLAG, false,
                                         "H5Ocopy(): expand soft and external links");

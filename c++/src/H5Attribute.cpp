@@ -605,4 +605,14 @@ Attribute::~Attribute()
     }
 }
 
+//--------------------------------------------------------------------------
+// Function:    Copy assignment operator
+Attribute &
+Attribute::operator=(const Attribute &original)
+{
+    IdComponent::operator=(original);
+
+    return *this;
+}
+
 } // namespace H5

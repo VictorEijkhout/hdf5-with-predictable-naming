@@ -2098,7 +2098,7 @@ test_extend(hid_t fapl, const char *base_name, H5D_layout_t layout)
         if ((fd = HDopen(FILE_NAME_RAW, O_RDWR | O_CREAT | O_TRUNC, H5_POSIX_CREATE_MODE_RW)) < 0 ||
             HDclose(fd) < 0)
             goto error;
-        if (H5Pset_external(dcpl, FILE_NAME_RAW, (off_t)0, (hsize_t)nelmts * sizeof(int)) < 0)
+        if (H5Pset_external(dcpl, FILE_NAME_RAW, 0, (hsize_t)nelmts * sizeof(int)) < 0)
             goto error;
     }
 #endif
@@ -2626,7 +2626,7 @@ main(int argc, char *argv[])
         } /* end for */
     }     /* end if */
 
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     if (h5_driver_is_default_vfd_compatible(fapl, &driver_is_default_compatible) < 0)

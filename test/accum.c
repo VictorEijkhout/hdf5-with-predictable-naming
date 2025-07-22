@@ -61,7 +61,7 @@ void accum_printf(const H5F_t *f);
 #define accum_read(a, s, b)  H5F_block_read(f, H5FD_MEM_DEFAULT, (haddr_t)(a), (size_t)(s), (b))
 #define accum_free(f, a, s)  H5F__accum_free(f->shared, H5FD_MEM_DEFAULT, (haddr_t)(a), (hsize_t)(s))
 #define accum_flush(f)       H5F__accum_flush(f->shared)
-#define accum_reset(f)       H5F__accum_reset(f->shared, true)
+#define accum_reset(f)       H5F__accum_reset(f->shared, true, false)
 
 /* ================= */
 /* Main Test Routine */
@@ -91,7 +91,7 @@ main(void)
     puts("Testing the metadata accumulator");
 
     /* File access property list */
-    h5_reset();
+    h5_test_init();
     if ((fapl = h5_fileaccess()) < 0)
         FAIL_STACK_ERROR;
     h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
@@ -1920,7 +1920,7 @@ test_random_write(H5F_t *f)
     TESTING("random writes to accumulator");
 
     /* Choose random # seed */
-    seed = (unsigned)HDtime(NULL);
+    seed = (unsigned)time(NULL);
 #if 0
 /* seed = (unsigned)1155438845; */
 fprintf(stderr, "Random # seed was: %u\n", seed);
@@ -2049,17 +2049,16 @@ error:
 unsigned
 test_swmr_write_big(bool newest_format)
 {
-
-    hid_t    fid  = H5I_INVALID_HID; /* File ID */
-    hid_t    fapl = H5I_INVALID_HID; /* File access property list */
-    H5F_t   *rf   = NULL;            /* File pointer */
-    char     filename[1024];
-    uint8_t *wbuf2 = NULL, *rbuf = NULL; /* Buffers for reading & writing */
-    uint8_t  wbuf[1024];                 /* Buffer for reading & writing */
-    unsigned u;                          /* Local index variable */
-    bool     process_success = false;
-    char    *driver          = NULL;  /* VFD string (from env variable) */
-    bool     api_ctx_pushed  = false; /* Whether API context pushed */
+    const char *driver_name = NULL;            /* VFD string (from env variable) */
+    hid_t       fid         = H5I_INVALID_HID; /* File ID */
+    hid_t       fapl        = H5I_INVALID_HID; /* File access property list */
+    H5F_t      *rf          = NULL;            /* File pointer */
+    char        filename[1024];
+    uint8_t    *wbuf2 = NULL, *rbuf = NULL; /* Buffers for reading & writing */
+    uint8_t     wbuf[1024];                 /* Buffer for reading & writing */
+    unsigned    u;                          /* Local index variable */
+    bool        process_success = false;
+    bool        api_ctx_pushed  = false; /* Whether API context pushed */
 
     if (newest_format)
         TESTING("SWMR write of large metadata: with latest format");
@@ -2077,8 +2076,8 @@ test_swmr_write_big(bool newest_format)
     /* Skip this test if SWMR I/O is not supported for the VFD specified
      * by the environment variable.
      */
-    driver = getenv(HDF5_DRIVER);
-    if (!H5FD__supports_swmr_test(driver)) {
+    driver_name = h5_get_test_driver_name();
+    if (!H5FD__supports_swmr_test(driver_name)) {
         SKIPPED();
         puts("    Test skipped due to VFD not supporting SWMR I/O.");
         return 0;
@@ -2194,7 +2193,7 @@ test_swmr_write_big(bool newest_format)
         ZeroMemory(&pi, sizeof(pi));
 
         if (0 == CreateProcess(NULL, SWMR_READER, NULL, NULL, false, 0, NULL, NULL, &si, &pi)) {
-            printf("CreateProcess failed (%d).\n", GetLastError());
+            printf("CreateProcess failed (%lu).\n", GetLastError());
             FAIL_STACK_ERROR;
         }
 

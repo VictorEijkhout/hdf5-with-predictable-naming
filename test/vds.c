@@ -522,7 +522,7 @@ test_api(test_api_config_t config, hid_t fapl, H5F_libver_t low)
     hid_t       dcpl        = H5I_INVALID_HID; /* Dataset creation property list */
     hid_t       ex_dcpl     = H5I_INVALID_HID; /* Temporary dcpl for examination */
     hid_t       srcspace[4] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                         H5I_INVALID_HID}; /* Source dataspaces */
+                               H5I_INVALID_HID}; /* Source dataspaces */
     hid_t       vspace[LIST_DOUBLE_SIZE];        /* Virtual dset dataspaces */
     const char *src_file[4] = {"src_file1", "src_file2.", "src_file3..",
                                "src_file4..."}; /* Source file names (different lengths) */
@@ -1188,17 +1188,17 @@ test_vds_prefix_first(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     char       *srcfilenamepct_map      = NULL;
     const char *srcfilenamepct_map_orig = "vds%%%%_src";
     hid_t       srcfile[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Files with source dsets */
+                                           H5I_INVALID_HID}; /* Files with source dsets */
     hid_t       vfile                   = H5I_INVALID_HID;   /* File with virtual dset */
     hid_t       dcpl                    = H5I_INVALID_HID;   /* Dataset creation property list */
     hid_t       dapl                    = H5I_INVALID_HID;   /* Dataset access property list */
     hid_t       srcspace[4]             = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                         H5I_INVALID_HID}; /* Source dataspaces */
+                                           H5I_INVALID_HID}; /* Source dataspaces */
     hid_t       vspace[4]               = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                       H5I_INVALID_HID}; /* Virtual dset dataspaces */
+                                           H5I_INVALID_HID}; /* Virtual dset dataspaces */
     hid_t       memspace                = H5I_INVALID_HID;   /* Memory dataspace */
     hid_t       srcdset[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Source datasets */
+                                           H5I_INVALID_HID}; /* Source datasets */
     hid_t       vdset                   = H5I_INVALID_HID;   /* Virtual dataset */
     hsize_t     dims[4]                 = {10, 26, 0, 0};    /* Data space current size */
     int         buf[10][26];                                 /* Write and expected read buffer */
@@ -1471,17 +1471,17 @@ test_basic_io(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     char       *srcfilenamepct_map      = NULL;
     const char *srcfilenamepct_map_orig = "vds%%%%_src";
     hid_t       srcfile[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Files with source dsets */
+                                           H5I_INVALID_HID}; /* Files with source dsets */
     hid_t       vfile                   = H5I_INVALID_HID;   /* File with virtual dset */
     hid_t       vfile2                  = H5I_INVALID_HID;   /* File with copied virtual dset */
     hid_t       dcpl                    = H5I_INVALID_HID;   /* Dataset creation property list */
     hid_t       srcspace[4]             = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                         H5I_INVALID_HID}; /* Source dataspaces */
+                                           H5I_INVALID_HID}; /* Source dataspaces */
     hid_t       vspace[4]               = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                       H5I_INVALID_HID}; /* Virtual dset dataspaces */
+                                           H5I_INVALID_HID}; /* Virtual dset dataspaces */
     hid_t       memspace                = H5I_INVALID_HID;   /* Memory dataspace */
     hid_t       srcdset[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Source datasets */
+                                           H5I_INVALID_HID}; /* Source datasets */
     hid_t       vdset                   = H5I_INVALID_HID;   /* Virtual dataset */
     hsize_t     dims[4]                 = {10, 26, 0, 0};    /* Data space current size */
     hsize_t     start[4];                                    /* Hyperslab start */
@@ -4401,19 +4401,19 @@ test_unlim(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     char           srcfilename_map[FILENAME_BUF_SIZE];
     char           vfilename[FILENAME_BUF_SIZE];
     hid_t          srcfile[4]  = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Files with source dsets */
+                                  H5I_INVALID_HID}; /* Files with source dsets */
     hid_t          vfile       = H5I_INVALID_HID;   /* File with virtual dset */
     hid_t          dcpl        = H5I_INVALID_HID;   /* Dataset creation property list */
     hid_t          srcdcpl     = H5I_INVALID_HID;   /* DCPL for source dset */
     hid_t          dapl        = H5I_INVALID_HID;   /* Dataset access property list */
     hid_t          srcspace[4] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                         H5I_INVALID_HID}; /* Source dataspaces */
+                                  H5I_INVALID_HID}; /* Source dataspaces */
     hid_t          vspace[4]   = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                       H5I_INVALID_HID}; /* Virtual dset dataspaces */
+                                  H5I_INVALID_HID}; /* Virtual dset dataspaces */
     hid_t          memspace    = H5I_INVALID_HID;   /* Memory dataspace */
     hid_t          filespace   = H5I_INVALID_HID;   /* File dataspace */
     hid_t          srcdset[4]  = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Source datasets */
+                                  H5I_INVALID_HID}; /* Source datasets */
     hid_t          vdset       = H5I_INVALID_HID;   /* Virtual dataset */
     hsize_t        dims[2]     = {10, 10};          /* Data space current size */
     hsize_t        mdims[2]    = {10, 20};          /* Data space maximum size */
@@ -7420,7 +7420,7 @@ test_printf(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     const char *printf_srcfilename_map_orig = "vds_src_%b";
     const char *srcfilenamepct_map_orig     = "vds%%%%_src";
     hid_t       srcfile[4]                  = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Files with source dsets */
+                                               H5I_INVALID_HID}; /* Files with source dsets */
     hid_t       vfile                       = H5I_INVALID_HID;   /* File with virtual dset */
     hid_t       dcpl                        = H5I_INVALID_HID;   /* Dataset creation property list */
     hid_t       dapl                        = H5I_INVALID_HID;   /* Dataset access property list */
@@ -7429,7 +7429,7 @@ test_printf(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     hid_t       memspace   = H5I_INVALID_HID;                    /* Memory dataspace */
     hid_t       filespace  = H5I_INVALID_HID;                    /* File dataspace */
     hid_t       srcdset[6] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID}; /* Source datasets */
+                              H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID}; /* Source datasets */
     hid_t       vdset      = H5I_INVALID_HID;                                     /* Virtual dataset */
     hsize_t     dims[2]    = {10, 0};  /* Data space current size */
     hsize_t     mdims[2]   = {10, 20}; /* Data space maximum size */
@@ -8608,7 +8608,8 @@ test_printf(unsigned config, hid_t vds_fapl, hid_t src_fapl)
          */
         /* Clean up files so the source files do not exist yet */
         H5Iinc_ref(vds_fapl); /* Prevent FAPL from being closed */
-        h5_clean_files(FILENAME, vds_fapl);
+        h5_delete_all_test_files(FILENAME, vds_fapl);
+        H5Pclose(vds_fapl);
 
         /* Clear virtual layout in DCPL */
         if (H5Pset_layout(dcpl, H5D_VIRTUAL) < 0)
@@ -8918,7 +8919,8 @@ test_printf(unsigned config, hid_t vds_fapl, hid_t src_fapl)
          */
         /* Clean up files so the source files do not exist yet */
         H5Iinc_ref(vds_fapl); /* Prevent FAPL from being closed */
-        h5_clean_files(FILENAME, vds_fapl);
+        h5_delete_all_test_files(FILENAME, vds_fapl);
+        H5Pclose(vds_fapl);
 
         /* Clear virtual layout in DCPL */
         if (H5Pset_layout(dcpl, H5D_VIRTUAL) < 0)
@@ -11138,7 +11140,7 @@ test_all(unsigned config, hid_t vds_fapl, hid_t src_fapl)
     hid_t   memspace    = H5I_INVALID_HID;                                     /* Memory dataspace */
     hid_t   filespace   = H5I_INVALID_HID;                                     /* File dataspace */
     hid_t   srcdset[5]  = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Source datasets */
+                           H5I_INVALID_HID}; /* Source datasets */
     hid_t   vdset       = H5I_INVALID_HID;   /* Virtual dataset */
     hsize_t dims[2]     = {6, 6};            /* Data space current size */
     hsize_t mdims[2]    = {10, 10};          /* Data space maximum size */
@@ -12316,16 +12318,14 @@ main(void)
     int          test_api_config;
     unsigned     bit_config;
     H5F_libver_t low, high;   /* Low and high bounds */
-    const char  *env_h5_drvr; /* File Driver value from environment */
+    const char  *driver_name; /* File Driver value from environment */
     bool         driver_is_parallel;
     int          nerrors = 0;
 
-    env_h5_drvr = getenv(HDF5_DRIVER);
-    if (env_h5_drvr == NULL)
-        env_h5_drvr = "nomatch";
+    driver_name = h5_get_test_driver_name();
 
     /* Testing setup */
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     if (h5_using_parallel_driver(fapl, &driver_is_parallel) < 0)
@@ -12336,7 +12336,7 @@ main(void)
      * doesn't support parallel reads and the splitter VFD has external
      * link-related bugs.
      */
-    if (driver_is_parallel || !strcmp(env_h5_drvr, "splitter")) {
+    if (driver_is_parallel || !strcmp(driver_name, "splitter")) {
         puts(" -- SKIPPED for incompatible VFD --");
         exit(EXIT_SUCCESS);
     }

@@ -773,7 +773,10 @@ test_cmpd_with_bkg(hid_t fid, unsigned chunked, unsigned mwbuf)
     s2_t   *s2_wbuf_bak = NULL;
     s2_t   *s2_rbuf     = NULL;
     char    dset_name[DSET_NAME_LEN];
-    int     fillvalue = -1;
+    s1_t    fillvalue;
+
+    /* Initialize the fill value */
+    memset(&fillvalue, 0, sizeof(s1_t));
 
     /* Create dataset transfer property list */
     if ((dxpl = H5Pcreate(H5P_DATASET_XFER)) < 0)
@@ -2931,12 +2934,11 @@ test_no_selection_io_cause_mode(const char *filename, hid_t fapl, uint32_t test_
 
     /* Check for (currently) incompatible combinations */
     if (test_mode & TEST_PAGE_BUFFER) {
-        char *env_h5_drvr = NULL;
+        const char *driver_name = h5_get_test_driver_name();
 
         /* The split and multi driver are not compatible with page buffering.  No message since the other
          * cases aren't skipped. */
-        env_h5_drvr = getenv(HDF5_DRIVER);
-        if (env_h5_drvr && (!strcmp(env_h5_drvr, "split") || !strcmp(env_h5_drvr, "multi")))
+        if (driver_name && (!strcmp(driver_name, "split") || !strcmp(driver_name, "multi")))
             return 0;
     }
 
@@ -3206,7 +3208,7 @@ main(void)
     unsigned mwbuf;     /* With/without modifying write buffer */
 
     /* Testing setup */
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
     h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
 
@@ -3386,9 +3388,19 @@ main(void)
 
     h5_cleanup(FILENAME, fapl);
 
+    H5Pclose(fapl2);
+
     exit(EXIT_SUCCESS);
 
 error:
+    H5E_BEGIN_TRY
+    {
+        H5Pclose(fapl);
+        H5Pclose(fapl2);
+        H5Fclose(fid);
+    }
+    H5E_END_TRY
+
     nerrors = MAX(1, nerrors);
     printf("***** %d SELECTION I/O DATASET TEST%s FAILED! *****\n", nerrors, 1 == nerrors ? "" : "S");
     exit(EXIT_FAILURE);

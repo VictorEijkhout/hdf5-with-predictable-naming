@@ -17,6 +17,7 @@
 #include "H5private.h"   /* Generic Functions			*/
 #include "H5Apkg.h"      /* Attributes				*/
 #include "H5Eprivate.h"  /* Error handling		  	*/
+#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5MMprivate.h" /* Memory management			*/
 #include "H5Opkg.h"      /* Object headers			*/
 #include "H5Spkg.h"      /* Dataspaces				*/
@@ -380,7 +381,7 @@ H5O__attr_encode(H5F_t *f, uint8_t *p, const void *mesg)
         p += name_len;
 
     /* encode the attribute datatype */
-    if ((H5O_MSG_DTYPE->encode)(f, false, p, attr->shared->dt) < 0)
+    if ((H5O_MSG_DTYPE->encode)(f, false, SIZE_MAX, p, attr->shared->dt) < 0)
         HGOTO_ERROR(H5E_ATTR, H5E_CANTENCODE, FAIL, "can't encode attribute datatype");
 
     if (attr->shared->version < H5O_ATTR_VERSION_2) {
@@ -391,7 +392,7 @@ H5O__attr_encode(H5F_t *f, uint8_t *p, const void *mesg)
         p += attr->shared->dt_size;
 
     /* encode the attribute dataspace */
-    if ((H5O_MSG_SDSPACE->encode)(f, false, p, &(attr->shared->ds->extent)) < 0)
+    if ((H5O_MSG_SDSPACE->encode)(f, false, SIZE_MAX, p, &(attr->shared->ds->extent)) < 0)
         HGOTO_ERROR(H5E_ATTR, H5E_CANTENCODE, FAIL, "can't encode attribute dataspace");
 
     if (attr->shared->version < H5O_ATTR_VERSION_2) {

@@ -374,7 +374,6 @@ H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, H5O_token_t *token)
     herr_t     ret_value    = SUCCEED;   /* Return value         */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE3("e", "ia*k", loc_id, addr, token);
 
     /* Check args */
     if (NULL == token)
@@ -394,7 +393,7 @@ H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, H5O_token_t *token)
         bool           is_native_vol_obj;
 
         /* Get the location object */
-        if (NULL == (vol_obj_container = (H5VL_object_t *)H5I_object(loc_id)))
+        if (NULL == (vol_obj_container = H5VL_vol_object(loc_id)))
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier");
 
         /* Make sure that the VOL object is a native connector object */
@@ -468,7 +467,6 @@ H5VLnative_token_to_addr(hid_t loc_id, H5O_token_t token, haddr_t *addr)
     herr_t     ret_value    = SUCCEED;   /* Return value         */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE3("e", "ik*a", loc_id, token, addr);
 
     /* Check args */
     if (NULL == addr)
@@ -488,7 +486,7 @@ H5VLnative_token_to_addr(hid_t loc_id, H5O_token_t token, haddr_t *addr)
         bool           is_native_vol_obj;
 
         /* Get the location object */
-        if (NULL == (vol_obj_container = (H5VL_object_t *)H5I_object(loc_id)))
+        if (NULL == (vol_obj_container = H5VL_vol_object(loc_id)))
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier");
 
         /* Make sure that the VOL object is a native connector object */

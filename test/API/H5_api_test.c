@@ -136,15 +136,6 @@ main(int argc, char **argv)
         }
     }
 
-#ifdef H5_HAVE_PARALLEL
-    /* If HDF5 was built with parallel enabled, go ahead and call MPI_Init before
-     * running these tests. Even though these are meant to be serial tests, they will
-     * likely be run using mpirun (or similar) and we cannot necessarily expect HDF5 or
-     * an HDF5 VOL connector to call MPI_Init.
-     */
-    MPI_Init(&argc, &argv);
-#endif
-
     H5open();
 
     n_tests_run_g     = 0;
@@ -152,7 +143,7 @@ main(int argc, char **argv)
     n_tests_failed_g  = 0;
     n_tests_skipped_g = 0;
 
-    seed = (unsigned)HDtime(NULL);
+    seed = (unsigned)time(NULL);
     srand(seed);
 
     if (NULL == (test_path_prefix = getenv(HDF5_API_TEST_PATH_PREFIX)))
@@ -272,7 +263,14 @@ main(int argc, char **argv)
     H5_api_test_run();
 
     printf("Cleaning up testing files\n");
-    H5Fdelete(H5_api_test_filename, fapl_id);
+
+    H5E_BEGIN_TRY
+    {
+        if (H5Fis_accessible(H5_api_test_filename, H5P_DEFAULT) > 0) {
+            H5Fdelete(H5_api_test_filename, fapl_id);
+        }
+    }
+    H5E_END_TRY
 
     if (n_tests_run_g > 0) {
         printf("%zu/%zu (%.2f%%) API tests passed with VOL connector '%s'\n", n_tests_passed_g, n_tests_run_g,
@@ -303,10 +301,6 @@ done:
     }
 
     H5close();
-
-#ifdef H5_HAVE_PARALLEL
-    MPI_Finalize();
-#endif
 
     exit(((err_occurred || n_tests_failed_g > 0) ? EXIT_FAILURE : EXIT_SUCCESS));
 }

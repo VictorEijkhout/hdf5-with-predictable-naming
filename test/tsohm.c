@@ -71,8 +71,8 @@ typedef struct dtype1_struct {
 
 #define DTYPE2_SIZE 1024
 static const char *DSETNAME[]       = {"dataset0",  "dataset1",  "dataset2", "dataset3", "dataset4",
-                                 "dataset5",  "dataset6",  "dataset7", "dataset8", "dataset9",
-                                 "dataset10", "dataset11", NULL};
+                                       "dataset5",  "dataset6",  "dataset7", "dataset8", "dataset9",
+                                       "dataset10", "dataset11", NULL};
 static const char *EXTRA_DSETNAME[] = {"ex_dataset0",  "ex_dataset1",  "ex_dataset2",
                                        "ex_dataset3",  "ex_dataset4",  "ex_dataset5",
                                        "ex_dataset6",  "ex_dataset7",  "ex_dataset8",
@@ -94,7 +94,7 @@ static const char *ENUM_NAME[] = {"enum_member0",  "enum_member1",  "enum_member
                                   "enum_member15", "enum_member16", "enum_member17",
                                   "enum_member18", "enum_member19", NULL};
 static const int   ENUM_VAL[]  = {0, 13,  -500,  63,  64,  -64,  65,  2048,  1,  2,     -1,
-                               7, 130, -5000, 630, 640, -640, 650, 20480, 10, -1001, -10};
+                                  7, 130, -5000, 630, 640, -640, 650, 20480, 10, -1001, -10};
 #define SIZE2_RANK1 6
 #define SIZE2_RANK2 10
 #define SIZE2_DIMS                                                                                           \
@@ -615,7 +615,7 @@ size1_helper(hid_t file, const char *filename, hid_t fapl_id, bool test_file_clo
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (GetTestExpress() > 1)
+    if (TestExpress > 1)
         test_file_closing = false;
 
     /* Initialize wdata */
@@ -1553,7 +1553,7 @@ size2_helper(hid_t fcpl_id, int test_file_closing, size2_helper_struct *ret_size
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (GetTestExpress() > 1)
+    if (TestExpress > 1)
         test_file_closing = 0;
 
     /* Create a file and get its size */
@@ -2422,7 +2422,7 @@ test_sohm_size2(int close_reopen)
         (list_index_small.attrs1 - list_index_small.interleaved))
         VERIFY(0, 1, "h5_get_file_size");
 
-    /* Give it some overhead (for checkin to move messages into continuation message) */
+    /* Give it some overhead (for commit to move messages into continuation message) */
     if ((list_index_small.attrs1 - list_index_small.interleaved) >
         (h5_stat_size_t)((float)(btree_index.attrs1 - btree_index.interleaved) * OVERHEAD_ALLOWED))
         VERIFY(0, 1, "h5_get_file_size");
@@ -3208,7 +3208,7 @@ test_sohm_extlink(void)
     CHECK_I(ret, "h5_driver_is_default_vfd_compatible");
 
     if (!driver_is_default_compatible) {
-        printf("-- SKIPPED --\n");
+        MESSAGE(5, ("-- SKIPPED --\n"));
         return;
     }
 
@@ -3710,17 +3710,22 @@ test_sohm_external_dtype(void)
 void
 test_sohm(void)
 {
-    const char *env_h5_drvr;
+    const char *driver_name;
+    bool        vol_is_native;
     bool        default_driver;
 
     MESSAGE(5, ("Testing Shared Object Header Messages\n"));
 
-    /* Get the VFD to use */
-    env_h5_drvr = getenv(HDF5_DRIVER);
-    if (env_h5_drvr == NULL)
-        env_h5_drvr = "nomatch";
+    /* Check if native VOL is being used */
+    CHECK(h5_using_native_vol(H5P_DEFAULT, H5I_INVALID_HID, &vol_is_native), FAIL, "h5_using_native_vol");
+    if (!vol_is_native) {
+        MESSAGE(5, (" -- SKIPPED --\n"));
+        return;
+    }
 
-    default_driver = h5_using_default_driver(env_h5_drvr);
+    /* Get the VFD to use */
+    driver_name    = h5_get_test_driver_name();
+    default_driver = h5_using_default_driver(driver_name);
 
     test_sohm_fcpl();        /* Test SOHMs and file creation plists */
     test_sohm_fcpl_errors(); /* Bogus H5P* calls for SOHMs */

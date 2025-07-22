@@ -1,5 +1,4 @@
 /** File Driver List
- *
 //! [file_driver_table]
 <table>
 <caption>I/O file drivers</caption>
@@ -70,10 +69,9 @@
 </table>
 //! [file_driver_table]
  *
- *
 //! [supported_file_driver_table]
 <table>
-<caption id="table_file_drivers">Supported file drivers</caption>
+<caption>Supported file drivers</caption>
 <tr>
 <th>Driver Name</th>
 <th>Driver Identifier</th>

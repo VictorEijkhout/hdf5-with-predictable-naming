@@ -65,20 +65,20 @@ usage(const char *progname)
 /*-------------------------------------------------------------------------
  * Function:    get_size
  *
- * Purpose:    Reads a size option of the form `-XNS' where `X' is any
- *        letter, `N' is a multi-character positive decimal number, and
- *        `S' is an optional suffix letter in the set [GgMmk].  The
- *        option may also be split among two arguments as: `-X NS'.
- *        The input value of ARGNO is the argument number for the
- *        switch in the ARGV vector and ARGC is the number of entries
- *        in that vector.
+ * Purpose:     Reads a size option of the form `-XNS' where `X' is any
+ *              letter, `N' is a multi-character positive decimal number, and
+ *              `S' is an optional suffix letter in the set [GgMmk].  The
+ *              option may also be split among two arguments as: `-X NS'.
+ *              The input value of ARGNO is the argument number for the
+ *              switch in the ARGV vector and ARGC is the number of entries
+ *              in that vector.
  *
- * Return:    Success:    The value N multiplied according to the
- *                suffix S.  On return ARGNO will be the number
- *                of the next argument to process.
+ * Return:      Success:    The value N multiplied according to the
+ *                          suffix S.  On return ARGNO will be the number
+ *                          of the next argument to process.
  *
- *        Failure:    Calls usage() which exits with a non-zero
- *                status.
+ *              Failure:    Calls usage() which exits with a non-zero
+ *                          status.
  *
  *-------------------------------------------------------------------------
  */
@@ -126,13 +126,6 @@ get_size(const char *progname, int *argno, int argc, char *argv[])
 
 /*-------------------------------------------------------------------------
  * Function:    main
- *
- * Purpose:    Split an hdf5 file
- *
- * Return:    Success:
- *
- *        Failure:
- *
  *-------------------------------------------------------------------------
  */
 H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
@@ -227,6 +220,10 @@ main(int argc, char *argv[])
     if (argno >= argc)
         usage(prog_name);
     src_gen_name = argv[argno++];
+    if (!src_gen_name) {
+        fprintf(stderr, "invalid source file name pointer");
+        exit(EXIT_FAILURE);
+    }
     snprintf(src_name, NAMELEN, src_gen_name, src_membno);
     src_is_family = strcmp(src_name, src_gen_name);
 
@@ -235,6 +232,7 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    memset(&sb, 0, sizeof(h5_stat_t));
     if (HDfstat(src, &sb) < 0) {
         perror("fstat");
         exit(EXIT_FAILURE);
@@ -249,6 +247,10 @@ main(int argc, char *argv[])
     if (argno >= argc)
         usage(prog_name);
     dst_gen_name = argv[argno++];
+    if (!dst_gen_name) {
+        fprintf(stderr, "invalid destination file name pointer");
+        exit(EXIT_FAILURE);
+    }
     snprintf(dst_name, NAMELEN, dst_gen_name, dst_membno);
     dst_is_family = strcmp(dst_name, dst_gen_name);
 
@@ -350,6 +352,7 @@ main(int argc, char *argv[])
                 perror(src_name);
                 exit(EXIT_FAILURE);
             }
+            memset(&sb, 0, sizeof(h5_stat_t));
             if (HDfstat(src, &sb) < 0) {
                 perror("fstat");
                 exit(EXIT_FAILURE);

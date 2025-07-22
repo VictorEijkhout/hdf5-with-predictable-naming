@@ -54,11 +54,11 @@ if (CMAKE_C_COMPILER_ID STREQUAL "NVHPC" )
       set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s")
     endif ()
   else ()
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Mbounds -g")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Mbounds -gopt")
   endif ()
 endif ()
 
-if (CMAKE_COMPILER_IS_GNUCC)
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
   set (CMAKE_C_FLAGS "${CMAKE_ANSI_CFLAGS} ${CMAKE_C_FLAGS}")
   if (${HDF_CFG_NAME} MATCHES "Debug" OR ${HDF_CFG_NAME} MATCHES "Developer")
     if (NOT CMAKE_C_COMPILER_VERSION VERSION_LESS 5.0)
@@ -337,11 +337,8 @@ if (HDF5_ENABLE_DEBUG_APIS)
       H5D_DEBUG
       H5D_CHUNK_DEBUG
       H5F_DEBUG
-      H5HL_DEBUG
-      H5I_DEBUG
       H5MM_DEBUG
       H5O_DEBUG
-      H5S_DEBUG
       H5T_DEBUG
       H5Z_DEBUG
   )
@@ -370,7 +367,7 @@ endif ()
 # This is in here to help some of the GCC based IDES like Eclipse
 # and code blocks parse the compiler errors and warnings better.
 #-----------------------------------------------------------------------------
-if (CMAKE_COMPILER_IS_GNUCC)
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fmessage-length=0")
 endif ()
 

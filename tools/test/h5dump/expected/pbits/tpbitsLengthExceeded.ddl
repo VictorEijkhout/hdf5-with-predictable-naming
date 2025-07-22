@@ -16,6 +16,7 @@ usage: h5dump [OPTIONS] files
      -b B, --binary=B     Binary file output, of form B
      -O F, --ddl=F        Output ddl text into file F
                           Use blank(empty) filename F to suppress ddl display
+     --page-buffer-size=N Set the page buffer cache size, N=non-negative integers
      --s3-cred=<cred>     Supply S3 authentication information to "ros3" vfd.
                           <cred> :: "(<aws-region>,<access-id>,<access-key>)"
                           If absent or <cred> -> "(,,)", no authentication.
@@ -103,9 +104,9 @@ usage: h5dump [OPTIONS] files
       (Alternate compact form of subsetting is described in the Reference Manual)
 
 --------------- Option Argument Conventions ---------------
-  D - is the file driver to use in opening the file. Acceptable values
-      are "sec2", "family", "split", "multi", "direct", and "stream". Without
-      the file driver flag, the file will be opened with each driver in
+  D - is the file driver to use in opening the file. Acceptable values are available from
+      https://support.hdfgroup.org/releases/hdf5/documentation/registered_virtual_file_drivers_vfds.md.
+      Without the file driver flag, the file will be opened with each driver in
       turn and in the order specified above until one driver succeeds
       in opening the file.
       See examples below for family, split, and multi driver special file name usage.

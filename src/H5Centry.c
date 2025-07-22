@@ -34,8 +34,10 @@
 #include "H5CXprivate.h" /* API Contexts                 */
 #include "H5Eprivate.h"  /* Error handling               */
 #include "H5Fpkg.h"      /* Files                        */
+#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5MFprivate.h" /* File memory management       */
 #include "H5MMprivate.h" /* Memory management            */
+#include "H5SLprivate.h" /* Skip Lists                               */
 
 /****************/
 /* Local Macros */
@@ -503,36 +505,24 @@ H5C__flush_single_entry(H5F_t *f, H5C_cache_entry_t *entry_ptr, unsigned flags)
     if (cache_ptr->slist_enabled) {
         if (entry_ptr->in_slist) {
             assert(entry_ptr->is_dirty);
-            if (entry_ptr->flush_marker && !entry_ptr->is_dirty)
+            if (!entry_ptr->is_dirty)
                 HGOTO_ERROR(H5E_CACHE, H5E_SYSTEM, FAIL, "entry in slist failed sanity checks");
         } /* end if */
-        else {
-            assert(!entry_ptr->is_dirty);
-            assert(!entry_ptr->flush_marker);
-            if (entry_ptr->is_dirty || entry_ptr->flush_marker)
-                HGOTO_ERROR(H5E_CACHE, H5E_SYSTEM, FAIL, "entry failed sanity checks");
-        } /* end else */
     }
-    else { /* slist is disabled */
+    else /* slist is disabled */
         assert(!entry_ptr->in_slist);
-        if (!entry_ptr->is_dirty)
-            if (entry_ptr->flush_marker)
-                HGOTO_ERROR(H5E_CACHE, H5E_SYSTEM, FAIL, "flush marked clean entry?");
-    }
 #endif /* H5C_DO_SANITY_CHECKS */
 
     if (entry_ptr->is_protected)
         /* Attempt to flush a protected entry -- scream and die. */
         HGOTO_ERROR(H5E_CACHE, H5E_PROTECT, FAIL, "Attempt to flush a protected entry");
 
-    /* Set entry_ptr->flush_in_progress = true and set
-     * entry_ptr->flush_marker = false
+    /* Set entry_ptr->flush_in_progress = true
      *
      * We will set flush_in_progress back to false at the end if the
      * entry still exists at that point.
      */
     entry_ptr->flush_in_progress = true;
-    entry_ptr->flush_marker      = false;
 
     /* Preserve current dirty state for later */
     was_dirty = entry_ptr->is_dirty;
@@ -1226,10 +1216,9 @@ H5C__load_entry(H5F_t *f,
 
     assert((dirty == false) || (type->id == 5 || type->id == 6));
 
-    entry->cache_ptr = f->shared->cache;
-    entry->addr      = addr;
-    entry->size      = len;
-    assert(entry->size < H5C_MAX_ENTRY_SIZE);
+    entry->cache_ptr        = f->shared->cache;
+    entry->addr             = addr;
+    entry->size             = len;
     entry->image_ptr        = image;
     entry->image_up_to_date = !dirty;
     entry->type             = type;
@@ -1240,7 +1229,6 @@ H5C__load_entry(H5F_t *f,
     entry->ro_ref_count     = 0;
     entry->is_pinned        = false;
     entry->in_slist         = false;
-    entry->flush_marker     = false;
 #ifdef H5_HAVE_PARALLEL
     entry->clear_on_unprotect = false;
     entry->flush_immediately  = false;
@@ -1897,7 +1885,6 @@ H5C__deserialize_prefetched_entry(H5F_t *f, H5C_t *cache_ptr, H5C_cache_entry_t 
     ds_entry_ptr->ro_ref_count     = 0;
     ds_entry_ptr->is_pinned        = false;
     ds_entry_ptr->in_slist         = false;
-    ds_entry_ptr->flush_marker     = false;
 #ifdef H5_HAVE_PARALLEL
     ds_entry_ptr->clear_on_unprotect = false;
     ds_entry_ptr->flush_immediately  = false;
@@ -2095,7 +2082,6 @@ H5C_insert_entry(H5F_t *f, const H5C_class_t *type, haddr_t addr, void *thing, u
 #ifdef H5_HAVE_PARALLEL
     bool coll_access = false; /* whether access to the cache entry is done collectively */
 #endif                        /* H5_HAVE_PARALLEL */
-    bool               set_flush_marker;
     bool               write_permitted = true;
     size_t             empty_space;
     H5C_cache_entry_t *entry_ptr = NULL;
@@ -2125,9 +2111,8 @@ H5C_insert_entry(H5F_t *f, const H5C_class_t *type, haddr_t addr, void *thing, u
         HGOTO_ERROR(H5E_CACHE, H5E_SYSTEM, FAIL, "an extreme sanity check failed on entry");
 #endif /* H5C_DO_EXTREME_SANITY_CHECKS */
 
-    set_flush_marker = ((flags & H5C__SET_FLUSH_MARKER_FLAG) != 0);
-    insert_pinned    = ((flags & H5C__PIN_ENTRY_FLAG) != 0);
-    flush_last       = ((flags & H5C__FLUSH_LAST_FLAG) != 0);
+    insert_pinned = ((flags & H5C__PIN_ENTRY_FLAG) != 0);
+    flush_last    = ((flags & H5C__FLUSH_LAST_FLAG) != 0);
 
     /* Get the ring type from the API context */
     ring = H5CX_get_ring();
@@ -2301,7 +2286,6 @@ H5C_insert_entry(H5F_t *f, const H5C_class_t *type, haddr_t addr, void *thing, u
 
     /* New entries are presumed to be dirty */
     assert(entry_ptr->is_dirty);
-    entry_ptr->flush_marker = set_flush_marker;
     H5C__INSERT_ENTRY_IN_SLIST(cache_ptr, entry_ptr, FAIL);
     H5C__UPDATE_RP_FOR_INSERTION(cache_ptr, entry_ptr, FAIL);
 
@@ -2496,9 +2480,6 @@ H5C_mark_entry_clean(void *_thing)
 
         /* Mark the entry as clean if it isn't already */
         entry_ptr->is_dirty = false;
-
-        /* Also reset the 'flush_marker' flag, since the entry shouldn't be flushed now */
-        entry_ptr->flush_marker = false;
 
         /* Modify cache data structures */
         if (was_dirty)
@@ -3150,7 +3131,7 @@ H5C_protect(H5F_t *f, const H5C_class_t *type, haddr_t addr, void *udata, unsign
         else
             empty_space = cache_ptr->max_cache_size - cache_ptr->index_size;
 
-        /* try to free up if necceary and if evictions are permitted.  Note
+        /* try to free up if necessary and if evictions are permitted.  Note
          * that if evictions are enabled, we will call H5C__make_space_in_cache()
          * regardless if the min_free_space requirement is not met.
          */
@@ -3426,7 +3407,6 @@ H5C_unprotect(H5F_t *f, haddr_t addr, void *thing, unsigned flags)
     H5C_t *cache_ptr;
     bool   deleted;
     bool   dirtied;
-    bool   set_flush_marker;
     bool   pin_entry;
     bool   unpin_entry;
     bool   free_file_space;
@@ -3441,13 +3421,12 @@ H5C_unprotect(H5F_t *f, haddr_t addr, void *thing, unsigned flags)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    deleted          = ((flags & H5C__DELETED_FLAG) != 0);
-    dirtied          = ((flags & H5C__DIRTIED_FLAG) != 0);
-    set_flush_marker = ((flags & H5C__SET_FLUSH_MARKER_FLAG) != 0);
-    pin_entry        = ((flags & H5C__PIN_ENTRY_FLAG) != 0);
-    unpin_entry      = ((flags & H5C__UNPIN_ENTRY_FLAG) != 0);
-    free_file_space  = ((flags & H5C__FREE_FILE_SPACE_FLAG) != 0);
-    take_ownership   = ((flags & H5C__TAKE_OWNERSHIP_FLAG) != 0);
+    deleted         = ((flags & H5C__DELETED_FLAG) != 0);
+    dirtied         = ((flags & H5C__DIRTIED_FLAG) != 0);
+    pin_entry       = ((flags & H5C__PIN_ENTRY_FLAG) != 0);
+    unpin_entry     = ((flags & H5C__UNPIN_ENTRY_FLAG) != 0);
+    free_file_space = ((flags & H5C__FREE_FILE_SPACE_FLAG) != 0);
+    take_ownership  = ((flags & H5C__TAKE_OWNERSHIP_FLAG) != 0);
 
     assert(f);
     assert(f->shared);
@@ -3621,15 +3600,10 @@ H5C_unprotect(H5F_t *f, haddr_t addr, void *thing, unsigned flags)
 
         entry_ptr->is_protected = false;
 
-        /* if the entry is dirty, 'or' its flush_marker with the set flush flag,
-         * and then add it to the skip list if it isn't there already.
-         */
-        if (entry_ptr->is_dirty) {
-            entry_ptr->flush_marker |= set_flush_marker;
-            if (!entry_ptr->in_slist)
-                /* this is a no-op if cache_ptr->slist_enabled is false */
-                H5C__INSERT_ENTRY_IN_SLIST(cache_ptr, entry_ptr, FAIL);
-        } /* end if */
+        /* if the entry is dirty, add it to the skip list if it isn't there already. */
+        if (entry_ptr->is_dirty && !entry_ptr->in_slist)
+            /* this is a no-op if cache_ptr->slist_enabled is false */
+            H5C__INSERT_ENTRY_IN_SLIST(cache_ptr, entry_ptr, FAIL);
 
         /* This implementation of the "deleted" option is a bit inefficient, as
          * we re-insert the entry to be deleted into the replacement policy
@@ -4141,7 +4115,6 @@ H5C_remove_entry(void *_entry)
 
     /* Additional internal cache consistency checks */
     assert(!entry->in_slist);
-    assert(!entry->flush_marker);
     assert(!entry->flush_in_progress);
 
     /* Note that the algorithm below is (very) similar to the set of operations

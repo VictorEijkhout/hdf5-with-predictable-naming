@@ -65,10 +65,10 @@ typedef struct H5FD_mirror_t {
 
 #ifndef BSWAP_64
 #define BSWAP_64(X)                                                                                          \
-    (uint64_t)((((X)&0x00000000000000FF) << 56) | (((X)&0x000000000000FF00) << 40) |                         \
-               (((X)&0x0000000000FF0000) << 24) | (((X)&0x00000000FF000000) << 8) |                          \
-               (((X)&0x000000FF00000000) >> 8) | (((X)&0x0000FF0000000000) >> 24) |                          \
-               (((X)&0x00FF000000000000) >> 40) | (((X)&0xFF00000000000000) >> 56))
+    (uint64_t)((((X) & 0x00000000000000FF) << 56) | (((X) & 0x000000000000FF00) << 40) |                     \
+               (((X) & 0x0000000000FF0000) << 24) | (((X) & 0x00000000FF000000) << 8) |                      \
+               (((X) & 0x000000FF00000000) >> 8) | (((X) & 0x0000FF0000000000) >> 24) |                      \
+               (((X) & 0x00FF000000000000) >> 40) | (((X) & 0xFF00000000000000) >> 56))
 #endif /* BSWAP_64 */
 
 /* Debugging flabs for verbose tracing -- nonzero to enable */
@@ -1263,7 +1263,6 @@ H5Pget_fapl_mirror(hid_t fapl_id, H5FD_mirror_fapl_t *fa_dst /*out*/)
     herr_t                    ret_value = SUCCEED;
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE2("e", "ix", fapl_id, fa_dst);
 
     LOG_OP_CALL(__func__);
 
@@ -1304,7 +1303,6 @@ H5Pset_fapl_mirror(hid_t fapl_id, H5FD_mirror_fapl_t *fa)
     herr_t          ret_value = FAIL;
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE2("e", "i*#", fapl_id, fa);
 
     LOG_OP_CALL(__func__);
 

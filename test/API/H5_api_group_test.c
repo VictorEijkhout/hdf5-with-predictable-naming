@@ -229,7 +229,7 @@ test_create_many_groups(void)
     printf("\n");
     for (i = 0; i < GROUP_NUMB_MANY; i++) {
         printf("\r %u/%u", i + 1, GROUP_NUMB_MANY);
-        sprintf(group_name, "group %02u", i);
+        snprintf(group_name, sizeof(group_name), "group %02u", i);
         if ((child_group_id =
                  H5Gcreate2(parent_group_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
             H5_FAILED();
@@ -342,11 +342,11 @@ create_group_recursive(hid_t parent_gid, unsigned counter)
 
     printf("\r %u/%u", counter, GROUP_DEPTH);
     if (counter == 1)
-        sprintf(gname, "2nd_child_group");
+        snprintf(gname, sizeof(gname), "2nd_child_group");
     else if (counter == 2)
-        sprintf(gname, "3rd_child_group");
+        snprintf(gname, sizeof(gname), "3rd_child_group");
     else
-        sprintf(gname, "%dth_child_group", counter + 1);
+        snprintf(gname, sizeof(gname), "%dth_child_group", counter + 1);
     if ((child_gid = H5Gcreate2(parent_gid, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't create group '%s'\n", gname);
@@ -1473,15 +1473,17 @@ test_get_group_info(void)
                 PART_ERROR(H5Gget_info);
             }
 
-            /*
-             * For the purpose of this test, the max creation order should match
-             * the number of links in the group.
-             */
-            if (group_info.max_corder != GROUP_GET_INFO_TEST_GROUP_NUMB) {
-                H5_FAILED();
-                printf("    group's max creation order '%lld' doesn't match expected value '%lld'\n",
-                       (long long)group_info.max_corder, (long long)GROUP_GET_INFO_TEST_GROUP_NUMB);
-                PART_ERROR(H5Gget_info);
+            if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
+                /*
+                 * For the purpose of this test, the max creation order should match
+                 * the number of links in the group.
+                 */
+                if (group_info.max_corder != GROUP_GET_INFO_TEST_GROUP_NUMB) {
+                    H5_FAILED();
+                    printf("    group's max creation order '%lld' doesn't match expected value '%lld'\n",
+                           (long long)group_info.max_corder, (long long)GROUP_GET_INFO_TEST_GROUP_NUMB);
+                    PART_ERROR(H5Gget_info);
+                }
             }
 
             /* Ensure that the storage_type field is at least set to a meaningful value */
@@ -1526,15 +1528,17 @@ test_get_group_info(void)
                 PART_ERROR(H5Gget_info_by_name);
             }
 
-            /*
-             * For the purpose of this test, the max creation order should match
-             * the number of links in the group.
-             */
-            if (group_info.max_corder != GROUP_GET_INFO_TEST_GROUP_NUMB) {
-                H5_FAILED();
-                printf("    group's max creation order '%lld' doesn't match expected value '%lld'\n",
-                       (long long)group_info.max_corder, (long long)GROUP_GET_INFO_TEST_GROUP_NUMB);
-                PART_ERROR(H5Gget_info_by_name);
+            if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
+                /*
+                 * For the purpose of this test, the max creation order should match
+                 * the number of links in the group.
+                 */
+                if (group_info.max_corder != GROUP_GET_INFO_TEST_GROUP_NUMB) {
+                    H5_FAILED();
+                    printf("    group's max creation order '%lld' doesn't match expected value '%lld'\n",
+                           (long long)group_info.max_corder, (long long)GROUP_GET_INFO_TEST_GROUP_NUMB);
+                    PART_ERROR(H5Gget_info_by_name);
+                }
             }
 
             /* Ensure that the storage_type field is at least set to a meaningful value */

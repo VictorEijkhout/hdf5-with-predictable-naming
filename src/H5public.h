@@ -83,15 +83,19 @@
 /**
  * For tweaks, bug-fixes, or development
  */
-#define H5_VERS_RELEASE 3
+#define H5_VERS_RELEASE 6
 /**
  * For pre-releases like \c snap0. Empty string for official releases.
  */
 #define H5_VERS_SUBRELEASE ""
 /**
+ * Short version string
+ */
+#define H5_VERS_STR "1.14.6"
+/**
  * Full version string
  */
-#define H5_VERS_INFO "HDF5 library version: 1.14.3"
+#define H5_VERS_INFO "HDF5 library version: 1.14.6"
 
 #define H5check() H5check_version(H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE)
 
@@ -103,7 +107,7 @@
  * \param[in] Maj Major version number - A non-negative integer value
  * \param[in] Min Minor version number - A non-negative integer value
  * \param[in] Rel Release version number - A non-negative integer value
- * \returns A value of 1 is returned if the library version is greater than
+ * \return A value of 1 is returned if the library version is greater than
  *          or equal to the version number specified.\n
  *          A value of 0 is returned if the library version is less than the
  *          version number specified.\n
@@ -123,7 +127,7 @@
  *          The #H5_VERSION_GE macro compares the version of the HDF5 library
  *          being used against the version number specified in the parameters.
  *
- *          For more information about release versioning, see \ref_h5lib_relver.
+ *          For more information about release versioning, see \ref RELVERSION.
  *
  * \since 1.8.7
  *
@@ -139,7 +143,7 @@
  * \param[in] Maj Major version number - A non-negative integer value
  * \param[in] Min Minor version number - A non-negative integer value
  * \param[in] Rel Release version number - A non-negative integer value
- * \returns A value of 1 is returned if the library version is less than
+ * \return A value of 1 is returned if the library version is less than
  *          or equal to the version number specified.\n
  *          A value of 0 is returned if the library version is greater than the
  *          version number specified.\n
@@ -159,7 +163,7 @@
  *          The #H5_VERSION_LE macro compares the version of the HDF5 library
  *          being used against the version number specified in the parameters.
  *
- *          For more information about release versioning, see \ref_h5lib_relver.
+ *          For more information about release versioning, see \ref RELVERSION.
  *
  * \since 1.8.7
  *
@@ -307,15 +311,22 @@ typedef uint64_t hsize_t;
  * should be discouraged in new code.
  */
 typedef int64_t hssize_t;
-#define PRIdHSIZE          PRId64
-#define PRIiHSIZE          PRIi64
-#define PRIoHSIZE          PRIo64
-#define PRIuHSIZE          PRIu64
-#define PRIxHSIZE          PRIx64
+/** d print conversion specifier for signed integer type \since 1.10.8 */
+#define PRIdHSIZE PRId64
+/** i print conversion specifier for signed integer type \since 1.10.8 */
+#define PRIiHSIZE PRIi64
+/** o print conversion specifier for signed integer type \since 1.10.8 */
+#define PRIoHSIZE PRIo64
+/** u print conversion specifier for signed integer type \since 1.10.8 */
+#define PRIuHSIZE PRIu64
+/** x print conversion specifier for signed integer type \since 1.10.8 */
+#define PRIxHSIZE PRIx64
+/** X print conversion specifier for signed integer type \since 1.10.8 */
 #define PRIXHSIZE          PRIX64
 #define H5_SIZEOF_HSIZE_T  8
 #define H5_SIZEOF_HSSIZE_T 8
-#define HSIZE_UNDEF        UINT64_MAX
+/** Represents the largest possible value of uint64_t \since 1.10.0 */
+#define HSIZE_UNDEF UINT64_MAX
 
 /**
  * The address of an object in the file.
@@ -323,10 +334,15 @@ typedef int64_t hssize_t;
  * \internal Defined as a (minimum) 64-bit unsigned integer type.
  */
 typedef uint64_t haddr_t;
-#define PRIdHADDR           PRId64
-#define PRIoHADDR           PRIo64
-#define PRIuHADDR           PRIu64
-#define PRIxHADDR           PRIx64
+/** d print conversion specifier for unsigned integer type \since 1.8.23 */
+#define PRIdHADDR PRId64
+/** o print conversion specifier for unsigned integer type \since 1.8.23 */
+#define PRIoHADDR PRIo64
+/** u print conversion specifier for unsigned integer type \since 1.8.23 */
+#define PRIuHADDR PRIu64
+/** x print conversion specifier for unsigned integer type \since 1.8.23 */
+#define PRIxHADDR PRIx64
+/** X print conversion specifier for unsigned integer type \since 1.8.23 */
 #define PRIXHADDR           PRIX64
 #define H5_SIZEOF_HADDR_T   8
 #define HADDR_UNDEF         UINT64_MAX
@@ -387,6 +403,8 @@ typedef struct H5_ih_info_t {
  * \details Tokens are unique and permanent identifiers that are
  *          used to reference HDF5 objects in a container. This allows
  *          for 128-bit tokens
+ *
+ * \since 1.12.0
  */
 #define H5O_MAX_TOKEN_SIZE (16)
 
@@ -423,12 +441,15 @@ extern "C" {
  * \details H5open() initializes the HDF5 library.
  *
  * \details When the HDF5 library is used in a C application, the library is
- *          automatically initialized when the first HDf5 function call is
+ *          automatically initialized when the first HDF5 function call is
  *          issued. If one finds that an HDF5 library function is failing
  *          inexplicably, H5open() can be called first. It is safe to call
  *          H5open() before an application issues any other function calls to
  *          the HDF5 library, as there are no damaging side effects in calling
  *          it more than once.
+ *
+ * \since 1.0.0
+ *
  */
 H5_DLL herr_t H5open(void);
 /**
@@ -468,6 +489,9 @@ H5_DLL herr_t H5atclose(H5_atclose_func_t func, void *ctx);
  *          generally called when the application calls exit(), but may be
  *          called earlier in the event of an emergency shutdown or out of a
  *          desire to free all resources used by the HDF5 library.
+ *
+ * \since 1.0.0
+ *
  */
 H5_DLL herr_t H5close(void);
 /**
@@ -487,6 +511,9 @@ H5_DLL herr_t H5close(void);
  *            before any other HDF5 function calls, and must be called each
  *            time the library is loaded/linked into the application (the first
  *            time and after it's been unloaded).
+ *
+ * \since 1.0.0
+ *
  */
 H5_DLL herr_t H5dont_atexit(void);
 /**
@@ -507,6 +534,9 @@ H5_DLL herr_t H5dont_atexit(void);
  *
  * \note The library automatically garbage collects all the free lists when the
  *       application ends.
+ *
+ * \since 1.4.0
+ *
  */
 H5_DLL herr_t H5garbage_collect(void);
 /**
@@ -559,7 +589,7 @@ H5_DLL herr_t H5garbage_collect(void);
  * \version 1.8.3 Function changed in this release to set factory free list
  *                memory limits.
  *
- * \since 1.6.0
+ * \since 1.4.0
  */
 H5_DLL herr_t H5set_free_list_limits(int reg_global_lim, int reg_list_lim, int arr_global_lim,
                                      int arr_list_lim, int blk_global_lim, int blk_list_lim);
@@ -595,6 +625,8 @@ H5_DLL herr_t H5get_free_list_sizes(size_t *reg_size, size_t *arr_size, size_t *
  *          of the version of the HDF5 library which is linked to the
  *          application.
  *
+ * \since 1.0.0
+ *
  */
 H5_DLL herr_t H5get_libversion(unsigned *majnum, unsigned *minnum, unsigned *relnum);
 /**
@@ -617,7 +649,7 @@ H5_DLL herr_t H5get_libversion(unsigned *majnum, unsigned *minnum, unsigned *rel
  *          example:
  *
  *          An official HDF5 release is labelled as follows:
- *          HDF5 Release \Code{\<majnum\>.\<minnum\>.\<relnum\>}\n
+ *          HDF5 Release \TText{\<majnum\>.\<minnum\>.\<relnum\>}\n
  *          For example, in HDF5 Release 1.8.5:
  *          \li 1 is the major version number, \p majnum.
  *          \li 8 is the minor version number, \p minnum.
@@ -642,6 +674,8 @@ H5_DLL herr_t H5get_libversion(unsigned *majnum, unsigned *minnum, unsigned *rel
  *          cause failures; if this check reveals an inconsistency, an
  *          informational warning is printed but the application is allowed to
  *          run.
+ *
+ * \since 1.0.0
  *
  */
 H5_DLL herr_t H5check_version(unsigned majnum, unsigned minnum, unsigned relnum);
@@ -675,6 +709,9 @@ H5_DLL herr_t H5is_library_terminating(hbool_t *is_terminating);
  *          data structures with a mutex. In certain circumstances, it may be
  *          useful to determine, at run-time, whether the linked HDF5 library
  *          was built with the thread-safety feature enabled.
+ *
+ * \since 1.10.0
+ *
  */
 H5_DLL herr_t H5is_library_threadsafe(hbool_t *is_ts);
 /**
@@ -796,15 +833,15 @@ H5_DLL void *H5allocate_memory(size_t size, hbool_t clear);
  *          This function is intended to have the semantics of realloc():
  *
  *          <table>
- *            <tr><td>\Code{H5resize_memory(buffer, size)}</td>
+ *            <tr><td>\TText{H5resize_memory(buffer, size)}</td>
  *                <td>Resizes buffer. Returns pointer to resized buffer.</td></tr>
- *            <tr><td>\Code{H5resize_memory(NULL, size)}</td>
+ *            <tr><td>\TText{H5resize_memory(NULL, size)}</td>
  *                <td>Allocates memory using HDF5 Library allocator.
  *                    Returns pointer to new buffer</td></tr>
- *            <tr><td>\Code{H5resize_memory(buffer, 0)}</td>
+ *            <tr><td>\TText{H5resize_memory(buffer, 0)}</td>
  *                <td>Frees memory using HDF5 Library allocator.
  *                    Returns NULL.</td></tr>
- *            <tr><td>\Code{H5resize_memory(NULL, 0)}</td>
+ *            <tr><td>\TText{H5resize_memory(NULL, 0)}</td>
  *                <td>Returns NULL (undefined in C standard).</td></tr>
  *          </table>
  *

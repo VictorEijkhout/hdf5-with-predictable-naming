@@ -130,16 +130,16 @@ MODULE H5LIB
   !
   ! H5R flags declaration
   !
-  INTEGER, PARAMETER :: H5R_FLAGS_LEN = 2
+  INTEGER, PARAMETER :: H5R_FLAGS_LEN = 9
   INTEGER, DIMENSION(1:H5R_FLAGS_LEN) :: H5R_flags
   !
   ! H5S flags declaration
   !
-  INTEGER, PARAMETER :: H5S_FLAGS_LEN = 18
+  INTEGER, PARAMETER :: H5S_FLAGS_LEN = 20
   INTEGER, DIMENSION(1:H5S_FLAGS_LEN) :: H5S_flags
   INTEGER, PARAMETER :: H5S_HSIZE_FLAGS_LEN = 1
   INTEGER(HSIZE_T), DIMENSION(1:H5S_HSIZE_FLAGS_LEN) :: H5S_hsize_flags
-  INTEGER, PARAMETER :: H5S_HID_FLAGS_LEN = 1
+  INTEGER, PARAMETER :: H5S_HID_FLAGS_LEN = 3
   INTEGER(HSIZE_T), DIMENSION(1:H5S_HID_FLAGS_LEN)   :: H5S_hid_flags
   !
   ! H5T flags declaration
@@ -319,6 +319,7 @@ CONTAINS
     H5T_STD_B64LE  = integer_types(25)
     H5T_FORTRAN_S1 = integer_types(26)
     H5T_C_S1       = integer_types(27)
+    H5T_STD_REF    = integer_types(28)
 
     error = error + h5init_flags_c(H5D_flags, &
          H5D_size_flags, &
@@ -627,12 +628,21 @@ CONTAINS
     !
     ! H5R flags
     !
-    H5R_OBJECT_F         = H5R_flags(1)
-    H5R_DATASET_REGION_F = H5R_flags(2)
+    H5R_OBJECT_F          = H5R_flags(1)
+    H5R_DATASET_REGION_F  = H5R_flags(2)
+    H5R_BADTYPE_F         = H5R_flags(3)
+    H5R_OBJECT1_F         = H5R_flags(4)
+    H5R_DATASET_REGION1_F = H5R_flags(5)
+    H5R_OBJECT2_F         = H5R_flags(6)
+    H5R_DATASET_REGION2_F = H5R_flags(7)
+    H5R_ATTR_F            = H5R_flags(8)
+    H5R_MAXTYPE_F         = H5R_flags(9)
     !
     ! H5S flags
     !
-    H5S_ALL_F = H5S_hid_flags(1)
+    H5S_ALL_F   = H5S_hid_flags(1)
+    H5S_BLOCK_F = H5S_hid_flags(2)
+    H5S_PLIST_F = H5S_hid_flags(3)
 
     H5S_UNLIMITED_F = H5S_hsize_flags(1)
 
@@ -654,6 +664,8 @@ CONTAINS
     H5S_SEL_POINTS_F     = H5S_flags(16)
     H5S_SEL_HYPERSLABS_F = H5S_flags(17)
     H5S_SEL_ALL_F        = H5S_flags(18)
+    H5S_SEL_ITER_GET_SEQ_LIST_SORTED_F  = H5S_flags(19)
+    H5S_SEL_ITER_SHARE_WITH_DATASPACE_F = H5S_flags(20)
     !
     ! H5T flags declaration
     !
@@ -996,7 +1008,7 @@ CONTAINS
           h5_type = H5T_NATIVE_REAL_C_LONG_DOUBLE
 #endif
 #if H5_PAC_FC_MAX_REAL_PRECISION > 28
-#if H5_HAVE_FLOAT128 == 1
+#ifdef H5_HAVE_FLOAT128
        ELSE
           h5_type = H5T_NATIVE_FLOAT_128
 #endif

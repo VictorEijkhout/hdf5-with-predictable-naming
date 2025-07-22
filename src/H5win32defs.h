@@ -22,7 +22,7 @@
 
 /* off_t exists on Windows, but is always a 32-bit long, even on 64-bit Windows,
  * so we define HDoff_t to be __int64, which is the type of the st_size field
- * of the _stati64 struct.
+ * of the _stati64 struct and what is returned by _ftelli64().
  */
 #define HDoff_t __int64
 
@@ -42,6 +42,7 @@ struct timezone {
 #define HDcreat(S, M)        Wopen_utf8(S, O_CREAT | O_TRUNC | O_RDWR, M)
 #define HDflock(F, L)        Wflock(F, L)
 #define HDfstat(F, B)        _fstati64(F, B)
+#define HDftell(F)           _ftelli64(F)
 #define HDgetdcwd(D, S, Z)   _getdcwd(D, S, Z)
 #define HDgetdrive()         _getdrive()
 #define HDgettimeofday(V, Z) Wgettimeofday(V, Z)
@@ -49,12 +50,18 @@ struct timezone {
 #define HDlstat(S, B)        _lstati64(S, B)
 #define HDmkdir(S, M)        _mkdir(S)
 
-/* Note that the variadic HDopen macro is using a VC++ extension
- * where the comma is dropped if nothing is passed to the ellipsis.
+/* Note that with the traditional MSVC preprocessor, the variadic
+ * HDopen macro uses an MSVC-specific extension where the comma
+ * is dropped if nothing is passed to the ellipsis.
+ *
+ * MinGW and the newer, conforming MSVC preprocessor do not exhibit this
+ * behavior.
  */
-#ifndef H5_HAVE_MINGW
+#if (defined(_MSC_VER) && !defined(_MSVC_TRADITIONAL)) || defined(_MSVC_TRADITIONAL)
+/* Using the MSVC traditional preprocessor */
 #define HDopen(S, F, ...) Wopen_utf8(S, F, __VA_ARGS__)
 #else
+/* Using a standards conformant preprocessor */
 #define HDopen(S, F, ...) Wopen_utf8(S, F, ##__VA_ARGS__)
 #endif
 

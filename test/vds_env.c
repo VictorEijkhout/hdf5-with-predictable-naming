@@ -49,17 +49,17 @@ test_vds_prefix_second(unsigned config, hid_t fapl)
     char       *srcfilenamepct          = NULL;
     char       *srcfilenamepct_map      = NULL;
     hid_t       srcfile[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Files with source dsets */
+                                           H5I_INVALID_HID}; /* Files with source dsets */
     hid_t       vfile                   = H5I_INVALID_HID;   /* File with virtual dset */
     hid_t       dcpl                    = H5I_INVALID_HID;   /* Dataset creation property list */
     hid_t       dapl                    = H5I_INVALID_HID;   /* Dataset access property list */
     hid_t       srcspace[4]             = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                         H5I_INVALID_HID}; /* Source dataspaces */
+                                           H5I_INVALID_HID}; /* Source dataspaces */
     hid_t       vspace[4]               = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                       H5I_INVALID_HID}; /* Virtual dset dataspaces */
+                                           H5I_INVALID_HID}; /* Virtual dset dataspaces */
     hid_t       memspace                = H5I_INVALID_HID;   /* Memory dataspace */
     hid_t       srcdset[4]              = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                        H5I_INVALID_HID}; /* Source datasets */
+                                           H5I_INVALID_HID}; /* Source datasets */
     hid_t       vdset                   = H5I_INVALID_HID;   /* Virtual dataset */
     hsize_t     dims[4]                 = {10, 26, 0, 0};    /* Data space current size */
     int         buf[10][26];                                 /* Write and expected read buffer */
@@ -327,16 +327,14 @@ main(void)
     hid_t        fapl, my_fapl;
     unsigned     bit_config;
     H5F_libver_t low, high;   /* Low and high bounds */
-    const char  *env_h5_drvr; /* File Driver value from environment */
+    const char  *driver_name; /* File Driver value from environment */
     bool         driver_is_parallel;
     int          nerrors = 0;
 
-    env_h5_drvr = getenv(HDF5_DRIVER);
-    if (env_h5_drvr == NULL)
-        env_h5_drvr = "nomatch";
+    driver_name = h5_get_test_driver_name();
 
     /* Testing setup */
-    h5_reset();
+    h5_test_init();
     fapl = h5_fileaccess();
 
     if (h5_using_parallel_driver(fapl, &driver_is_parallel) < 0)
@@ -347,7 +345,7 @@ main(void)
      * doesn't support parallel reads and the splitter VFD has external
      * link-related bugs.
      */
-    if (driver_is_parallel || !strcmp(env_h5_drvr, "splitter")) {
+    if (driver_is_parallel || !strcmp(driver_name, "splitter")) {
         puts(" -- SKIPPED for incompatible VFD --");
         exit(EXIT_SUCCESS);
     }

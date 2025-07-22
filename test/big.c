@@ -143,12 +143,13 @@ is_sparse(void)
 
     if ((fd = HDopen("x.h5", O_RDWR | O_TRUNC | O_CREAT, H5_POSIX_CREATE_MODE_RW)) < 0)
         return 0;
-    if (HDlseek(fd, (HDoff_t)(1024 * 1024), SEEK_SET) != 1024 * 1024)
+    if (HDlseek(fd, (1024 * 1024), SEEK_SET) != 1024 * 1024)
         return 0;
     if (5 != HDwrite(fd, "hello", (size_t)5))
         return 0;
     if (HDclose(fd) < 0)
         return 0;
+    memset(&sb, 0, sizeof(h5_stat_t));
     if (HDstat("x.h5", &sb) < 0)
         return 0;
     if (HDremove("x.h5") < 0)
@@ -590,7 +591,8 @@ test_sec2(hid_t fapl)
 quit:
     /* End with normal return code */
     /* Clean up the test file */
-    h5_clean_files(FILENAME, fapl);
+    h5_delete_all_test_files(FILENAME, fapl);
+    H5Pclose(fapl);
     HDremove(DNAME);
     return 0;
 
@@ -627,7 +629,8 @@ test_stdio(hid_t fapl)
 quit:
     /* End with normal return code */
     /* Clean up the test file */
-    h5_clean_files(FILENAME, fapl);
+    h5_delete_all_test_files(FILENAME, fapl);
+    H5Pclose(fapl);
     HDremove(DNAME);
     fflush(stdout);
     return 0;
@@ -682,7 +685,8 @@ test_family(hid_t fapl)
 quit:
     /* End with normal return code */
     /* Clean up the test file */
-    h5_clean_files(FILENAME, fapl);
+    h5_delete_all_test_files(FILENAME, fapl);
+    H5Pclose(fapl);
     HDremove(DNAME);
     return 0;
 
@@ -751,7 +755,7 @@ main(int ac, char **av)
         sparse_support = is_sparse();
 
     /* Choose random # seed */
-    seed = (unsigned long)HDtime(NULL);
+    seed = (unsigned long)time(NULL);
 #if 0
     /* seed = (unsigned long)1155438845; */
     fprintf(stderr, "Random # seed was: %lu\n", seed);

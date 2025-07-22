@@ -52,6 +52,7 @@ test_encode_decode(hid_t orig_pl, int mpi_rank, int recv_proc)
         void *rbuf;
 
         MPI_Recv(&recv_size, 1, MPI_INT, 0, 123, MPI_COMM_WORLD, &status);
+        VRFY((recv_size >= 0), "MPI_Recv succeeded");
         buf_size = (size_t)recv_size;
         rbuf     = (uint8_t *)malloc(buf_size);
         MPI_Recv(rbuf, recv_size, MPI_BYTE, 0, 124, MPI_COMM_WORLD, &status);
@@ -171,13 +172,13 @@ test_plist_ed(void)
     VRFY((ret >= 0), "set fill-value succeeded");
 
     max_size[0] = 100;
-    ret         = H5Pset_external(dcpl, "ext1.data", (off_t)0, (hsize_t)(max_size[0] * sizeof(int) / 4));
+    ret         = H5Pset_external(dcpl, "ext1.data", 0, (hsize_t)(max_size[0] * sizeof(int) / 4));
     VRFY((ret >= 0), "set external succeeded");
-    ret = H5Pset_external(dcpl, "ext2.data", (off_t)0, (hsize_t)(max_size[0] * sizeof(int) / 4));
+    ret = H5Pset_external(dcpl, "ext2.data", 0, (hsize_t)(max_size[0] * sizeof(int) / 4));
     VRFY((ret >= 0), "set external succeeded");
-    ret = H5Pset_external(dcpl, "ext3.data", (off_t)0, (hsize_t)(max_size[0] * sizeof(int) / 4));
+    ret = H5Pset_external(dcpl, "ext3.data", 0, (hsize_t)(max_size[0] * sizeof(int) / 4));
     VRFY((ret >= 0), "set external succeeded");
-    ret = H5Pset_external(dcpl, "ext4.data", (off_t)0, (hsize_t)(max_size[0] * sizeof(int) / 4));
+    ret = H5Pset_external(dcpl, "ext4.data", 0, (hsize_t)(max_size[0] * sizeof(int) / 4));
     VRFY((ret >= 0), "set external succeeded");
 
     ret = test_encode_decode(dcpl, mpi_rank, recv_proc);

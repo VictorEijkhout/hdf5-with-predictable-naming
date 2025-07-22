@@ -67,6 +67,28 @@
 #define VERBOSE_HI   (HDGetTestVerbosity() >= VERBO_HI)
 
 /*
+ * The TestExpress mode for the testing framework
+ *
+ Values:
+ 0: Exhaustive run
+    Tests should take as long as necessary
+ 1: Full run.  Default if H5_TEST_EXPRESS_LEVEL_DEFAULT
+    and HDF5TestExpress are not defined
+    Tests should take no more than 30 minutes
+ 2: Quick run
+    Tests should take no more than 10 minutes
+ 3: Smoke test.
+    Default if HDF5TestExpress is set to a value other than 0-3
+    Tests should take less than 1 minute
+
+ Design:
+ If the environment variable $HDF5TestExpress is defined,
+ or if a default testing level > 1 has been set via
+ H5_TEST_EXPRESS_LEVEL_DEFAULT, then test programs should
+ skip some tests so that they complete sooner.
+*/
+
+/*
  * Test controls definitions.
  */
 #define SKIPTEST  1 /* Skip this test */
@@ -230,7 +252,8 @@ H5TEST_DLLVAR MPI_Info h5_io_info_g; /* MPI INFO object for IO */
 #define H5_ALARM_SEC 1200 /* default is 20 minutes */
 
 /* Flags for h5_fileaccess_flags() */
-#define H5_FILEACCESS_LIBVER 0x01
+#define H5_FILEACCESS_VFD    0x01
+#define H5_FILEACCESS_LIBVER 0x02
 
 /* Flags for h5_driver_uses_multiple_files() */
 #define H5_EXCLUDE_MULTIPART_DRIVERS     0x01
@@ -267,7 +290,6 @@ extern "C" {
 #endif
 
 /* Generally useful testing routines */
-H5TEST_DLL void        h5_clean_files(const char *base_name[], hid_t fapl);
 H5TEST_DLL int         h5_cleanup(const char *base_name[], hid_t fapl);
 H5TEST_DLL char       *h5_fixname(const char *base_name, hid_t fapl, char *fullname, size_t size);
 H5TEST_DLL char       *h5_fixname_superblock(const char *base_name, hid_t fapl, char *fullname, size_t size);
@@ -277,7 +299,6 @@ H5TEST_DLL hid_t       h5_fileaccess(void);
 H5TEST_DLL hid_t       h5_fileaccess_flags(unsigned flags);
 H5TEST_DLL void        h5_no_hwconv(void);
 H5TEST_DLL const char *h5_rmprefix(const char *filename);
-H5TEST_DLL void        h5_reset(void);
 H5TEST_DLL void        h5_restore_err(void);
 H5TEST_DLL void        h5_show_hostname(void);
 H5TEST_DLL h5_stat_size_t h5_get_file_size(const char *filename, hid_t fapl);
@@ -290,23 +311,33 @@ H5TEST_DLL const char    *h5_get_version_string(H5F_libver_t libver);
 H5TEST_DLL int            h5_compare_file_bytes(char *fname1, char *fname2);
 H5TEST_DLL int            h5_duplicate_file_by_bytes(const char *orig, const char *dest);
 H5TEST_DLL herr_t         h5_check_if_file_locking_enabled(bool *are_enabled);
+H5TEST_DLL void           h5_check_file_locking_env_var(htri_t *use_locks, htri_t *ignore_disabled_locks);
+H5TEST_DLL herr_t         h5_using_native_vol(hid_t fapl_id, hid_t obj_id, bool *is_native_vol);
+H5TEST_DLL const char    *h5_get_test_driver_name(void);
 H5TEST_DLL bool           h5_using_default_driver(const char *drv_name);
 H5TEST_DLL herr_t         h5_using_parallel_driver(hid_t fapl_id, bool *driver_is_parallel);
 H5TEST_DLL herr_t         h5_driver_is_default_vfd_compatible(hid_t fapl_id, bool *default_vfd_compatible);
 H5TEST_DLL bool           h5_driver_uses_multiple_files(const char *drv_name, unsigned flags);
 
+/* Random number functions that don't modify the underlying rand/random state.
+ * These use rand_r with a state pointer under the hood. The state is always
+ * initialized to the same value so that each process in the parallel tests
+ * always gets the same sequence.
+ */
+H5TEST_DLL int  h5_local_rand(void);
+H5TEST_DLL void h5_local_srand(unsigned int seed);
+
 /* Functions that will replace components of a FAPL */
+H5TEST_DLL herr_t h5_get_vfd_fapl(hid_t fapl_id);
 H5TEST_DLL herr_t h5_get_libver_fapl(hid_t fapl_id);
 
-/* h5_clean_files() replacements */
+/* fapl must be closed by caller */
 H5TEST_DLL void h5_delete_test_file(const char *base_name, hid_t fapl);
 H5TEST_DLL void h5_delete_all_test_files(const char *base_name[], hid_t fapl);
 
-/* h5_reset() replacement */
+/* Performs any special actions before the test begins,
+ * including resetting the library by closing it */
 H5TEST_DLL void h5_test_init(void);
-
-/* h5_cleanup() replacement */
-H5TEST_DLL void h5_test_shutdown(void);
 
 /* Routines for operating on the list of tests (for the "all in one" tests) */
 H5TEST_DLL void        TestUsage(void);
@@ -347,6 +378,7 @@ H5TEST_DLL char *getenv_all(MPI_Comm comm, int root, const char *name);
 #endif
 
 /* Extern global variables */
+H5TEST_DLLVAR int      TestExpress;
 H5TEST_DLLVAR int      TestVerbosity;
 H5TEST_DLLVAR size_t   n_tests_run_g;
 H5TEST_DLLVAR size_t   n_tests_passed_g;

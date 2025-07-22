@@ -2298,15 +2298,13 @@ main(void)
     hid_t               fapl    = H5I_INVALID_HID; /* File access property list for data files */
     unsigned            nerrors = 0;               /* Cumulative error count */
     time_t              curr_time;                 /* Current time, for seeding random number generator */
-    int                 ExpressMode;               /* Test express value */
     bool                api_ctx_pushed = false;    /* Whether API context pushed */
 
     /* Reset library */
-    h5_reset();
-    fapl        = h5_fileaccess();
-    ExpressMode = GetTestExpress();
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
+    h5_test_init();
+    fapl = h5_fileaccess();
+    if (TestExpress > 0)
+        printf("***Express test mode %d.  Some tests may be skipped\n", TestExpress);
 
     /* Set the filename to use for this test (dependent on fapl) */
     h5_fixname(FILENAME[0], fapl, filename_g, sizeof(filename_g));
@@ -2317,7 +2315,7 @@ main(void)
     api_ctx_pushed = true;
 
     /* Seed random #'s */
-    curr_time = HDtime(NULL);
+    curr_time = time(NULL);
     HDsrandom((unsigned)curr_time);
 
     /* Create an empty file to retrieve size */

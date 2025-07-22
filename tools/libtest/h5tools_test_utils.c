@@ -544,7 +544,7 @@ test_populate_ros3_fa(void)
 
 #ifndef H5_HAVE_ROS3_VFD
     puts(" -SKIP-");
-    puts("    Read-Only S3 VFD not enabled");
+    puts("    Test is skipped unless HDF5 is configured and built with the Read-Only S3 VFD enabled.");
     fflush(stdout);
     return 0;
 #else
@@ -674,8 +674,8 @@ test_populate_ros3_fa(void)
     {
         H5FD_ros3_fapl_ext_t fa       = {{bad_version, false, "a", "b", "c"}, "d"};
         const char          *values[] = {"somewhere over the rainbow not too high "
-                                         "there is another rainbow bounding some darkened sky",
-                                "y", "z", ""};
+                                                  "there is another rainbow bounding some darkened sky",
+                                         "y", "z", ""};
 
         if (show_progress) {
             printf("region overflow\n");
@@ -738,17 +738,17 @@ test_populate_ros3_fa(void)
     {
         H5FD_ros3_fapl_ext_t fa       = {{bad_version, false, "a", "b", "c"}, "d"};
         const char          *values[] = {"x",
-                                "Why is it necessary to solve the problem? "
-                                         "What benefits will you receive by solving the problem? "
-                                         "What is the unknown? "
-                                         "What is it you don't yet understand? "
-                                         "What is the information you have? "
-                                         "What isn't the problem? "
-                                         "Is the information insufficient, redundant, or contradictory? "
-                                         "Should you draw a diagram or figure of the problem? "
-                                         "What are the boundaries of the problem? "
-                                         "Can you separate the various parts of the problem?",
-                                "z", ""};
+                                         "Why is it necessary to solve the problem? "
+                                                  "What benefits will you receive by solving the problem? "
+                                                  "What is the unknown? "
+                                                  "What is it you don't yet understand? "
+                                                  "What is the information you have? "
+                                                  "What isn't the problem? "
+                                                  "Is the information insufficient, redundant, or contradictory? "
+                                                  "Should you draw a diagram or figure of the problem? "
+                                                  "What are the boundaries of the problem? "
+                                                  "Can you separate the various parts of the problem?",
+                                         "z", ""};
 
         if (show_progress) {
             printf("id overflow\n");
@@ -871,17 +871,17 @@ test_populate_ros3_fa(void)
     {
         H5FD_ros3_fapl_ext_t fa       = {{bad_version, false, "a", "b", "c"}, "d"};
         const char          *values[] = {"x", "y",
-                                "Why is it necessary to solve the problem? "
-                                         "What benefits will you receive by solving the problem? "
-                                         "What is the unknown? "
-                                         "What is it you don't yet understand? "
-                                         "What is the information you have? "
-                                         "What isn't the problem? "
-                                         "Is the information insufficient, redundant, or contradictory? "
-                                         "Should you draw a diagram or figure of the problem? "
-                                         "What are the boundaries of the problem? "
-                                         "Can you separate the various parts of the problem?",
-                                ""};
+                                         "Why is it necessary to solve the problem? "
+                                                  "What benefits will you receive by solving the problem? "
+                                                  "What is the unknown? "
+                                                  "What is it you don't yet understand? "
+                                                  "What is the information you have? "
+                                                  "What isn't the problem? "
+                                                  "Is the information insufficient, redundant, or contradictory? "
+                                                  "Should you draw a diagram or figure of the problem? "
+                                                  "What are the boundaries of the problem? "
+                                                  "Can you separate the various parts of the problem?",
+                                         ""};
 
         if (show_progress) {
             printf("key overflow\n");
@@ -903,7 +903,7 @@ test_populate_ros3_fa(void)
     {
         H5FD_ros3_fapl_ext_t fa       = {{0, 0, "", "", ""}, ""};
         const char          *values[] = {"us-east-2", "AKIAIMC3D3XLYXLN5COA",
-                                "ugs5aVVnLFCErO/8uW14iWE3K5AgXMpsMlWneO/+", ""};
+                                         "ugs5aVVnLFCErO/8uW14iWE3K5AgXMpsMlWneO/+", ""};
         JSVERIFY(1, h5tools_populate_ros3_fapl(&fa, values), "unable to set use case")
         JSVERIFY(1, fa.fa.version, "version check")
         JSVERIFY(1, fa.fa.authenticate, "should authenticate")
@@ -927,7 +927,7 @@ error:
  *
  * Function:   test_set_configured_fapl()
  *
- * Purpose:    Verify `h5tools_get_fapl()` with ROS3 and HDFS VFDs
+ * Purpose:    Verify `h5tools_get_new_fapl()` with ROS3 and HDFS VFDs
  *
  * Return:     0 if test passes
  *             1 if failure
@@ -983,28 +983,28 @@ test_set_configured_fapl(void)
             "(common) H5P_DEFAULT with no struct should succeed",
             1,
             UTIL_TEST_DEFAULT,
-            "sec2",
+            H5_DEFAULT_VFD_NAME,
             NULL,
         },
         {
             "(common) H5P_DEFAULT with (ignored) struct should succeed",
             1,
             UTIL_TEST_DEFAULT,
-            "sec2",
+            H5_DEFAULT_VFD_NAME,
             &wrong_fa,
         },
         {
             "(common) provided fapl entry should not fail",
             1,
             UTIL_TEST_CREATE,
-            "sec2",
+            H5_DEFAULT_VFD_NAME,
             NULL,
         },
         {
             "(common) provided fapl entry should not fail; ignores struct",
             1,
             UTIL_TEST_CREATE,
-            "sec2",
+            H5_DEFAULT_VFD_NAME,
             &wrong_fa,
         },
         {
@@ -1111,12 +1111,15 @@ test_set_configured_fapl(void)
         vfd_info.info   = C.conf_fa;
         vfd_info.u.name = C.vfdname;
 
-        if (C.expected == 1)
-            result = h5tools_get_fapl(H5P_DEFAULT, NULL, &vfd_info);
+        if (C.expected == 1) {
+            result = h5tools_get_new_fapl(H5P_DEFAULT);
+            result = h5tools_set_fapl_vfd(result, &vfd_info);
+        }
         else {
             H5E_BEGIN_TRY
             {
-                result = h5tools_get_fapl(H5P_DEFAULT, NULL, &vfd_info);
+                result = h5tools_get_new_fapl(H5P_DEFAULT);
+                result = h5tools_set_fapl_vfd(result, &vfd_info);
             }
             H5E_END_TRY
         }

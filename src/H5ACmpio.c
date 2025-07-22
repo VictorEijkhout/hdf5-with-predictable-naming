@@ -35,8 +35,10 @@
 #include "H5Cprivate.h"  /* Cache                                */
 #include "H5CXprivate.h" /* API Contexts                         */
 #include "H5Eprivate.h"  /* Error handling		  	*/
+#include "H5FLprivate.h" /* Free Lists                               */
 #include "H5Fpkg.h"      /* Files				*/
 #include "H5MMprivate.h" /* Memory management                    */
+#include "H5SLprivate.h" /* Skip Lists                               */
 
 #ifdef H5_HAVE_PARALLEL
 
@@ -1132,7 +1134,7 @@ done:
  *
  *		2) Apply the candidate entry list.
  *
- *		3) Particpate in a closing barrier.
+ *		3) Participate in a closing barrier.
  *
  *		4) Remove from the dirty list (d_slist_ptr) and from the
  *		   flushed and still clean entries list (c_slist_ptr),
@@ -1149,7 +1151,7 @@ done:
  *
  *		2) Apply the candidate entry list.
  *
- *		3) Particpate in a closing barrier.
+ *		3) Participate in a closing barrier.
  *
  * Return:      Success:        non-negative
  *

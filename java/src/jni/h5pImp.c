@@ -10,12 +10,6 @@
  * help@hdfgroup.org.                                                        *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-/*
- *  For details of the HDF libraries, see the HDF Documentation at:
- *    http://hdfgroup.org/HDF5/doc/
- *
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -563,8 +557,8 @@ done:
 JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5Pget(JNIEnv *env, jclass clss, jlong plid, jstring name)
 {
-    const char *cstr = NULL;
-    jint        val;
+    const char *cstr   = NULL;
+    jint        val    = -1;
     herr_t      status = FAIL;
 
     UNUSED(clss);

@@ -89,38 +89,50 @@
   # repartition family member size to 20,000 bytes.
   add_test (
       NAME H5REPART-h5repart_20K
-      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart${tgt_file_ext}> -m 20000 family_file%05d.h5 fst_family%05d.h5
+      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart> -m 20000 family_file%05d.h5 fst_family%05d.h5
   )
   set_tests_properties (H5REPART-h5repart_20K PROPERTIES
       FIXTURES_REQUIRED clear_testrepart
   )
+  if ("H5REPART-h5repart_20K" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+    set_tests_properties (H5REPART-h5repart_20K PROPERTIES DISABLED true)
+  endif ()
 
   # repartition family member size to 5 KB.
   add_test (
       NAME H5REPART-h5repart_5K
-      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart${tgt_file_ext}> -m 5k family_file%05d.h5 scd_family%05d.h5
+      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart> -m 5k family_file%05d.h5 scd_family%05d.h5
   )
   set_tests_properties (H5REPART-h5repart_5K PROPERTIES
       FIXTURES_REQUIRED clear_testrepart
   )
+  if ("H5REPART-h5repart_5K" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+    set_tests_properties (H5REPART-h5repart_5K PROPERTIES DISABLED true)
+  endif ()
 
   # convert family file to sec2 file of 20,000 bytes
   add_test (
       NAME H5REPART-h5repart_single
-      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart${tgt_file_ext}> -m 20000 -family_to_single family_file%05d.h5 family_to_single.h5
+      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart> -m 20000 -family_to_single family_file%05d.h5 family_to_single.h5
   )
   set_tests_properties (H5REPART-h5repart_single PROPERTIES
       FIXTURES_REQUIRED clear_testrepart
   )
+  if ("H5REPART-h5repart_single" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+    set_tests_properties (H5REPART-h5repart_single PROPERTIES DISABLED true)
+  endif ()
 
   # convert family file to sec2 file of 20,000 bytes (old argument)
   add_test (
       NAME H5REPART-h5repart_sec2
-      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart${tgt_file_ext}> -m 20000 -family_to_sec2 family_file%05d.h5 family_to_sec2.h5
+      COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:h5repart> -m 20000 -family_to_sec2 family_file%05d.h5 family_to_sec2.h5
   )
   set_tests_properties (H5REPART-h5repart_sec2 PROPERTIES
       FIXTURES_REQUIRED clear_testrepart
   )
+  if ("H5REPART-h5repart_sec2" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+    set_tests_properties (H5REPART-h5repart_sec2 PROPERTIES DISABLED true)
+  endif ()
 
   # test the output files repartitioned above.
   add_test (
@@ -131,6 +143,9 @@
       DEPENDS "H5REPART-h5repart_20K;H5REPART-h5repart_5K;H5REPART-h5repart_single;H5REPART-h5repart_sec2"
       FIXTURES_REQUIRED clear_testrepart
   )
+  if ("H5REPART-h5repart_test" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
+    set_tests_properties (H5REPART-h5repart_test PROPERTIES DISABLED true)
+  endif ()
 
   set (H5_DEP_EXECUTABLES ${H5_DEP_EXECUTABLES}
         h5repart_test

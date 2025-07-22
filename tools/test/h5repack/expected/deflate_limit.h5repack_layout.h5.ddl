@@ -5,10 +5,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -23,10 +23,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -41,10 +41,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -59,10 +59,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -77,10 +77,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 20, 10 )
-         SIZE 1283 (2.494:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -95,10 +95,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET
@@ -113,10 +113,10 @@ GROUP "/" {
       DATASPACE  SIMPLE { ( 40, 20 ) / ( 40, 20 ) }
       STORAGE_LAYOUT {
          CHUNKED ( 40, 20 )
-         SIZE 1150 (2.783:1 COMPRESSION)
+         SIZE XXXX (2.XXX:1 COMPRESSION)
       }
       FILTERS {
-         COMPRESSION DEFLATE { LEVEL 1 }
+         COMPRESSION DEFLATE { LEVEL 2 }
       }
       FILLVALUE {
          FILL_TIME H5D_FILL_TIME_IFSET

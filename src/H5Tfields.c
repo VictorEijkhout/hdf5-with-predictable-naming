@@ -44,7 +44,6 @@ H5Tget_nmembers(hid_t type_id)
     int    ret_value; /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE1("Is", "i", type_id);
 
     /* Check args */
     if (NULL == (dt = (H5T_t *)H5I_object_verify(type_id, H5I_DATATYPE)))
@@ -114,7 +113,6 @@ H5Tget_member_name(hid_t type_id, unsigned membno)
     char  *ret_value;
 
     FUNC_ENTER_API(NULL)
-    H5TRACE2("*s", "iIu", type_id, membno);
 
     /* Check args */
     if (NULL == (dt = (H5T_t *)H5I_object_verify(type_id, H5I_DATATYPE)))
@@ -177,7 +175,7 @@ H5T__get_member_name(H5T_t const *dt, unsigned membno)
         case H5T_NCLASSES:
         default:
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "operation not supported for type class");
-    } /*lint !e788 All appropriate cases are covered */
+    }
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -204,7 +202,6 @@ H5Tget_member_index(hid_t type_id, const char *name)
     unsigned i;
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE2("Is", "i*s", type_id, name);
 
     /* Check arguments */
     assert(name);
@@ -237,7 +234,7 @@ H5Tget_member_index(hid_t type_id, const char *name)
         case H5T_NCLASSES:
         default:
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "operation not supported for this type");
-    } /*lint !e788 All appropriate cases are covered */
+    }
 
 done:
     FUNC_LEAVE_API(ret_value)

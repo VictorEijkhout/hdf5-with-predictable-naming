@@ -10,12 +10,6 @@
  * help@hdfgroup.org.                                                        *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-/*
- *  For details of the HDF libraries, see the HDF Documentation at:
- *    http://hdfgroup.org/HDF5/doc/
- *
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -105,7 +99,7 @@ JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5get_1libversion(JNIEnv *env, jclass clss, jintArray libversion)
 {
     jboolean libversionArrayIsCopy;
-    int     *libversionArray = NULL;
+    jint    *libversionArray = NULL;
     herr_t   status          = FAIL;
 
     UNUSED(clss);

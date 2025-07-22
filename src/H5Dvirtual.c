@@ -875,16 +875,14 @@ H5D__virtual_open_source_dset(const H5D_t *vdset, H5O_storage_virtual_ent_t *vir
         intent = H5F_INTENT(vdset->oloc.file);
 
         /* Try opening the file */
-        src_file = H5F_prefix_open_file(vdset->oloc.file, H5F_PREFIX_VDS, vdset->shared->vds_prefix,
-                                        source_dset->file_name, intent,
-                                        vdset->shared->layout.storage.u.virt.source_fapl);
+        if (H5F_prefix_open_file(true, &src_file, vdset->oloc.file, H5F_PREFIX_VDS, vdset->shared->vds_prefix,
+                                 source_dset->file_name, intent,
+                                 vdset->shared->layout.storage.u.virt.source_fapl) < 0)
+            HGOTO_ERROR(H5E_DATASET, H5E_CANTOPENFILE, FAIL, "can't try opening file");
 
         /* If we opened the source file here, we should close it when leaving */
         if (src_file)
             src_file_open = true;
-        else
-            /* Reset the error stack */
-            H5E_clear_stack(NULL);
     } /* end if */
     else
         /* Source file is ".", use the virtual dataset's file */
@@ -906,7 +904,7 @@ H5D__virtual_open_source_dset(const H5D_t *vdset, H5O_storage_virtual_ent_t *vir
         /* Dataset does not exist */
         if (NULL == source_dset->dset) {
             /* Reset the error stack */
-            H5E_clear_stack(NULL);
+            H5E_clear_stack();
 
             source_dset->dset_exists = false;
         } /* end if */
@@ -2678,11 +2676,11 @@ H5D__virtual_read_one(H5D_dset_io_info_t *dset_info, H5O_storage_virtual_srcdset
 
         {
             /* Initialize source_dinfo */
-            source_dinfo.dset        = source_dset->dset;
-            source_dinfo.mem_space   = source_dset->projected_mem_space;
-            source_dinfo.file_space  = projected_src_space;
-            source_dinfo.buf.vp      = dset_info->buf.vp;
-            source_dinfo.mem_type_id = dset_info->type_info.dst_type_id;
+            source_dinfo.dset       = source_dset->dset;
+            source_dinfo.mem_space  = source_dset->projected_mem_space;
+            source_dinfo.file_space = projected_src_space;
+            source_dinfo.buf.vp     = dset_info->buf.vp;
+            source_dinfo.mem_type   = dset_info->type_info.dst_type;
 
             /* Read in the point (with the custom VL memory allocator) */
             if (H5D__read(1, &source_dinfo) < 0)
@@ -2875,11 +2873,11 @@ H5D__virtual_write_one(H5D_dset_io_info_t *dset_info, H5O_storage_virtual_srcdse
 
         {
             /* Initialize source_dinfo */
-            source_dinfo.dset        = source_dset->dset;
-            source_dinfo.mem_space   = source_dset->projected_mem_space;
-            source_dinfo.file_space  = projected_src_space;
-            source_dinfo.buf.cvp     = dset_info->buf.cvp;
-            source_dinfo.mem_type_id = dset_info->type_info.dst_type_id;
+            source_dinfo.dset       = source_dset->dset;
+            source_dinfo.mem_space  = source_dset->projected_mem_space;
+            source_dinfo.file_space = projected_src_space;
+            source_dinfo.buf.cvp    = dset_info->buf.cvp;
+            source_dinfo.mem_type   = dset_info->type_info.dst_type;
 
             /* Read in the point (with the custom VL memory allocator) */
             if (H5D__write(1, &source_dinfo) < 0)

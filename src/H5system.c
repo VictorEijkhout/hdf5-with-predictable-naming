@@ -223,12 +223,12 @@ H5_make_time(struct tm *tm)
 
     /* Initialize timezone information */
     if (!H5_ntzset) {
-        HDtzset();
+        tzset();
         H5_ntzset = true;
-    } /* end if */
+    }
 
     /* Perform base conversion */
-    if ((time_t)-1 == (the_time = HDmktime(tm)))
+    if ((time_t)-1 == (the_time = mktime(tm)))
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTCONVERT, FAIL, "badly formatted modification time message");
 
         /* Adjust for timezones */
@@ -339,13 +339,20 @@ Wsetenv(const char *name, const char *value, int overwrite)
      * value is non-zero), then return an error code.
      */
     if (!overwrite) {
+#ifndef H5_HAVE_MINGW
         size_t  bufsize;
         errno_t err;
 
         err = getenv_s(&bufsize, NULL, 0, name);
         if (err || bufsize)
             return (int)err;
-    } /* end if */
+#else
+        /* MinGW doesn't have getenv_s() */
+        char *test = getenv(name);
+        if (*test)
+            return FAIL;
+#endif
+    }
 
     return (int)_putenv_s(name, value);
 } /* end Wsetenv() */
@@ -555,8 +562,7 @@ Wopen_utf8(const char *path, int oflag, ...)
     fd = _wopen(wpath, oflag, pmode);
 
 done:
-    if (wpath)
-        H5MM_xfree((void *)wpath);
+    H5MM_xfree(wpath);
 
     return fd;
 } /* end Wopen_utf8() */
@@ -570,7 +576,6 @@ done:
  *
  * Return:       Success:    0
  *               Failure:    -1
- *
  *-------------------------------------------------------------------------
  */
 int
@@ -583,12 +588,11 @@ Wremove_utf8(const char *path)
     if (NULL == (wpath = H5_get_utf16_str(path)))
         goto done;
 
-    /* Open the file */
+    /* Remove the file */
     ret = _wremove(wpath);
 
 done:
-    if (wpath)
-        H5MM_xfree((void *)wpath);
+    H5MM_xfree(wpath);
 
     return ret;
 } /* end Wremove_utf8() */
@@ -652,7 +656,7 @@ H5_build_extpath(const char *name, char **extpath /*out*/)
          * Unix: does not apply
          */
         if (H5_CHECK_ABS_DRIVE(name)) {
-            drive  = HDtoupper(name[0]) - 'A' + 1;
+            drive  = toupper(name[0]) - 'A' + 1;
             retcwd = HDgetdcwd(drive, cwdpath, MAX_PATH_LEN);
             strncpy(new_name, &name[2], name_len);
         }
@@ -807,13 +811,12 @@ H5_nanosleep(uint64_t nanosec)
 
 #ifdef H5_HAVE_WIN32_API
     DWORD dwMilliseconds = (DWORD)ceil(nanosec / 1.0e6);
-    DWORD ignore;
 
     /* Windows can't sleep at a ns resolution. Best we can do is ~1 ms. We
      * don't care about the return value since the second parameter
      * (bAlertable) is false, so it will always be zero.
      */
-    ignore = SleepEx(dwMilliseconds, false);
+    SleepEx(dwMilliseconds, false);
 
 #else
 
@@ -1368,7 +1371,7 @@ H5_strcasestr(const char *haystack, const char *needle)
         const char *h = haystack;
         const char *n = needle;
         /* loop while lowercase strings match, or needle ends */
-        while (HDtolower(*h) == HDtolower(*n) && *n) {
+        while (tolower(*h) == tolower(*n) && *n) {
             h++;
             n++;
         }

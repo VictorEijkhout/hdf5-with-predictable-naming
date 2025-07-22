@@ -36,7 +36,6 @@
 
 /* Private headers needed by this file */
 #include "H5private.h"   /* Generic Functions                        */
-#include "H5ACprivate.h" /* Metadata cache                           */
 #include "H5CXprivate.h" /* API Contexts                             */
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5Gprivate.h"  /* Groups                                   */
@@ -192,7 +191,7 @@ H5R__encode_token_region_compat(H5F_t *f, const H5O_token_t *obj_token, size_t t
          * file libver bounds, this is later retrieved in H5S hyper encode */
         H5CX_set_libver_bounds(f);
 
-        /* Zero the heap ID out, may leak heap space if user is re-using
+        /* Zero the heap ID out, may leak heap space if user is reusing
          * reference and doesn't have garbage collection turned on
          */
         memset(buf, 0, buf_size);
@@ -255,7 +254,6 @@ H5Rget_obj_type1(hid_t id, H5R_type_t ref_type, const void *ref)
     H5G_obj_t              ret_value;         /* Return value */
 
     FUNC_ENTER_API(H5G_UNKNOWN)
-    H5TRACE3("Go", "iRt*x", id, ref_type, ref);
 
     /* Check args */
     if (buf == NULL)
@@ -269,12 +267,12 @@ H5Rget_obj_type1(hid_t id, H5R_type_t ref_type, const void *ref)
 
     /* Check if using native VOL connector */
     if (H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, H5G_UNKNOWN,
                     "can't determine if VOL object is native connector object");
 
     /* Must use native VOL connector for this operation */
     if (!is_native_vol_obj)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, H5G_UNKNOWN,
                     "H5Rget_obj_type1 is only meant to be used with the native VOL connector");
 
     /* Get object type */
@@ -330,7 +328,6 @@ H5Rdereference1(hid_t obj_id, H5R_type_t ref_type, const void *ref)
     hid_t                ret_value = H5I_INVALID_HID; /* Return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE3("i", "iRt*x", obj_id, ref_type, ref);
 
     /* Check args */
     if (buf == NULL)
@@ -344,12 +341,12 @@ H5Rdereference1(hid_t obj_id, H5R_type_t ref_type, const void *ref)
 
     /* Check if using native VOL connector */
     if (H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, H5I_INVALID_HID,
                     "can't determine if VOL object is native connector object");
 
     /* Must use native VOL connector for this operation */
     if (!is_native_vol_obj)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, H5I_INVALID_HID,
                     "H5Rdereference1 is only meant to be used with the native VOL connector");
 
     /* Get object type */
@@ -409,7 +406,6 @@ H5Rcreate(void *ref, hid_t loc_id, const char *name, H5R_type_t ref_type, hid_t 
     herr_t         ret_value         = SUCCEED;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE5("e", "*xi*sRti", ref, loc_id, name, ref_type, space_id);
 
     /* Check args */
     if (buf == NULL)
@@ -528,7 +524,6 @@ H5Rget_obj_type2(hid_t id, H5R_type_t ref_type, const void *ref, H5O_type_t *obj
     herr_t                 ret_value         = SUCCEED; /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE4("e", "iRt*xx", id, ref_type, ref, obj_type);
 
     /* Check args */
     if (buf == NULL)
@@ -600,7 +595,6 @@ H5Rdereference2(hid_t obj_id, hid_t oapl_id, H5R_type_t ref_type, const void *re
     hid_t                ret_value         = H5I_INVALID_HID; /* Return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE4("i", "iiRt*x", obj_id, oapl_id, ref_type, ref);
 
     /* Check args */
     if (oapl_id < 0)
@@ -620,12 +614,12 @@ H5Rdereference2(hid_t obj_id, hid_t oapl_id, H5R_type_t ref_type, const void *re
 
     /* Check if using native VOL connector */
     if (H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, H5I_INVALID_HID,
                     "can't determine if VOL object is native connector object");
 
     /* Must use native VOL connector for this operation */
     if (!is_native_vol_obj)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, H5I_INVALID_HID,
                     "H5Rdereference2 is only meant to be used with the native VOL connector");
 
     /* Get object type */
@@ -683,7 +677,6 @@ H5Rget_region(hid_t id, H5R_type_t ref_type, const void *ref)
     hid_t ret_value;                        /* Return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE3("i", "iRt*x", id, ref_type, ref);
 
     /* Check args */
     if (buf == NULL)
@@ -701,7 +694,7 @@ H5Rget_region(hid_t id, H5R_type_t ref_type, const void *ref)
                     "can't query if file uses native VOL connector");
 
     if (!is_native_vol_obj)
-        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, FAIL,
+        HGOTO_ERROR(H5E_REFERENCE, H5E_VOL, H5I_INVALID_HID,
                     "H5Rget_region is only meant to be used with the native VOL connector");
 
     /* Get object type */
@@ -766,7 +759,6 @@ H5Rget_name(hid_t id, H5R_type_t ref_type, const void *ref, char *name /*out*/, 
     ssize_t                ret_value    = -1;                         /* Return value */
 
     FUNC_ENTER_API((-1))
-    H5TRACE5("Zs", "iRt*xxz", id, ref_type, ref, name, size);
 
     /* Check args */
     if (buf == NULL)
