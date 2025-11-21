@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.18)
+cmake_minimum_required (VERSION 3.26)
 project (HDF5Examples_FORTRAN_H5PAR Fortran)
 
 # --------------------------------------------------------------------
@@ -10,7 +10,7 @@ project (HDF5Examples_FORTRAN_H5PAR Fortran)
 # Setup include Directories
 #-----------------------------------------------------------------------------
 set_directory_properties(PROPERTIES INCLUDE_DIRECTORIES
-  "${CMAKE_Fortran_MODULE_DIRECTORY}${H5EX_MOD_EXT};${HDF5_F90_BINARY_DIR};${PROJECT_BINARY_DIR};${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+  "${CMAKE_Fortran_MODULE_DIRECTORY}${H5EXAMPLE_MOD_EXT};${HDF5_F90_BINARY_DIR};${PROJECT_BINARY_DIR};${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
 )
 
 #-----------------------------------------------------------------------------
@@ -28,13 +28,14 @@ foreach (example_name ${examples})
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_110_API}>:-DH5_USE_110_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_112_API}>:-DH5_USE_112_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_114_API}>:-DH5_USE_114_API>"
+          "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_200_API}>:-DH5_USE_200_API>"
   )
   target_include_directories (${EXAMPLE_VARNAME}_f90_${example_name} PUBLIC ${MPI_Fortran_INCLUDE_DIRS})
-  target_link_libraries (${EXAMPLE_VARNAME}_f90_${example_name} ${H5EX_LINK_Fortran_LIBS})
+  target_link_libraries (${EXAMPLE_VARNAME}_f90_${example_name} ${H5EXAMPLE_LINK_Fortran_LIBS})
   set_target_properties (${EXAMPLE_VARNAME}_f90_${example_name} PROPERTIES LINKER_LANGUAGE Fortran)
 endforeach ()
 
-if (H5EX_BUILD_TESTING)
+if (H5EXAMPLE_BUILD_TESTING)
   macro (ADD_GREP_TEST testname mumprocs)
     add_test (
         NAME MPI_TEST_${EXAMPLE_VARNAME}_f90_${testname}-clearall
@@ -49,9 +50,10 @@ if (H5EX_BUILD_TESTING)
         -D "TEST_EXPECT=0"
         -D "TEST_SKIP_COMPARE=TRUE"
         -D "TEST_OUTPUT=${testname}.out"
+        -D "TEST_GREP_COMPARE=TRUE"
         -D "TEST_REFERENCE:STRING=PHDF5 example finished with no errors"
         -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-        -P "${H5EX_RESOURCES_DIR}/grepTest.cmake"
+        -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
     )
     set_tests_properties (MPI_TEST_${EXAMPLE_VARNAME}_f90_${testname} PROPERTIES DEPENDS MPI_TEST_${EXAMPLE_VARNAME}_f90_${testname}-clearall)
     add_test (

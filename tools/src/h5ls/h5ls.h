@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -13,6 +13,9 @@
 #define H5LS_H
 
 /** \page H5TOOL_LS_UG The HDF5 h5ls Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5ls h5ls
  *
@@ -70,13 +73,16 @@
  * \li <strong>--page-buffer-size=N</strong> Set the page buffer cache size, N=non-negative integers
  * \li <strong>--vfd=DRIVER</strong>   Use the specified virtual file driver
  * \li <strong>--hexdump</strong>      Show raw data in hexadecimal format
- * \li <strong>--s3-cred=C</strong>    Supply S3 authentication information to "ros3" vfd.
- *                   Accepts tuple of \code (\<aws-region\>,\<access-id\>,\<access-key\>) \endcode.
- *                   If absent or C = \code (,,) \endcode defaults to no-authentication.
+ * \li <strong>--endpoint-url=P</strong> Supply S3 endpoint url information to "ros3" vfd.
+ *                   P is the AWS service endpoint.
  *                   Has no effect if vfd flag not set to "ros3".
- * \li <strong>--hdfs-attrs=A</strong> Supply configuration information to Hadoop VFD.
- *                   Accepts tuple of \code (\<namenode name\>,\<namenode port\>,
- *                   ...\<kerberos cache path\>,\<username\>,\<buffer size\>) \endcode
+ * \li <strong>--s3-cred=C</strong>    Supply S3 authentication information to "ros3" vfd.
+ *                   Accepts tuple of \code (<aws-region>,<access-id>,<access-key>) \endcode
+ *                   or \code (<aws-region>,<access-id>,<access-key>,<session-token>) \endcode.
+ *                   If absent or C = \code (,,) \endcode or C = \code (,,,) \endcode defaults to
+ * no-authentication. Has no effect if vfd flag not set to "ros3". \li <strong>--hdfs-attrs=A</strong> Supply
+ * configuration information to Hadoop VFD. Accepts tuple of \code (<namenode name>,<namenode port>,
+ *                   ...<kerberos cache path>,<username>,<buffer size>) \endcode
  *                   If absent or A == \code (,,,,) \endcode all default values are used.
  *                   Has no effect if vfd flag is not 'hdfs'.
  * \li <strong>--vol-value</strong> Value (ID) of the VOL connector to use for opening the
@@ -102,6 +108,11 @@
  *                      Replaced by <strong>--follow-symlinks</strong>.
  * \li <strong>--errors</strong>    Show all HDF5 error reporting<br />
  *                      Replaced by <strong>--enable-error-stack</strong>.
+ *
+ * Previous Chapter \ref sec_cltools_h5jam - Next Chapter \ref sec_cltools_h5repack
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

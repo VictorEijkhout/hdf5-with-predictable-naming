@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -13,6 +13,9 @@
 #define H5CLEAR_H
 
 /** \page H5TOOL_CR_UG The HDF5 h5clear Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5clear h5clear
  *
@@ -61,6 +64,11 @@
  * \li 4) h5clear --increment=512 file_name
  *
  *      Set the EOA to the maximum of (EOA, EOF) + 512 for the file\<file_name>.
+ *
+ * Previous Chapter \ref sec_cltools_h5stat - Next Chapter \ref sec_cltools_h5debug
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

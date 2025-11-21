@@ -9,7 +9,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -244,6 +244,18 @@ h5init_types_c(hid_t_f *types, hid_t_f *floatingtypes, hid_t_f *integertypes)
     if ((floatingtypes[2] = (hid_t_f)H5Tcopy(H5T_IEEE_F64BE)) < 0)
         return ret_value;
     if ((floatingtypes[3] = (hid_t_f)H5Tcopy(H5T_IEEE_F64LE)) < 0)
+        return ret_value;
+    if ((floatingtypes[4] = (hid_t_f)H5Tcopy(H5T_IEEE_F16BE)) < 0)
+        return ret_value;
+    if ((floatingtypes[5] = (hid_t_f)H5Tcopy(H5T_IEEE_F16LE)) < 0)
+        return ret_value;
+    if ((floatingtypes[6] = (hid_t_f)H5Tcopy(H5T_FLOAT_BFLOAT16BE)) < 0)
+        return ret_value;
+    if ((floatingtypes[7] = (hid_t_f)H5Tcopy(H5T_FLOAT_BFLOAT16LE)) < 0)
+        return ret_value;
+    if ((floatingtypes[8] = (hid_t_f)H5Tcopy(H5T_FLOAT_F8E4M3)) < 0)
+        return ret_value;
+    if ((floatingtypes[9] = (hid_t_f)H5Tcopy(H5T_FLOAT_F8E5M2)) < 0)
         return ret_value;
 
     if ((integertypes[0] = (hid_t_f)H5Tcopy(H5T_STD_I8BE)) < 0)
@@ -539,6 +551,9 @@ h5init_flags_c(int_f *h5d_flags, size_t_f *h5d_size_flags, int_f *h5e_flags, hid
     h5f_flags[27] = (int_f)H5F_LIBVER_V110;
     h5f_flags[28] = (int_f)H5F_LIBVER_V112;
     h5f_flags[29] = (int_f)H5F_LIBVER_V114;
+    h5f_flags[30] = (int_f)H5F_LIBVER_V200;
+    h5f_flags[31] = (int_f)H5F_ACC_SWMR_READ;
+    h5f_flags[32] = (int_f)H5F_ACC_SWMR_WRITE;
 
     /*
      *  H5FD flags
@@ -847,6 +862,7 @@ h5init_flags_c(int_f *h5d_flags, size_t_f *h5d_size_flags, int_f *h5e_flags, hid
     h5t_flags[32] = (int_f)H5T_ARRAY;
     h5t_flags[33] = (int_f)H5T_DIR_ASCEND;
     h5t_flags[34] = (int_f)H5T_DIR_DESCEND;
+    h5t_flags[35] = (int_f)H5T_COMPLEX;
 
     /*
      *  H5VL flags
@@ -1121,5 +1137,51 @@ h5dont_atexit_c(void)
     if (H5dont_atexit() < 0)
         return ret_value;
     ret_value = 0;
+    return ret_value;
+}
+
+/****if* H5_f/h5free_string_array_memory_c
+ * NAME
+ *  h5free_string_array_memory_c
+ * PURPOSE
+ *  Frees internal memory allocated for a char** string array
+ * INPUTS
+ *  array_ptr - pointer to char** array
+ *  num_files - number of strings in the array
+ * RETURNS
+ *  0 on success, -1 on failure
+ * SOURCE
+ */
+int_f
+h5free_string_array_memory_c(void **array_ptr, size_t_f *num_files)
+/******/
+{
+    int    ret_value = 0;
+    char **array;
+    size_t len;
+
+    if (array_ptr == NULL || num_files == NULL) {
+        return ret_value; /* Nothing to free */
+    }
+
+    array = (char **)(*array_ptr);
+    len   = (size_t)(*num_files);
+
+    if (array == NULL || len == 0) {
+        return ret_value; /* Nothing to free */
+    }
+
+    /* Free each individual string */
+    for (size_t i = 0; i < len; i++) {
+        if (array[i] != NULL) {
+            H5free_memory(array[i]);
+            array[i] = NULL;
+        }
+    }
+
+    /* Free the array of pointers */
+    H5free_memory(array);
+    *array_ptr = NULL;
+
     return ret_value;
 }

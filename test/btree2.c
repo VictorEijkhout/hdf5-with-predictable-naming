@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -2908,7 +2908,7 @@ test_insert_lots(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t
 curr_time=1109170019;
 fprintf(stderr,"curr_time=%lu\n",(unsigned long)curr_time);
 #endif
-    HDsrandom((unsigned)curr_time);
+    srand((unsigned)curr_time);
 
     /*
      * Test inserting many records into v2 B-tree
@@ -2925,7 +2925,7 @@ fprintf(stderr,"curr_time=%lu\n",(unsigned long)curr_time);
 
     /* Shuffle record #'s */
     for (u = 0; u < INSERT_MANY; u++) {
-        swap_idx          = ((unsigned)HDrandom() % (INSERT_MANY - u)) + u;
+        swap_idx          = ((unsigned)rand() % (INSERT_MANY - u)) + u;
         temp_rec          = records[u];
         records[u]        = records[swap_idx];
         records[swap_idx] = temp_rec;
@@ -3015,7 +3015,7 @@ fprintf(stderr,"curr_time=%lu\n",(unsigned long)curr_time);
     /* Find random records */
     for (u = 0; u < FIND_MANY; u++) {
         /* Pick random record */
-        idx = (hsize_t)(HDrandom() % INSERT_MANY);
+        idx = (hsize_t)(rand() % INSERT_MANY);
 
         /* Attempt to find existent record in root of level-4 B-tree */
         found = false;
@@ -3046,7 +3046,7 @@ fprintf(stderr,"curr_time=%lu\n",(unsigned long)curr_time);
     /* Find random records */
     for (u = 0; u < FIND_MANY; u++) {
         /* Pick random record */
-        idx = (hsize_t)(HDrandom() % INSERT_MANY);
+        idx = (hsize_t)(rand() % INSERT_MANY);
 
         /* Attempt to find existent record in root of level-4 B-tree */
         /* (in increasing order) */
@@ -4978,7 +4978,7 @@ test_update_lots(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t
 curr_time = 1451342093;
 fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
 #endif
-    HDsrandom((unsigned)curr_time);
+    srand((unsigned)curr_time);
 
     /*
      * Test inserting many records into v2 B-tree
@@ -5000,7 +5000,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
         H5B2_test_rec_t temp_rec; /* Temporary record */
         unsigned        swap_idx; /* Location to swap with when shuffling */
 
-        swap_idx          = ((unsigned)HDrandom() % (INSERT_MANY_REC - u)) + u;
+        swap_idx          = ((unsigned)rand() % (INSERT_MANY_REC - u)) + u;
         temp_rec          = records[u];
         records[u]        = records[swap_idx];
         records[swap_idx] = temp_rec;
@@ -5076,7 +5076,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
     /* Find random records */
     for (u = 0; u < FIND_MANY_REC; u++) {
         /* Pick random record */
-        find.key = (hsize_t)(HDrandom() % INSERT_MANY_REC);
+        find.key = (hsize_t)(rand() % INSERT_MANY_REC);
         find.val = (hsize_t)-1;
 
         /* Attempt to find existent record in level-4 B-tree */
@@ -5112,7 +5112,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
         hsize_t idx; /* Record index */
 
         /* Pick random record */
-        idx = (hsize_t)(HDrandom() % INSERT_MANY_REC);
+        idx = (hsize_t)(rand() % INSERT_MANY_REC);
 
         /* Reset find record */
         find.key = (hsize_t)-1;
@@ -8624,7 +8624,7 @@ test_remove_lots(const char *driver_name, hid_t fapl, const H5B2_create_t *cpara
 curr_time = 1163537969;
 fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
 #endif
-    HDsrandom((unsigned)curr_time);
+    srand((unsigned)curr_time);
 
     /*
      * Test removing many records into v2 B-tree
@@ -8643,7 +8643,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
         hsize_t  temp_rec; /* Temporary record */
         unsigned swap_idx; /* Location to swap with when shuffling */
 
-        swap_idx          = ((unsigned)HDrandom() % (INSERT_MANY - u)) + u;
+        swap_idx          = ((unsigned)rand() % (INSERT_MANY - u)) + u;
         temp_rec          = records[u];
         records[u]        = records[swap_idx];
         records[swap_idx] = temp_rec;
@@ -8703,7 +8703,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
         hsize_t  temp_rec; /* Temporary record */
         unsigned swap_idx; /* Location to swap with when shuffling */
 
-        swap_idx          = ((unsigned)HDrandom() % (INSERT_MANY - u)) + u;
+        swap_idx          = ((unsigned)rand() % (INSERT_MANY - u)) + u;
         temp_rec          = records[u];
         records[u]        = records[swap_idx];
         records[swap_idx] = temp_rec;
@@ -8797,7 +8797,7 @@ fprintf(stderr, "curr_time = %lu\n", (unsigned long)curr_time);
     /* Remove all records */
     for (u = 0; u < INSERT_MANY; u++) {
         /* Pick a record index to remove from randomly */
-        rem_idx = ((unsigned)HDrandom() % (INSERT_MANY - u));
+        rem_idx = ((unsigned)rand() % (INSERT_MANY - u));
         rrecord = HSIZET_MAX;
 
         /* Remove random record */
@@ -9575,7 +9575,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     modify = 4;
     H5E_BEGIN_TRY
     {
-        ret = H5B2_modify(bt2, &record, modify_cb, &modify);
+        ret = H5B2_modify(bt2, &record, false, modify_cb, &modify);
     }
     H5E_END_TRY
     /* Should fail */
@@ -9600,7 +9600,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     /* Attempt to modify a record in a leaf node */
     record = 4330;
     modify = 4331;
-    if (H5B2_modify(bt2, &record, modify_cb, &modify) < 0)
+    if (H5B2_modify(bt2, &record, false, modify_cb, &modify) < 0)
         FAIL_STACK_ERROR;
 
     /* Check status of B-tree */
@@ -9626,7 +9626,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     found  = HSIZET_MAX;
     H5E_BEGIN_TRY
     {
-        ret = H5B2_modify(bt2, &record, modify_cb, &modify);
+        ret = H5B2_modify(bt2, &record, false, modify_cb, &modify);
     }
     H5E_END_TRY
     /* Should fail */
@@ -9651,7 +9651,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     /* Attempt to modify a record in an internal node */
     record = 5350;
     modify = 5352;
-    if (H5B2_modify(bt2, &record, modify_cb, &modify) < 0)
+    if (H5B2_modify(bt2, &record, false, modify_cb, &modify) < 0)
         FAIL_STACK_ERROR;
 
     /* Check status of B-tree */
@@ -9677,7 +9677,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     found  = 5350;
     H5E_BEGIN_TRY
     {
-        ret = H5B2_modify(bt2, &record, modify_cb, &modify);
+        ret = H5B2_modify(bt2, &record, false, modify_cb, &modify);
     }
     H5E_END_TRY
     /* Should fail */
@@ -9702,7 +9702,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     /* Attempt to modify a record in a root node */
     record = 9445;
     modify = 9448;
-    if (H5B2_modify(bt2, &record, modify_cb, &modify) < 0)
+    if (H5B2_modify(bt2, &record, false, modify_cb, &modify) < 0)
         FAIL_STACK_ERROR;
 
     /* Check status of B-tree */
@@ -9728,7 +9728,7 @@ test_modify(hid_t fapl, const H5B2_create_t *cparam, const bt2_test_param_t *tpa
     found  = 9445;
     H5E_BEGIN_TRY
     {
-        ret = H5B2_modify(bt2, &record, modify_cb, &modify);
+        ret = H5B2_modify(bt2, &record, false, modify_cb, &modify);
     }
     H5E_END_TRY
     /* Should fail */
@@ -9916,28 +9916,29 @@ main(void)
     unsigned         nerrors = 0;               /* Cumulative error count */
     unsigned         reopen;                    /* Whether to reopen B-tree during tests */
     const char      *driver_name;
-    bool             api_ctx_pushed = false; /* Whether API context pushed */
-    int              localTestExpress;       /* localized TestExpress */
+    H5CX_node_t      api_ctx        = {{0}, NULL}; /* API context node to push */
+    bool             api_ctx_pushed = false;       /* Whether API context pushed */
+    int              localTestExpress;             /* localized TestExpress */
 
     driver_name = h5_get_test_driver_name();
 
     /* Reset library */
     h5_test_init();
     fapl             = h5_fileaccess();
-    localTestExpress = TestExpress;
+    localTestExpress = h5_get_testexpress();
 
     /* For the Direct I/O driver, skip intensive tests due to poor performance */
-    if (localTestExpress < 2 && !strcmp(driver_name, "direct"))
-        localTestExpress = 2;
+    if (localTestExpress < H5_TEST_EXPRESS_QUICK && !strcmp(driver_name, "direct"))
+        localTestExpress = H5_TEST_EXPRESS_QUICK;
 
-    if (localTestExpress > 0)
+    if (localTestExpress > H5_TEST_EXPRESS_EXHAUSTIVE)
         printf("***Express test mode %d.  Some tests may be skipped\n", localTestExpress);
 
     /* Initialize v2 B-tree creation parameters */
     init_cparam(&cparam, &cparam2);
 
     /* Push API context */
-    if (H5CX_push() < 0)
+    if (H5CX_push(&api_ctx) < 0)
         FAIL_STACK_ERROR;
     api_ctx_pushed = true;
 
@@ -9967,7 +9968,7 @@ main(void)
         nerrors += test_insert_level2_2internal_split(fapl, &cparam, &tparam);
         nerrors += test_insert_level2_3internal_redistrib(fapl, &cparam, &tparam);
         nerrors += test_insert_level2_3internal_split(fapl, &cparam, &tparam);
-        if (localTestExpress > 1)
+        if (localTestExpress > H5_TEST_EXPRESS_FULL)
             printf("***Express test mode on.  test_insert_lots skipped\n");
         else
             nerrors += test_insert_lots(fapl, &cparam, &tparam);
@@ -9981,7 +9982,7 @@ main(void)
         nerrors += test_update_level1_3leaf_redistrib(fapl, &cparam2, &tparam);
         nerrors += test_update_level1_middle_split(fapl, &cparam2, &tparam);
         nerrors += test_update_make_level2(fapl, &cparam2, &tparam);
-        if (localTestExpress > 1)
+        if (localTestExpress > H5_TEST_EXPRESS_FULL)
             printf("***Express test mode on.  test_update_lots skipped\n");
         else
             nerrors += test_update_lots(fapl, &cparam2, &tparam);
@@ -10008,7 +10009,7 @@ main(void)
         nerrors += test_remove_level2_2internal_merge_right(fapl, &cparam, &tparam);
         nerrors += test_remove_level2_3internal_merge(fapl, &cparam, &tparam);
         nerrors += test_remove_level2_collapse_right(fapl, &cparam, &tparam);
-        if (localTestExpress > 1)
+        if (localTestExpress > H5_TEST_EXPRESS_FULL)
             printf("***Express test mode on.  test_remove_lots skipped\n");
         else
             nerrors += test_remove_lots(driver_name, fapl, &cparam);

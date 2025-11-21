@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.18)
+cmake_minimum_required (VERSION 3.26)
 project (HDF5Examples_C_H5G C)
 
 #-----------------------------------------------------------------------------
@@ -12,19 +12,20 @@ foreach (example_name ${common_examples})
   else ()
     add_executable (${EXAMPLE_VARNAME}_${example_name} ${PROJECT_SOURCE_DIR}/${example_name}.c)
   endif ()
-  target_compile_options(${EXAMPLE_VARNAME}_${example_name}
+  target_compile_options (${EXAMPLE_VARNAME}_${example_name}
       PRIVATE
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_16_API}>:-DH5_USE_16_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_18_API}>:-DH5_USE_18_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_110_API}>:-DH5_USE_110_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_112_API}>:-DH5_USE_112_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_114_API}>:-DH5_USE_114_API>"
+          "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_200_API}>:-DH5_USE_200_API>"
   )
   if (H5_HAVE_PARALLEL)
     target_include_directories (${EXAMPLE_VARNAME}_${example_name} PUBLIC ${MPI_C_INCLUDE_DIRS})
   endif ()
-  target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EX_HDF5_LINK_LIBS})
-  if (H5EX_BUILD_TESTING)
+  target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EXAMPLE_HDF5_LINK_LIBS})
+  if (H5EXAMPLE_BUILD_TESTING)
     if (NOT ${example_name} STREQUAL "h5ex_g_create")
       add_custom_command (
           TARGET     ${EXAMPLE_VARNAME}_${example_name}
@@ -46,12 +47,13 @@ if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "1.8" AND NOT ${EXAMPLE_VARNAME}_US
             "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_110_API}>:-DH5_USE_110_API>"
             "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_112_API}>:-DH5_USE_112_API>"
             "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_114_API}>:-DH5_USE_114_API>"
+            "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_200_API}>:-DH5_USE_200_API>"
     )
     if (H5_HAVE_PARALLEL)
       target_include_directories (${EXAMPLE_VARNAME}_${example_name} PUBLIC ${MPI_C_INCLUDE_DIRS})
     endif ()
-    target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EX_HDF5_LINK_LIBS})
-    if (H5EX_BUILD_TESTING)
+    target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EXAMPLE_HDF5_LINK_LIBS})
+    if (H5EXAMPLE_BUILD_TESTING)
       add_custom_command (
           TARGET     ${EXAMPLE_VARNAME}_${example_name}
           POST_BUILD
@@ -72,12 +74,13 @@ endif ()
 #            "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_110_API}>:-DH5_USE_110_API>"
 #            "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_112_API}>:-DH5_USE_112_API>"
 #            "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_114_API}>:-DH5_USE_114_API>"
+#            "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_200_API}>:-DH5_USE_200_API>"
 #    )
 #    if (H5_HAVE_PARALLEL)
 #      target_include_directories (${EXAMPLE_VARNAME}_${example_name} PUBLIC ${MPI_C_INCLUDE_DIRS})
 #    endif ()
-#    target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EX_HDF5_LINK_LIBS})
-#    if (H5EX_BUILD_TESTING)
+#    target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EXAMPLE_HDF5_LINK_LIBS})
+#    if (H5EXAMPLE_BUILD_TESTING)
 #      add_custom_command (
 #          TARGET     ${EXAMPLE_VARNAME}_${example_name}
 #          POST_BUILD
@@ -89,7 +92,7 @@ endif ()
 #endif ()
 #if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "1.12")
 #  foreach (example_name ${1_12_examples})
-#    if (H5EX_BUILD_TESTING)
+#    if (H5EXAMPLE_BUILD_TESTING)
 #          add_custom_command (
 #          TARGET     ${EXAMPLE_VARNAME}_${example_name}
 #          POST_BUILD
@@ -101,7 +104,7 @@ endif ()
 #endif ()
 #if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "1.14")
 #  foreach (example_name ${1_14_examples})
-#    if (H5EX_BUILD_TESTING)
+#    if (H5EXAMPLE_BUILD_TESTING)
 #      add_custom_command (
 #          TARGET     ${EXAMPLE_VARNAME}_${example_name}
 #          POST_BUILD
@@ -111,20 +114,20 @@ endif ()
 #    endif ()
 #  endforeach ()
 #endif ()
-#if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "1.16")
-#  foreach (example_name ${1_16_examples})
-#    if (H5EX_BUILD_TESTING)
+#if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "2.0")
+#  foreach (example_name ${2_0_examples})
+#    if (H5EXAMPLE_BUILD_TESTING)
 #      add_custom_command (
 #          TARGET     ${EXAMPLE_VARNAME}_${example_name}
 #          POST_BUILD
 #          COMMAND    ${CMAKE_COMMAND}
-#          ARGS       -E copy_if_different ${PROJECT_SOURCE_DIR}/tfiles/116/${example_name}.tst ${PROJECT_BINARY_DIR}/${example_name}.tst
+#          ARGS       -E copy_if_different ${PROJECT_SOURCE_DIR}/tfiles/200/${example_name}.tst ${PROJECT_BINARY_DIR}/${example_name}.tst
 #      )
 #    endif ()
 #  endforeach ()
 #endif ()
 
-if (HDF5_BUILD_TOOLS)
+if (HDF5_PROVIDES_TOOLS)
   foreach (example_name ${common_examples})
     if (${example_name} STREQUAL "h5ex_g_create")
       add_custom_command (
@@ -184,12 +187,12 @@ if (HDF5_BUILD_TOOLS)
     #      ARGS       -E copy_if_different ${PROJECT_SOURCE_DIR}/tfiles/114/${example_name}.ddl ${PROJECT_BINARY_DIR}/${example_name}.ddl
     #  )
     #endif ()
-    #if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "1.16")
+    #if (HDF5_VERSION_MAJOR VERSION_GREATER_EQUAL "2.0")
     #  add_custom_command (
     #      TARGET     ${EXAMPLE_VARNAME}_${example_name}
     #      POST_BUILD
     #      COMMAND    ${CMAKE_COMMAND}
-    #      ARGS       -E copy_if_different ${PROJECT_SOURCE_DIR}/tfiles/116/${example_name}.ddl ${PROJECT_BINARY_DIR}/${example_name}.ddl
+    #      ARGS       -E copy_if_different ${PROJECT_SOURCE_DIR}/tfiles/200/${example_name}.ddl ${PROJECT_BINARY_DIR}/${example_name}.ddl
     #  )
     #endif ()
 #  endforeach ()
@@ -200,11 +203,11 @@ if (HDF5_BUILD_TOOLS)
 #  endforeach ()
 #  foreach (example_name ${1_14_examples})
 #  endforeach ()
-#  foreach (example_name ${1_16_examples})
+#  foreach (example_name ${2_0_examples})
 #  endforeach ()
 endif ()
 
-if (H5EX_BUILD_TESTING)
+if (H5EXAMPLE_BUILD_TESTING)
   set (exfiles
       h5ex_g_iterate
       h5ex_g_traverse
@@ -226,18 +229,15 @@ if (H5EX_BUILD_TESTING)
   macro (ADD_DUMP_TEST testname)
     add_test (
         NAME ${EXAMPLE_VARNAME}_${testname}-clearall
-        COMMAND    ${CMAKE_COMMAND}
-            -E remove
-            ${testname}.h5
+        COMMAND ${CMAKE_COMMAND} -E remove ${testname}.h5
     )
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
+      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
       set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
     else ()
       add_test (
           NAME ${EXAMPLE_VARNAME}_${testname}
           COMMAND "${CMAKE_COMMAND}"
-              -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
               -D "TEST_PROGRAM=$<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>"
               -D "TEST_ARGS:STRING="
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
@@ -245,37 +245,41 @@ if (H5EX_BUILD_TESTING)
               -D "TEST_SKIP_COMPARE=TRUE"
               -D "TEST_OUTPUT=${testname}.out"
               -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-              -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+              -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
       )
-      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
-      if (HDF5_BUILD_TOOLS)
+      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES
+          DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall
+          ENVIRONMENT "${CROSSCOMPILING_PATH}"
+      )
+      if (HDF5_PROVIDES_TOOLS)
         add_test (
             NAME ${EXAMPLE_VARNAME}_H5DUMP-${testname}
             COMMAND "${CMAKE_COMMAND}"
-                -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-                -D "TEST_PROGRAM=${H5EX_HDF5_DUMP_EXECUTABLE}"
+                -D "TEST_PROGRAM=${H5EXAMPLE_HDF5_DUMP_EXECUTABLE}"
                 -D "TEST_ARGS:STRING=${ARGN};${testname}.h5"
                 -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
                 -D "TEST_OUTPUT=${testname}.out"
                 -D "TEST_EXPECT=0"
                 -D "TEST_REFERENCE=${testname}.ddl"
                 -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-                -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+                -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
         )
-        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname})
+        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname} PROPERTIES
+            DEPENDS ${EXAMPLE_VARNAME}_${testname}
+            ENVIRONMENT "${CROSSCOMPILING_PATH}"
+        )
     endif ()
     endif ()
   endmacro ()
 
   macro (ADD_H5_DUMP_TEST testname)
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
+      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
       set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
     else ()
       add_test (
           NAME ${EXAMPLE_VARNAME}_${testname}
           COMMAND "${CMAKE_COMMAND}"
-              -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
               -D "TEST_PROGRAM=$<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>"
               -D "TEST_ARGS:STRING="
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
@@ -283,23 +287,25 @@ if (H5EX_BUILD_TESTING)
               -D "TEST_OUTPUT=${testname}.out"
               -D "TEST_REFERENCE=${testname}.tst"
               -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-              -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+              -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
       )
-      if (HDF5_BUILD_TOOLS)
+      if (HDF5_PROVIDES_TOOLS)
         add_test (
             NAME ${EXAMPLE_VARNAME}_H5DUMP-${testname}
             COMMAND "${CMAKE_COMMAND}"
-                -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-                -D "TEST_PROGRAM=${H5EX_HDF5_DUMP_EXECUTABLE}"
+                -D "TEST_PROGRAM=${H5EXAMPLE_HDF5_DUMP_EXECUTABLE}"
                 -D "TEST_ARGS:STRING=${ARGN};${testname}.h5"
                 -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
                 -D "TEST_OUTPUT=${testname}.ddl.out"
                 -D "TEST_EXPECT=0"
                 -D "TEST_REFERENCE=${testname}.ddl"
                 -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-                -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+                -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
         )
-        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname})
+        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname} PROPERTIES
+            DEPENDS ${EXAMPLE_VARNAME}_${testname}
+            ENVIRONMENT "${CROSSCOMPILING_PATH}"
+        )
       endif ()
     endif ()
   endmacro ()
@@ -307,19 +313,17 @@ if (H5EX_BUILD_TESTING)
   macro (ADD_H5_DUMP2_TEST testname)
     add_test (
         NAME ${EXAMPLE_VARNAME}_${testname}-clearall
-        COMMAND    ${CMAKE_COMMAND}
-            -E remove
+        COMMAND ${CMAKE_COMMAND} -E remove
             ${testname}1.h5
             ${testname}2.h5
     )
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
+      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
       set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
     else ()
       add_test (
           NAME ${EXAMPLE_VARNAME}_${testname}
           COMMAND "${CMAKE_COMMAND}"
-              -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
               -D "TEST_PROGRAM=$<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>"
               -D "TEST_ARGS:STRING="
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
@@ -327,38 +331,45 @@ if (H5EX_BUILD_TESTING)
               -D "TEST_OUTPUT=${testname}.out"
               -D "TEST_REFERENCE=${testname}.tst"
               -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-              -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+              -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
       )
-      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
-      if (HDF5_BUILD_TOOLS)
+      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES
+          DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall
+          ENVIRONMENT "${CROSSCOMPILING_PATH}"
+      )
+      if (HDF5_PROVIDES_TOOLS)
         add_test (
             NAME ${EXAMPLE_VARNAME}_H5DUMP-${testname}1
             COMMAND "${CMAKE_COMMAND}"
-                -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-                -D "TEST_PROGRAM=${H5EX_HDF5_DUMP_EXECUTABLE}"
+                -D "TEST_PROGRAM=${H5EXAMPLE_HDF5_DUMP_EXECUTABLE}"
                 -D "TEST_ARGS:STRING=${testname}1.h5"
                 -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
                 -D "TEST_OUTPUT=${testname}1.ddl.out"
                 -D "TEST_EXPECT=0"
                 -D "TEST_REFERENCE=${testname}1.ddl"
                 -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-                -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+                -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
         )
-        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname}1 PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname})
+        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname}1 PROPERTIES
+            DEPENDS ${EXAMPLE_VARNAME}_${testname}
+            ENVIRONMENT "${CROSSCOMPILING_PATH}"
+        )
         add_test (
             NAME ${EXAMPLE_VARNAME}_H5DUMP-${testname}2
             COMMAND "${CMAKE_COMMAND}"
-                -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
-                -D "TEST_PROGRAM=${H5EX_HDF5_DUMP_EXECUTABLE}"
+                -D "TEST_PROGRAM=${H5EXAMPLE_HDF5_DUMP_EXECUTABLE}"
                 -D "TEST_ARGS:STRING=${testname}2.h5"
                 -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
                 -D "TEST_OUTPUT=${testname}2.ddl.out"
                 -D "TEST_EXPECT=0"
                 -D "TEST_REFERENCE=${testname}2.ddl"
                 -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-                -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+                -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
         )
-        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname}2 PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_H5DUMP-${testname}1)
+        set_tests_properties (${EXAMPLE_VARNAME}_H5DUMP-${testname}2 PROPERTIES
+            DEPENDS ${EXAMPLE_VARNAME}_H5DUMP-${testname}1
+            ENVIRONMENT "${CROSSCOMPILING_PATH}"
+        )
       endif ()
     endif ()
   endmacro ()
@@ -366,18 +377,15 @@ if (H5EX_BUILD_TESTING)
   macro (ADD_H5_CMP_TEST testname)
     add_test (
         NAME ${EXAMPLE_VARNAME}_${testname}-clearall
-        COMMAND    ${CMAKE_COMMAND}
-            -E remove
-            ${testname}.out.tmp
+        COMMAND ${CMAKE_COMMAND} -E remove ${testname}.out.tmp
     )
     if (HDF5_ENABLE_USING_MEMCHECKER)
-      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
+      add_test (NAME ${EXAMPLE_VARNAME}_${testname} COMMAND $<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>)
       set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
     else ()
       add_test (
           NAME ${EXAMPLE_VARNAME}_${testname}
           COMMAND "${CMAKE_COMMAND}"
-              -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
               -D "TEST_PROGRAM=$<TARGET_FILE:${EXAMPLE_VARNAME}_${testname}>"
               -D "TEST_ARGS:STRING=${ARGN}"
               -D "TEST_FOLDER=${PROJECT_BINARY_DIR}"
@@ -385,9 +393,12 @@ if (H5EX_BUILD_TESTING)
               -D "TEST_OUTPUT=${testname}.out"
               -D "TEST_REFERENCE=${testname}.tst"
               -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-              -P "${H5EX_RESOURCES_DIR}/runTest.cmake"
+              -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
       )
-      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
+      set_tests_properties (${EXAMPLE_VARNAME}_${testname} PROPERTIES
+          DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall
+          ENVIRONMENT "${CROSSCOMPILING_PATH}"
+      )
     endif ()
   endmacro ()
 

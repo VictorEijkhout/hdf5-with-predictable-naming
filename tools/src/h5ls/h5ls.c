@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -34,19 +34,23 @@
 static h5tool_format_t ls_dataformat = {
     0, /*raw */
 
-    "",     /*fmt_raw */
-    "%d",   /*fmt_int */
-    "%u",   /*fmt_uint */
-    "%hhd", /*fmt_schar */
-    "%u",   /*fmt_uchar */
-    "%d",   /*fmt_short */
-    "%u",   /*fmt_ushort */
-    "%ld",  /*fmt_long */
-    "%lu",  /*fmt_ulong */
-    NULL,   /*fmt_llong */
-    NULL,   /*fmt_ullong */
-    "%g",   /*fmt_double */
-    "%g",   /*fmt_float */
+    "",         /*fmt_raw */
+    "%hhd",     /*fmt_schar */
+    "%u",       /*fmt_uchar */
+    "%d",       /*fmt_short */
+    "%u",       /*fmt_ushort */
+    "%d",       /*fmt_int */
+    "%u",       /*fmt_uint */
+    "%ld",      /*fmt_long */
+    "%lu",      /*fmt_ulong */
+    NULL,       /*fmt_llong */
+    NULL,       /*fmt_ullong */
+    "%g",       /*fmt_float */
+    "%g",       /*fmt_double */
+    "%Lg",      /*fmt_ldouble */
+    "%g%+gi",   /*fmt_float_complex */
+    "%g%+gi",   /*fmt_double_complex */
+    "%Lg%+Lgi", /*fmt_ldouble_complex */
 
     0, /*ascii */
     0, /*str_locale */
@@ -156,7 +160,7 @@ static herr_t visit_obj(hid_t file, const char *oname, iter_t *iter);
 /*-------------------------------------------------------------------------
  * Function: usage
  *
- * Purpose: Prints a usage message on stderr and then returns.
+ * Purpose: Prints a usage message on stdout stream and then returns.
  *
  * Return: void
  *-------------------------------------------------------------------------
@@ -216,12 +220,18 @@ usage(void)
                    "   --page-buffer-size=N Set the page buffer cache size, N=non-negative integers\n");
     PRINTVALSTREAM(rawoutstream, "   --vfd=DRIVER    Use the specified virtual file driver\n");
     PRINTVALSTREAM(rawoutstream, "   -x, --hexdump   Show raw data in hexadecimal format\n");
+    PRINTVALSTREAM(rawoutstream, "   --endpoint-url=P Supply S3 endpoint url information to \"ros3\" vfd.\n");
+    PRINTVALSTREAM(rawoutstream, "                   P is the AWS service endpoint.\n");
+    PRINTVALSTREAM(rawoutstream, "                   Has no effect if vfd flag not set to \"ros3\".\n");
     PRINTVALSTREAM(rawoutstream,
                    "   --s3-cred=C     Supply S3 authentication information to \"ros3\" vfd.\n");
     PRINTVALSTREAM(rawoutstream,
-                   "                   Accepts tuple of \"(<aws-region>,<access-id>,<access-key>)\".\n");
+                   "                   Accepts tuple of \"(<aws-region>,<access-id>,<access-key>)\" or\n");
     PRINTVALSTREAM(rawoutstream,
-                   "                   If absent or C->\"(,,)\", defaults to no-authentication.\n");
+                   "                   \"(<aws-region>,<access-id>,<access-key>,<session-token>)\".\n");
+    PRINTVALSTREAM(
+        rawoutstream,
+        "                   If absent or C->\"(,,)\" or C->\"(,,,)\", defaults to no-authentication.\n");
     PRINTVALSTREAM(rawoutstream, "                   Has no effect if vfd flag not set to \"ros3\".\n");
     PRINTVALSTREAM(rawoutstream, "   --hdfs-attrs=A  Supply configuration information to Hadoop VFD.\n");
     PRINTVALSTREAM(rawoutstream, "                   Accepts tuple of (<namenode name>,<namenode port>,\n");
@@ -441,6 +451,17 @@ print_native_type(h5tools_str_t *buffer, hid_t type, int ind)
         else if (H5Tequal(type, H5T_NATIVE_DOUBLE) == true) {
             h5tools_str_append(buffer, "native double");
         }
+#ifdef H5_HAVE_COMPLEX_NUMBERS
+        else if (H5Tequal(type, H5T_NATIVE_FLOAT_COMPLEX) == true) {
+            h5tools_str_append(buffer, "native float _Complex");
+        }
+        else if (H5Tequal(type, H5T_NATIVE_DOUBLE_COMPLEX) == true) {
+            h5tools_str_append(buffer, "native double _Complex");
+        }
+        else if (H5Tequal(type, H5T_NATIVE_LDOUBLE_COMPLEX) == true) {
+            h5tools_str_append(buffer, "native long double _Complex");
+        }
+#endif
         else if (H5Tequal(type, H5T_NATIVE_INT8) == true) {
             h5tools_str_append(buffer, "native int8_t");
         }
@@ -548,16 +569,17 @@ print_native_type(h5tools_str_t *buffer, hid_t type, int ind)
 }
 
 /*-------------------------------------------------------------------------
- * Function:    print_ieee_type
+ * Function:    print_specific_float_type
  *
- * Purpose:     Print the name of an IEEE floating-point data type.
+ * Purpose:     Print the name of an IEEE or alternative floating-point
+ *              data type.
  *
  * Return:      Success: true
  *              Failure: false, nothing printed
  *-------------------------------------------------------------------------
  */
 static bool
-print_ieee_type(h5tools_str_t *buffer, hid_t type, int ind)
+print_specific_float_type(h5tools_str_t *buffer, hid_t type, int ind)
 {
     if (H5Tequal(type, H5T_IEEE_F16BE) == true) {
         h5tools_str_append(buffer, "IEEE 16-bit big-endian float");
@@ -576,6 +598,18 @@ print_ieee_type(h5tools_str_t *buffer, hid_t type, int ind)
     }
     else if (H5Tequal(type, H5T_IEEE_F64LE) == true) {
         h5tools_str_append(buffer, "IEEE 64-bit little-endian float");
+    }
+    else if (H5Tequal(type, H5T_FLOAT_BFLOAT16BE) == true) {
+        h5tools_str_append(buffer, "bfloat16 16-bit big-endian float");
+    }
+    else if (H5Tequal(type, H5T_FLOAT_BFLOAT16LE) == true) {
+        h5tools_str_append(buffer, "bfloat16 16-bit little-endian float");
+    }
+    else if (H5Tequal(type, H5T_FLOAT_F8E4M3) == true) {
+        h5tools_str_append(buffer, "FP8 E4M3 8-bit float");
+    }
+    else if (H5Tequal(type, H5T_FLOAT_F8E5M2) == true) {
+        h5tools_str_append(buffer, "FP8 E5M2 8-bit float");
     }
     else {
         return print_float_type(buffer, type, ind);
@@ -1255,6 +1289,31 @@ print_bitfield_type(h5tools_str_t *buffer, hid_t type, int ind)
 }
 
 /*-------------------------------------------------------------------------
+ * Function:    print_complex_type
+ *
+ * Purpose:     Print information about a complex number type.
+ *
+ * Return:      Success: true
+ *              Failure: false, nothing printed
+ *-------------------------------------------------------------------------
+ */
+static bool
+print_complex_type(h5tools_str_t *buffer, hid_t type, int ind)
+{
+    hid_t super;
+
+    if (H5T_COMPLEX != H5Tget_class(type))
+        return false;
+
+    h5tools_str_append(buffer, "complex number of\n%*s", ind + 4, "");
+    super = H5Tget_super(type);
+    print_type(buffer, super, ind + 4);
+    H5Tclose(super);
+
+    return true;
+}
+
+/*-------------------------------------------------------------------------
  * Function:    print_type
  *
  * Purpose:     Prints a data type definition.  The definition is printed
@@ -1296,11 +1355,12 @@ print_type(h5tools_str_t *buffer, hid_t type, int ind)
     } /* end if */
 
     /* Print the type */
-    if (print_native_type(buffer, type, ind) || print_ieee_type(buffer, type, ind) ||
-        print_cmpd_type(buffer, type, ind) || print_enum_type(buffer, type, ind) ||
-        print_string_type(buffer, type, ind) || print_reference_type(buffer, type, ind) ||
-        print_vlen_type(buffer, type, ind) || print_array_type(buffer, type, ind) ||
-        print_opaque_type(buffer, type, ind) || print_bitfield_type(buffer, type, ind))
+    if (print_native_type(buffer, type, ind) || print_specific_float_type(buffer, type, ind) ||
+        print_complex_type(buffer, type, ind) || print_cmpd_type(buffer, type, ind) ||
+        print_enum_type(buffer, type, ind) || print_string_type(buffer, type, ind) ||
+        print_reference_type(buffer, type, ind) || print_vlen_type(buffer, type, ind) ||
+        print_array_type(buffer, type, ind) || print_opaque_type(buffer, type, ind) ||
+        print_bitfield_type(buffer, type, ind))
         return;
 
     /* Unknown type */
@@ -1324,8 +1384,12 @@ dump_dataset_values(hid_t dset)
     hsize_t           total_size[H5S_MAX_RANK];
     int               ndims;
     char              string_prefix[64];
+    static char       fmt_ldouble[16];
     static char       fmt_double[16];
     static char       fmt_float[16];
+    static char       fmt_ldouble_complex[32];
+    static char       fmt_double_complex[32];
+    static char       fmt_float_complex[16];
     hsize_t           curr_pos = 0; /* total data element position   */
     h5tools_str_t     buffer;       /* string into which to render   */
     h5tools_context_t ctx;          /* print context  */
@@ -1394,11 +1458,20 @@ dump_dataset_values(hid_t dset)
         outputformat.vlen_end = NULL;
     }
     outputformat.arr_linebreak = 0;
+
     /* Floating point types should display full precision */
     snprintf(fmt_float, sizeof(fmt_float), "%%1.%dg", FLT_DIG);
     outputformat.fmt_float = fmt_float;
     snprintf(fmt_double, sizeof(fmt_double), "%%1.%dg", DBL_DIG);
     outputformat.fmt_double = fmt_double;
+    snprintf(fmt_ldouble, sizeof(fmt_ldouble), "%%1.%dLg", LDBL_DIG);
+    outputformat.fmt_ldouble = fmt_ldouble;
+    snprintf(fmt_float_complex, sizeof(fmt_float_complex), "%%1.%dg%%+1.%dgi", FLT_DIG, FLT_DIG);
+    outputformat.fmt_float_complex = fmt_float_complex;
+    snprintf(fmt_double_complex, sizeof(fmt_double_complex), "%%1.%dg%%+1.%dgi", DBL_DIG, DBL_DIG);
+    outputformat.fmt_double_complex = fmt_double_complex;
+    snprintf(fmt_ldouble_complex, sizeof(fmt_ldouble_complex), "%%1.%dLg%%+1.%dLgi", LDBL_DIG, LDBL_DIG);
+    outputformat.fmt_ldouble_complex = fmt_ldouble_complex;
 
     if (hexdump_g) {
         /* Print all data in hexadecimal format if the `-x' or `--hexdump'
@@ -1493,8 +1566,12 @@ dump_attribute_values(hid_t attr)
     hsize_t           total_size[H5S_MAX_RANK];
     int               ndims;
     char              string_prefix[64];
+    static char       fmt_ldouble[16];
     static char       fmt_double[16];
     static char       fmt_float[16];
+    static char       fmt_ldouble_complex[32];
+    static char       fmt_double_complex[32];
+    static char       fmt_float_complex[16];
     hsize_t           curr_pos = 0; /* total data element position   */
     h5tools_str_t     buffer;       /* string into which to render   */
     h5tools_context_t ctx;          /* print context  */
@@ -1563,11 +1640,20 @@ dump_attribute_values(hid_t attr)
         outputformat.vlen_end = NULL;
     }
     outputformat.arr_linebreak = 0;
+
     /* Floating point types should display full precision */
     snprintf(fmt_float, sizeof(fmt_float), "%%1.%dg", FLT_DIG);
     outputformat.fmt_float = fmt_float;
     snprintf(fmt_double, sizeof(fmt_double), "%%1.%dg", DBL_DIG);
     outputformat.fmt_double = fmt_double;
+    snprintf(fmt_ldouble, sizeof(fmt_ldouble), "%%1.%dLg", LDBL_DIG);
+    outputformat.fmt_ldouble = fmt_ldouble;
+    snprintf(fmt_float_complex, sizeof(fmt_float_complex), "%%1.%dg%%+1.%dgi", FLT_DIG, FLT_DIG);
+    outputformat.fmt_float_complex = fmt_float_complex;
+    snprintf(fmt_double_complex, sizeof(fmt_double_complex), "%%1.%dg%%+1.%dgi", DBL_DIG, DBL_DIG);
+    outputformat.fmt_double_complex = fmt_double_complex;
+    snprintf(fmt_ldouble_complex, sizeof(fmt_ldouble_complex), "%%1.%dLg%%+1.%dLgi", LDBL_DIG, LDBL_DIG);
+    outputformat.fmt_ldouble_complex = fmt_ldouble_complex;
 
     if (hexdump_g) {
         /* Print all data in hexadecimal format if the `-x' or `--hexdump'
@@ -1833,24 +1919,24 @@ dataset_list1(hid_t dset)
 static herr_t
 dataset_list2(hid_t dset, const char H5_ATTR_UNUSED *name)
 {
-    hid_t             dcpl;          /* dataset creation property list */
-    hid_t             type;          /* data type of dataset */
-    hid_t             space;         /* data space of dataset */
-    int               nf;            /* number of filters */
-    unsigned          filt_flags;    /* filter flags */
-    H5Z_filter_t      filt_id;       /* filter identification number */
-    unsigned          cd_values[20]; /* filter client data values */
-    size_t            cd_nelmts;     /* filter client number of values */
-    size_t            cd_num;        /* filter client data counter */
-    char              f_name[256];   /* filter/file name */
-    char              s[64];         /* temporary string buffer */
-    off_t             f_offset;      /* offset in external file */
-    hsize_t           f_size;        /* bytes used in external file */
-    hsize_t           total, used;   /* total size or offset */
-    int               ndims;         /* dimensionality */
-    int               n, max_len;    /* max extern file name length */
-    double            utilization;   /* percent utilization of storage */
-    H5T_class_t       tclass;        /* datatype class identifier */
+    hid_t             dcpl;                        /* dataset creation property list */
+    hid_t             type;                        /* data type of dataset */
+    hid_t             space;                       /* data space of dataset */
+    int               nf;                          /* number of filters */
+    unsigned          filt_flags;                  /* filter flags */
+    H5Z_filter_t      filt_id;                     /* filter identification number */
+    unsigned          cd_values[DEFAULT_CDELEMTS]; /* filter client data values */
+    size_t            cd_nelmts;                   /* filter client number of values */
+    size_t            cd_num;                      /* filter client data counter */
+    char              f_name[256];                 /* filter/file name */
+    char              s[64];                       /* temporary string buffer */
+    HDoff_t           f_offset;                    /* offset in external file */
+    hsize_t           f_size;                      /* bytes used in external file */
+    hsize_t           total, used;                 /* total size or offset */
+    int               ndims;                       /* dimensionality */
+    int               n, max_len;                  /* max extern file name length */
+    double            utilization;                 /* percent utilization of storage */
+    H5T_class_t       tclass;                      /* datatype class identifier */
     int               i;
     H5D_layout_t      stl;
     hsize_t           curr_pos = 0; /* total data element position   */
@@ -1990,6 +2076,7 @@ dataset_list2(hid_t dset, const char H5_ATTR_UNUSED *name)
             case H5T_COMPOUND:
             case H5T_ENUM:
             case H5T_ARRAY:
+            case H5T_COMPLEX:
             case H5T_NCLASSES:
             default:
                 h5tools_str_append(&buffer, "%" PRIuHSIZE " logical byte%s, %" PRIuHSIZE " allocated byte%s",
@@ -2373,7 +2460,7 @@ list_lnk(const char *name, const H5L_info2_t *linfo, void *_iter)
             else if (no_dangling_link_g && ret == 0)
                 iter->symlink_list->dangle_link = true;
 
-            if (H5Lunpack_elink_val(buf, linfo->u.val_size, NULL, &filename, &path) < 0)
+            if (H5Lunpack_elink_val(buf, lnk_info.linfo.u.val_size, NULL, &filename, &path) < 0)
                 goto done;
 
             h5tools_str_append(&buffer, "External Link {");
@@ -2668,32 +2755,12 @@ main(int argc, char *argv[])
     bool               custom_vfd_fapl = false;
     h5tools_vol_info_t vol_info        = {0};
     h5tools_vfd_info_t vfd_info        = {0};
-
 #ifdef H5_HAVE_ROS3_VFD
-    /* Default "anonymous" S3 configuration */
-    H5FD_ros3_fapl_ext_t ros3_fa = {
-        {
-            1,     /* Structure Version */
-            false, /* Authenticate?     */
-            "",    /* AWS Region        */
-            "",    /* Access Key ID     */
-            "",    /* Secret Access Key */
-        },
-        "", /* Session/security token */
-    };
-#endif /* H5_HAVE_ROS3_VFD */
-
+    H5FD_ros3_fapl_ext_t *ros3_fa = NULL;
+#endif
 #ifdef H5_HAVE_LIBHDFS
-    /* "Default" HDFS configuration */
-    H5FD_hdfs_fapl_t hdfs_fa = {
-        1,           /* Structure Version     */
-        "localhost", /* Namenode Name         */
-        0,           /* Namenode Port         */
-        "",          /* Kerberos ticket cache */
-        "",          /* User name             */
-        2048,        /* Stream buffer size    */
-    };
-#endif /* H5_HAVE_LIBHDFS */
+    H5FD_hdfs_fapl_t *hdfs_fa = NULL;
+#endif
 
     h5tools_setprogname(PROGRAMNAME);
     h5tools_setstatus(EXIT_SUCCESS);
@@ -2704,6 +2771,29 @@ main(int argc, char *argv[])
     /* Initialize fapl info structs */
     memset(&vol_info, 0, sizeof(h5tools_vol_info_t));
     memset(&vfd_info, 0, sizeof(h5tools_vfd_info_t));
+
+    /* Initialize other VFD-specific structs */
+#ifdef H5_HAVE_ROS3_VFD
+    if (NULL == (ros3_fa = calloc(1, sizeof(*ros3_fa)))) {
+        fprintf(rawerrorstream, "Error: Unable to allocate space for configuration structure\n");
+        leave(EXIT_FAILURE);
+    }
+
+    /* Default "anonymous" S3 configuration */
+    ros3_fa->fa.version      = H5FD_CURR_ROS3_FAPL_T_VERSION;
+    ros3_fa->fa.authenticate = false;
+#endif /* H5_HAVE_ROS3_VFD */
+#ifdef H5_HAVE_LIBHDFS
+    if (NULL == (hdfs_fa = calloc(1, sizeof(*hdfs_fa)))) {
+        fprintf(rawerrorstream, "Error: Unable to allocate space for configuration structure\n");
+        leave(EXIT_FAILURE);
+    }
+
+    /* "Default" HDFS configuration */
+    hdfs_fa->version            = H5FD__CURR_HDFS_FAPL_T_VERSION;
+    hdfs_fa->stream_buffer_size = 2048;
+    strcpy(hdfs_fa->namenode_name, "localhost");
+#endif /* H5_HAVE_LIBHDFS */
 
     /* Build object display table */
     DISPATCH(H5O_TYPE_GROUP, "Group", NULL, NULL);
@@ -2731,7 +2821,7 @@ main(int argc, char *argv[])
             data_g = true;
         }
         else if (!strcmp(argv[argno], "--enable-error-stack")) {
-            enable_error_stack = 1;
+            enable_error_stack = 2;
         }
         else if (!strcmp(argv[argno], "--errors")) {
             /* deprecated --errors */
@@ -2868,13 +2958,32 @@ main(int argc, char *argv[])
             }
             start++;
 
-            if (h5tools_parse_ros3_fapl_tuple(start, ',', &ros3_fa) < 0) {
+            if (h5tools_parse_ros3_fapl_tuple(start, ',', ros3_fa) < 0) {
                 fprintf(rawerrorstream, "Error: failed to parse S3 VFD credential info\n\n");
                 usage();
                 leave(EXIT_FAILURE);
             }
 
-            vfd_info.info = &ros3_fa;
+            vfd_info.info = ros3_fa;
+#else
+            fprintf(rawerrorstream, "Error: Read-Only S3 VFD is not available unless enabled when HDF5 is "
+                                    "configured and built.\n\n");
+            usage();
+            leave(EXIT_FAILURE);
+#endif
+        }
+        else if (!strncmp(argv[argno], "--endpoint-url=", (size_t)15)) {
+#ifdef H5_HAVE_ROS3_VFD
+            char const *start = NULL;
+
+            start = strchr(argv[argno], '=');
+            if (start == NULL) {
+                fprintf(rawerrorstream, "Error: Unable to parse null endpoint url\n");
+                usage();
+                leave(EXIT_FAILURE);
+            }
+            start++;
+            snprintf(ros3_fa->ep_url, H5FD_ROS3_MAX_ENDPOINT_URL_LEN + 1, "%s", start);
 #else
             fprintf(rawerrorstream, "Error: Read-Only S3 VFD is not available unless enabled when HDF5 is "
                                     "configured and built.\n\n");
@@ -2892,13 +3001,13 @@ main(int argc, char *argv[])
                 leave(EXIT_FAILURE);
             }
 
-            if (h5tools_parse_hdfs_fapl_tuple(start, ',', &hdfs_fa) < 0) {
+            if (h5tools_parse_hdfs_fapl_tuple(start, ',', hdfs_fa) < 0) {
                 fprintf(rawerrorstream, "Error: failed to parse HDFS VFD configuration info\n\n");
                 usage();
                 leave(EXIT_FAILURE);
             }
 
-            vfd_info.info = &hdfs_fa;
+            vfd_info.info = hdfs_fa;
 #else
             fprintf(
                 rawerrorstream,
@@ -2979,7 +3088,7 @@ main(int argc, char *argv[])
             }     /* end for */
         }
         else {
-            fprintf(stderr, "Unknown argument: %s\n", argv[argno]);
+            error_msg("Unknown argument: %s\n", argv[argno]);
             usage();
             leave(EXIT_FAILURE);
         }
@@ -3003,15 +3112,15 @@ main(int argc, char *argv[])
 
     /* Setup a custom fapl for file accesses */
 #ifdef H5_HAVE_ROS3_VFD
-    if (custom_vfd_fapl && (0 == strcmp(vfd_info.u.name, drivernames[ROS3_VFD_IDX]))) {
-        if (!vfd_info.info)
-            vfd_info.info = &ros3_fa;
+    if (custom_vfd_fapl && !vfd_info.info) {
+        if (vfd_info.type == VFD_BY_NAME && 0 == strcmp(vfd_info.u.name, drivernames[ROS3_VFD_IDX]))
+            vfd_info.info = ros3_fa;
     }
 #endif
 #ifdef H5_HAVE_LIBHDFS
-    if (custom_vfd_fapl && (0 == strcmp(vfd_info.u.name, drivernames[HDFS_VFD_IDX]))) {
-        if (!vfd_info.info)
-            vfd_info.info = &hdfs_fa;
+    if (custom_vfd_fapl && !vfd_info.info) {
+        if (vfd_info.type == VFD_BY_NAME && 0 == strcmp(vfd_info.u.name, drivernames[HDFS_VFD_IDX]))
+            vfd_info.info = hdfs_fa;
     }
 #endif
 
@@ -3062,6 +3171,26 @@ main(int argc, char *argv[])
         fname   = strdup(argv[argno++]);
         oname   = NULL;
         file_id = H5I_INVALID_HID;
+
+        /* Since this tool does not handle different VFD per input file the code below is not
+         * changing much. Once a file triggers custom_vfd_fapl boolean to true, ROS3 will apply
+         * to any subsequent file. */
+        if ((!custom_vfd_fapl) && (strncmp(fname, S3_URI_PREFIX, strlen(S3_URI_PREFIX)) == 0)) {
+#ifdef H5_HAVE_ROS3_VFD
+            vfd_info.type   = VFD_BY_NAME;
+            vfd_info.u.name = drivernames[ROS3_VFD_IDX];
+            custom_vfd_fapl = true;
+            vfd_info.info   = ros3_fa;
+            if (h5tools_set_fapl_vfd(fapl_id, &vfd_info) < 0) {
+                error_msg("unable to set ROS3 VFD on fapl for file\n");
+                leave(EXIT_FAILURE);
+            }
+#else
+            error_msg(
+                "Error: ROS3 VFD is not available unless enabled when HDF5 is configured and built.\n\n");
+            leave(EXIT_FAILURE);
+#endif
+        }
 
         while (fname && *fname) {
             file_id = h5tools_fopen(fname, H5F_ACC_RDONLY, fapl_id, (custom_vol_fapl || custom_vfd_fapl),
@@ -3185,6 +3314,13 @@ main(int argc, char *argv[])
             leave(EXIT_FAILURE);
         }
     }
+
+#ifdef H5_HAVE_ROS3_VFD
+    free(ros3_fa);
+#endif
+#ifdef H5_HAVE_LIBHDFS
+    free(hdfs_fa);
+#endif
 
     if (err_exit)
         leave(EXIT_FAILURE);

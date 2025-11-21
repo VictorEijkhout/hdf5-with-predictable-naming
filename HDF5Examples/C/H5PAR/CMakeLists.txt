@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.18)
+cmake_minimum_required (VERSION 3.26)
 project (H5PAR_C C)
 
 #-----------------------------------------------------------------------------
@@ -15,12 +15,13 @@ foreach (example_name ${examples})
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_110_API}>:-DH5_USE_110_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_112_API}>:-DH5_USE_112_API>"
           "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_114_API}>:-DH5_USE_114_API>"
+          "$<$<BOOL:${${EXAMPLE_VARNAME}_USE_200_API}>:-DH5_USE_200_API>"
   )
   target_include_directories (${EXAMPLE_VARNAME}_${example_name} PUBLIC ${MPI_C_INCLUDE_DIRS})
-  target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EX_HDF5_LINK_LIBS})
+  target_link_libraries (${EXAMPLE_VARNAME}_${example_name} ${H5EXAMPLE_HDF5_LINK_LIBS})
 endforeach ()
 
-if (H5EX_BUILD_TESTING)
+if (H5EXAMPLE_BUILD_TESTING)
   macro (ADD_GREP_TEST testname mumprocs)
     add_test (
         NAME ${EXAMPLE_VARNAME}_${testname}-clearall
@@ -38,9 +39,10 @@ if (H5EX_BUILD_TESTING)
         -D "TEST_EXPECT=0"
         -D "TEST_SKIP_COMPARE=TRUE"
         -D "TEST_OUTPUT=${testname}.out"
+        -D "TEST_GREP_COMPARE=TRUE"
         -D "TEST_REFERENCE:STRING=PHDF5 example finished with no errors"
         -D "TEST_LIBRARY_DIRECTORY=${CMAKE_TEST_LIB_DIRECTORY}"
-        -P "${H5EX_RESOURCES_DIR}/grepTest.cmake"
+        -P "${H5EXAMPLE_RESOURCES_DIR}/runTest.cmake"
     )
     set_tests_properties (MPI_TEST_${EXAMPLE_VARNAME}_${testname} PROPERTIES DEPENDS ${EXAMPLE_VARNAME}_${testname}-clearall)
     set (last_test "MPI_TEST_${EXAMPLE_VARNAME}_${testname}")

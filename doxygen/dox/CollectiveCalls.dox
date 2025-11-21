@@ -1,5 +1,8 @@
 /** \page collective_calls Collective Calling Requirements in Parallel HDF5 Applications
  *
+ * Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
+ * <hr>
+ *
  * \section sec_collective_calls_intro Introduction
  *    This document addresses two topics of concern
     in a parallel computing environment:
@@ -29,20 +32,16 @@
         <u>All processes:</u>
         <br/>
         same datatype &amp; dataspace 
-      </th>
       </th><th>
         <u>All processes:</u>
         <br/>
         same access properties
-      </th>
       </th><th>
         <u>All processes:</u>
         <br/>
         same creation properties
-      </th>
       </th><th>
         Available in releases since
-      </th>
       </th><th>
         Additional notes
       </th>
@@ -656,20 +655,16 @@
         <u>All processes:</u>
         <br/>
         same datatype &amp; dataspace 
-      </th>
       </th><th>
         <u>All processes:</u>
         <br/>
         same access properties
-      </th>
       </th><th>
         <u>All processes:</u>
         <br/>
         same creation properties
-      </th>
       </th><th>
         Available in releases since
-      </th>
       </th><th>
         Additional notes
       </th>
@@ -1261,5 +1256,8 @@
     </table>
 </td></tr>
 </table>
- 
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
+ *
  */

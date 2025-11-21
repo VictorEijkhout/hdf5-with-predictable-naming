@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -9989,13 +9989,18 @@ main(int argc, char **argv)
     if (VERBOSE_MED)
         h5_show_hostname();
 
-    TestAlarmOn();
+    if (TestAlarmOn() < 0) {
+        if (MAINPROCESS)
+            fprintf(stderr, "couldn't enable test timer\n");
+        fflush(stderr);
+        MPI_Abort(MPI_COMM_WORLD, -1);
+    }
 
     /*
      * Get the TestExpress level setting
      */
-    test_express_level_g = GetTestExpress();
-    if ((test_express_level_g >= 1) && MAINPROCESS) {
+    test_express_level_g = h5_get_testexpress();
+    if ((test_express_level_g >= H5_TEST_EXPRESS_FULL) && MAINPROCESS) {
         printf("** Some tests will be skipped due to TestExpress setting.\n");
         printf("** Exhaustive tests will only be performed for the first available filter.\n");
         printf("** Set the HDF5TestExpress environment variable to 0 to perform exhaustive testing for all "
@@ -10192,7 +10197,7 @@ main(int argc, char **argv)
                          * as the 'USE_MULTIPLE_DATASETS' and 'USE_MULTIPLE_DATASETS_MIXED_FILTERED'
                          * cases are more stressful on the file system.
                          */
-                        if (test_express_level_g > 1) {
+                        if (test_express_level_g > H5_TEST_EXPRESS_FULL) {
                             if (((test_mode == USE_MULTIPLE_DATASETS) ||
                                  (test_mode == USE_MULTIPLE_DATASETS_MIXED_FILTERED)) &&
                                 (chunk_opt != H5FD_MPIO_CHUNK_ONE_IO))
@@ -10296,7 +10301,7 @@ main(int argc, char **argv)
          * If the TestExpress level setting isn't set for exhaustive
          * testing, run smoke checks for the other filters
          */
-        if (!expedite_testing && (test_express_level_g >= 1))
+        if (!expedite_testing && (test_express_level_g >= H5_TEST_EXPRESS_FULL))
             expedite_testing = true;
     }
 

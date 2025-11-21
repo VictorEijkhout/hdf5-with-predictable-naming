@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -21,7 +21,7 @@
  */
 #define H5FA_FRIEND /*suppress error about including H5FApkg	  */
 #define H5FA_TESTING
-#include "H5FApkg.h" /* Fixed Arrays			*/
+#include "H5FApkg.h" /* Fixed arrays			*/
 
 /* Other private headers that this test requires */
 #include "H5CXprivate.h" /* API Contexts                             */
@@ -38,7 +38,7 @@
 #define ELMT_SIZE                   sizeof(uint64_t)
 #define MAX_DBLOCK_PAGE_NELMTS_BITS 10 /* 2^10 = 1024 elements per data block page */
 
-/* Testing # of elements in the Fixed Array */
+/* Testing # of elements in the fixed array */
 #define TEST_NELMTS 20000
 
 /* Convenience macros for computing earray state */
@@ -204,7 +204,7 @@ error:
 /*-------------------------------------------------------------------------
  * Function:    set_fa_state
  *
- * Purpose:     Set the state of the Fixed Array
+ * Purpose:     Set the state of the fixed array
  *
  * Return:      SUCCEED/FAIL
  *
@@ -1149,7 +1149,7 @@ fiter_rnd_init(const H5FA_create_t H5_ATTR_UNUSED *cparam, const farray_test_par
             size_t  swap_idx; /* Location to swap with when shuffling */
             hsize_t temp_idx; /* Temporary index */
 
-            swap_idx             = ((size_t)HDrandom() % ((size_t)cnt - u)) + u;
+            swap_idx             = ((size_t)rand() % ((size_t)cnt - u)) + u;
             temp_idx             = fiter->idx[u];
             fiter->idx[u]        = fiter->idx[swap_idx];
             fiter->idx[swap_idx] = temp_idx;
@@ -1622,32 +1622,29 @@ error:
 int
 main(void)
 {
-    H5FA_create_t       cparam;                    /* Creation parameters for fixed array */
-    farray_test_param_t tparam;                    /* Testing parameters */
-    farray_test_type_t  curr_test;                 /* Current test being worked on */
-    farray_iter_type_t  curr_iter;                 /* Current iteration type being worked on */
-    hid_t               fapl    = H5I_INVALID_HID; /* File access property list for data files */
-    unsigned            nerrors = 0;               /* Cumulative error count */
-    time_t              curr_time;                 /* Current time, for seeding random number generator */
-    bool                api_ctx_pushed = false;    /* Whether API context pushed */
+    H5FA_create_t       cparam;                           /* Creation parameters for fixed array */
+    farray_test_param_t tparam;                           /* Testing parameters */
+    farray_test_type_t  curr_test;                        /* Current test being worked on */
+    farray_iter_type_t  curr_iter;                        /* Current iteration type being worked on */
+    hid_t               fapl           = H5I_INVALID_HID; /* File access property list for data files */
+    unsigned            nerrors        = 0;               /* Cumulative error count */
+    H5CX_node_t         api_ctx        = {{0}, NULL};     /* API context node to push */
+    bool                api_ctx_pushed = false;           /* Whether API context pushed */
 
     /* Reset library */
     h5_test_init();
     fapl = h5_fileaccess();
-    if (TestExpress > 0)
-        printf("***Express test mode %d.  Some tests may be skipped\n", TestExpress);
 
     /* Set the filename to use for this test (dependent on fapl) */
     h5_fixname(FILENAME[0], fapl, filename_g, sizeof(filename_g));
 
     /* Push API context */
-    if (H5CX_push() < 0)
+    if (H5CX_push(&api_ctx) < 0)
         FAIL_STACK_ERROR;
     api_ctx_pushed = true;
 
     /* Seed random #'s */
-    curr_time = time(NULL);
-    HDsrandom((unsigned)curr_time);
+    srand((unsigned)time(NULL));
 
     /* Create an empty file to retrieve size */
     {
@@ -1751,8 +1748,8 @@ main(void)
         nerrors += test_skip_elmts(fapl, &cparam, &tparam, (hsize_t)(tparam.nelmts - 1), true,
                                    "skipping to last element");
 
-        /* Create Fixed Array */
-        /* MAX_NELMTS succeeds on some platforms buy may fail on others:
+        /* Create fixed array */
+        /* MAX_NELMTS succeeds on some platforms but may fail on others:
          *
          *      "H5FD_sec2_truncate(): unable to extend file properly"
          *
@@ -1765,7 +1762,7 @@ main(void)
         tparam.nelmts = MAX_NELMTS / 17;
         init_cparam(&cparam, &tparam);
 
-        /* Set the last element in the Fixed Array */
+        /* Set the last element in the fixed array */
         nerrors += test_skip_elmts(fapl, &cparam, &tparam, (hsize_t)(tparam.nelmts - 1), false,
                                    "skipping to last element");
     } /* end for */

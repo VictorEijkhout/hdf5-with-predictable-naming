@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -88,9 +88,7 @@ error(const char *fmt, ...)
 
     va_start(ap, fmt);
     fprintf(stderr, "%s: error: ", prog);
-    H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
     vfprintf(stderr, fmt, ap);
-    H5_GCC_CLANG_DIAG_ON("format-nonliteral")
     fprintf(stderr, "\n");
     va_end(ap);
     exit(EXIT_FAILURE);
@@ -345,7 +343,7 @@ fill_with_random_data(Bytef *src, uLongf src_len)
         fprintf(stdout, "Using random() for random data\n");
 
         for (u = 0; u < src_len; ++u)
-            src[u] = (Bytef)(0xff & HDrandom());
+            src[u] = (Bytef)(0xff & rand());
     }
 
     if (compress_percent) {

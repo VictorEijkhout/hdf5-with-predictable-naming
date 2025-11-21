@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -228,8 +228,9 @@ usage(const char *prog)
     PRINTVALSTREAM(rawoutstream, "        2: This is H5F_LIBVER_V110 in H5F_libver_t struct\n");
     PRINTVALSTREAM(rawoutstream, "        3: This is H5F_LIBVER_V112 in H5F_libver_t struct\n");
     PRINTVALSTREAM(rawoutstream, "        4: This is H5F_LIBVER_V114 in H5F_libver_t struct\n");
+    PRINTVALSTREAM(rawoutstream, "        5: This is H5F_LIBVER_V200 in H5F_libver_t struct\n");
     PRINTVALSTREAM(rawoutstream,
-                   "           (H5F_LIBVER_LATEST is aliased to H5F_LIBVER_V114 for this release\n");
+                   "           (H5F_LIBVER_LATEST is aliased to H5F_LIBVER_V200 for this release\n");
     PRINTVALSTREAM(rawoutstream, "\n");
     PRINTVALSTREAM(rawoutstream, "    FS_STRATEGY is a string indicating the file space strategy used:\n");
     PRINTVALSTREAM(rawoutstream, "        FSM_AGGR:\n");
@@ -988,10 +989,11 @@ done:
 int
 main(int argc, char **argv)
 {
-    pack_opt_t options; /*the global options */
-    int        parse_ret;
+    pack_opt_t *options = NULL; /*the global options */
+    int         parse_ret;
 
-    memset(&options, 0, sizeof(pack_opt_t));
+    if (NULL == (options = (pack_opt_t *)calloc(1, sizeof(pack_opt_t))))
+        goto done;
 
     /* Initialize h5tools lib */
     h5tools_init();
@@ -1007,7 +1009,7 @@ main(int argc, char **argv)
     }
 
     /* initialize options  */
-    if (h5repack_init(&options, 0, false) < 0) {
+    if (h5repack_init(options, 0, false) < 0) {
         printf("Error occurred while initializing repack options\n");
         h5tools_setstatus(EXIT_FAILURE);
         goto done;
@@ -1016,7 +1018,7 @@ main(int argc, char **argv)
     /* Initialize default indexing options */
     sort_by = H5_INDEX_CRT_ORDER;
 
-    parse_ret = parse_command_line(argc, (const char *const *)argv, &options);
+    parse_ret = parse_command_line(argc, (const char *const *)argv, options);
     if (parse_ret < 0) {
         printf("Error occurred while parsing command-line options\n");
         h5tools_setstatus(EXIT_FAILURE);
@@ -1032,7 +1034,7 @@ main(int argc, char **argv)
     h5tools_error_report();
 
     /* pack it */
-    if (h5repack(infile, outfile, &options) < 0) {
+    if (h5repack(infile, outfile, options) < 0) {
         printf("Error occurred while repacking\n");
         h5tools_setstatus(EXIT_FAILURE);
         goto done;
@@ -1041,13 +1043,17 @@ main(int argc, char **argv)
     h5tools_setstatus(EXIT_SUCCESS);
 
 done:
-    if (options.fin_fapl >= 0 && options.fin_fapl != H5P_DEFAULT)
-        H5Pclose(options.fin_fapl);
-    if (options.fout_fapl >= 0 && options.fout_fapl != H5P_DEFAULT)
-        H5Pclose(options.fout_fapl);
+    if (options) {
+        if (options->fin_fapl >= 0 && options->fin_fapl != H5P_DEFAULT)
+            H5Pclose(options->fin_fapl);
+        if (options->fout_fapl >= 0 && options->fout_fapl != H5P_DEFAULT)
+            H5Pclose(options->fout_fapl);
 
-    /* free tables */
-    h5repack_end(&options);
+        /* free tables */
+        h5repack_end(options);
+
+        free(options);
+    }
 
     leave(h5tools_getstatus());
 }

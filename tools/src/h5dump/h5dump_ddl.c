@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -116,6 +116,13 @@ dump_attr_cb(hid_t oid, const char *attr_name, const H5A_info_t H5_ATTR_UNUSED *
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
     }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
+    }
 
     if (h5tools_nCols == 0) {
         string_dataformat.line_ncols    = 65535;
@@ -161,8 +168,10 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
     h5tool_format_t  *outputformat = &h5tools_dataformat;
     h5tool_format_t   string_dataformat;
     hsize_t           curr_pos = 0; /* total data element position   */
+    H5L_info2_t       local_linfo;
 
     /* setup */
+    memset(&local_linfo, 0, sizeof(H5L_info2_t));
     memset(&buffer, 0, sizeof(h5tools_str_t));
 
     memset(&ctx, 0, sizeof(ctx));
@@ -174,6 +183,13 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
     if (fp_format) {
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
+    }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
     }
 
     if (h5tools_nCols == 0) {
@@ -441,7 +457,13 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
                 break;
 
             case H5L_TYPE_EXTERNAL:
-                if ((targbuf = (char *)malloc(linfo->u.val_size)) == NULL) {
+                if (H5Lget_info2(group, name, &local_linfo, H5P_DEFAULT) < 0) {
+                    error_msg("unable to get API-level ext link info\n");
+                    h5tools_setstatus(EXIT_FAILURE);
+                    ret = FAIL;
+                }
+
+                if ((targbuf = (char *)malloc(local_linfo.u.val_size)) == NULL) {
                     error_msg("unable to allocate buffer\n");
                     h5tools_setstatus(EXIT_FAILURE);
                     ret = FAIL;
@@ -456,7 +478,7 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
                     h5tools_render_element(rawoutstream, outputformat, &ctx, &buffer, &curr_pos,
                                            (size_t)outputformat->line_ncols, (hsize_t)0, (hsize_t)0);
 
-                    if (H5Lget_val(group, name, targbuf, linfo->u.val_size, H5P_DEFAULT) < 0) {
+                    if (H5Lget_val(group, name, targbuf, local_linfo.u.val_size, H5P_DEFAULT) < 0) {
                         indentation(dump_indent);
                         error_msg("unable to get external link value\n");
                         h5tools_setstatus(EXIT_FAILURE);
@@ -466,7 +488,8 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
                         const char *filename;
                         const char *targname;
 
-                        if (H5Lunpack_elink_val(targbuf, linfo->u.val_size, NULL, &filename, &targname) < 0) {
+                        if (H5Lunpack_elink_val(targbuf, local_linfo.u.val_size, NULL, &filename, &targname) <
+                            0) {
                             indentation(dump_indent);
                             error_msg("unable to unpack external link value\n");
                             h5tools_setstatus(EXIT_FAILURE);
@@ -646,6 +669,13 @@ dump_named_datatype(hid_t tid, const char *name)
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
     }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
+    }
 
     if (h5tools_nCols == 0) {
         string_dataformat.line_ncols    = 65535;
@@ -802,6 +832,13 @@ dump_group(hid_t gid, const char *name)
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
     }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
+    }
 
     if (h5tools_nCols == 0) {
         string_dataformat.line_ncols    = 65535;
@@ -928,6 +965,13 @@ dump_dataset(hid_t did, const char *name, struct subset_t *sset)
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
     }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
+    }
 
     if (h5tools_nCols == 0) {
         string_dataformat.line_ncols    = 65535;
@@ -1038,7 +1082,8 @@ dump_dataset(hid_t did, const char *name, struct subset_t *sset)
                 case H5T_REFERENCE:
                 case H5T_ENUM:
                 case H5T_VLEN:
-                case H5T_ARRAY: {
+                case H5T_ARRAY:
+                case H5T_COMPLEX: {
                     h5tools_dump_data(rawoutstream, outputformat, &ctx, did, true);
                 } break;
 
@@ -1097,6 +1142,13 @@ dump_data(hid_t obj_id, int obj_data, struct subset_t *sset, int display_index)
     if (fp_format) {
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
+    }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
     }
 
     if (h5tools_nCols == 0) {
@@ -1562,6 +1614,13 @@ handle_attributes(hid_t fid, const char *attr, void H5_ATTR_UNUSED *data, int H5
     if (fp_format) {
         string_dataformat.fmt_double = fp_format;
         string_dataformat.fmt_float  = fp_format;
+    }
+    if (fp_lformat) {
+        string_dataformat.fmt_ldouble = fp_lformat;
+    }
+    if (complex_format) {
+        string_dataformat.fmt_double_complex = complex_format;
+        string_dataformat.fmt_float_complex  = complex_format;
     }
 
     if (h5tools_nCols == 0) {

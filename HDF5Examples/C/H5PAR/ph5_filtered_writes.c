@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -26,6 +26,7 @@
  * if one is needed.
  */
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "hdf5.h"
@@ -102,7 +103,7 @@ fill_databuf(hsize_t start[], hsize_t count[], hsize_t stride[], C_DATATYPE *dat
 static void
 cleanup(char *filename)
 {
-    hbool_t do_cleanup = getenv(HDF5_NOCLEANUP) ? 0 : 1;
+    bool do_cleanup = getenv(HDF5_NOCLEANUP) ? false : true;
 
     if (do_cleanup)
         MPI_File_delete(filename, MPI_INFO_NULL);

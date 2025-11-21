@@ -1,4 +1,4 @@
-/** @page IntroParContHyperslab Writing by Contiguous Hyperslab
+/** \page IntroParContHyperslab Writing by Contiguous Hyperslab
 
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 <hr>
@@ -51,7 +51,7 @@ The number of processes that you could use would be 1, 2, 4, or 8. The number of
 <table>
 <tr>
 <th><strong>Processes</strong></th>
-<th><strong>Size of count[0](\# of rows) </strong></th>
+<th><strong>Size of count[0](&#35; of rows) </strong></th>
 </tr><tr>
 <td>1</td><td>8</td>
 </tr><tr>
@@ -106,7 +106,7 @@ If using this example with 4 processes, then,
 \li    Process 2 writes "12"s.
 \li    Process 3 writes "13"s.
 
-The following is the output from h5dump for the HDF5 file created by this example using 4 processes:
+The following is the output from \ref sec_cltools_h5dump for the HDF5 file created by this example using 4 processes:
 \code
 HDF5 "SDS_row.h5" {
 GROUP "/" {
@@ -163,7 +163,7 @@ columns that could be written by each slab is as follows:
 <table>
 <tr>
 <th><strong>Processes</strong></th>
-<th><strong>Size of count (2)(\# of columns) </strong></th>
+<th><strong>Size of count (2)(&#35; of columns) </strong></th>
 </tr><tr>
 <td>1</td><td>8</td>
 </tr><tr>
@@ -210,14 +210,14 @@ Below is the F90 example program which illustrates how to write contiguous hyper
 </tr>
 </table>
 
-If you run this program with 4 processes and look at the output with h5dump you will notice that the output is
-much like the output shown above for the C example. This is because h5dump is written in C. The data would be
+If you run this program with 4 processes and look at the output with \ref sec_cltools_h5dump you will notice that the output is
+much like the output shown above for the C example. This is because \ref sec_cltools_h5dump is written in C. The data would be
 displayed in columns if it was printed using Fortran 90 code.
 
 <hr>
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 
-@page IntroParRegularSpaced Writing by Regularly Spaced Data
+\page IntroParRegularSpaced Writing by Regularly Spaced Data
 
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 <hr>
@@ -280,7 +280,7 @@ Below is an example program for writing hyperslabs by column in Parallel HDF5:
 </tr>
 </table>
 
-The following is the output from h5dump for the HDF5 file created by this example:
+The following is the output from \ref sec_cltools_h5dump for the HDF5 file created by this example:
 \code
 HDF5 "SDS_col.h5" {
 GROUP "/" {
@@ -351,13 +351,13 @@ Below is the example program for writing hyperslabs by column in Parallel HDF5:
 </tr>
 </table>
 
-The output for h5dump on the file created by this program will look like the output as shown above for the C example. This is
-because h5dump is written in C. The data would be displayed in rows if it were printed using Fortran 90 code.
+The output for \ref sec_cltools_h5dump on the file created by this program will look like the output as shown above for the C example. This is
+because \ref sec_cltools_h5dump is written in C. The data would be displayed in rows if it were printed using Fortran 90 code.
 
 <hr>
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 
-@page IntroParPattern Writing by Pattern
+\page IntroParPattern Writing by Pattern
 
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 <hr>
@@ -441,7 +441,7 @@ Below are example programs for writing hyperslabs by pattern in Parallel HDF5:
 </tr>
 </table>
 
-The following is the output from h5dump for the HDF5 file created in this example:
+The following is the output from \ref sec_cltools_h5dump for the HDF5 file created in this example:
 \code
 HDF5 "SDS_pat.h5" {
 GROUP "/" {
@@ -462,13 +462,13 @@ GROUP "/" {
 } 
 } 
 \endcode
-The h5dump utility is written in C so the output is in C order.
+The \ref sec_cltools_h5dump utility is written in C so the output is in C order.
 
 
 <hr>
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 
-@page IntroParChunk Writing by Chunk
+\page IntroParChunk Writing by Chunk
 
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5
 <hr>
@@ -540,7 +540,7 @@ Below are example programs for writing hyperslabs by pattern in Parallel HDF5:
 </tr>
 </table>
 
-The following is the output from h5dump for the HDF5 file created in this example:
+The following is the output from \ref sec_cltools_h5dump for the HDF5 file created in this example:
 \code
 HDF5 "SDS_chnk.h5" {
 GROUP "/" {
@@ -561,7 +561,7 @@ GROUP "/" {
 } 
 } 
 \endcode
-The h5dump utility is written in C so the output is in C order.
+The \ref sec_cltools_h5dump utility is written in C so the output is in C order.
 
 <hr>
 Navigate back: \ref index "Main" / \ref GettingStarted / \ref IntroParHDF5

@@ -8,15 +8,21 @@
 
   This file is intended for use with HDF5 Library version 1.8
 
+Note: This example includes older cases from previous versions
+  of HDF5 for historical reference and to illustrate how to
+  migrate older code to newer functions. However, readers are
+  encouraged to avoid using deprecated functions and earlier
+  schemas from those versions.
+
  ************************************************************/
 
 #include "hdf5.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FILE    "h5ex_t_vlstring.h5"
-#define DATASET "DS1"
-#define DIM0    4
+#define FILENAME "h5ex_t_vlstring.h5"
+#define DATASET  "DS1"
+#define DIM0     4
 
 int
 main(void)
@@ -33,7 +39,7 @@ main(void)
     /*
      * Create a new file using the default properties.
      */
-    file = H5Fcreate(FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     /*
      * Create file and memory datatypes.  For this example we will save
@@ -76,7 +82,7 @@ main(void)
     /*
      * Open file and dataset.
      */
-    file = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
+    file = H5Fopen(FILENAME, H5F_ACC_RDONLY, H5P_DEFAULT);
     dset = H5Dopen(file, DATASET, H5P_DEFAULT);
 
     /*
@@ -108,13 +114,17 @@ main(void)
     for (i = 0; i < dims[0]; i++)
         printf("%s[%d]: %s\n", DATASET, i, rdata[i]);
 
-    /*
-     * Close and release resources.  Note that H5Dvlen_reclaim works
-     * for variable-length strings as well as variable-length arrays.
-     * Also note that we must still free the array of pointers stored
-     * in rdata, as H5Tvlen_reclaim only frees the data these point to.
-     */
+        /*
+         * Close and release resources.  Note that H5Dvlen_reclaim works
+         * for variable-length strings as well as variable-length arrays.
+         * Also note that we must still free the array of pointers stored
+         * in rdata, as H5Tvlen_reclaim only frees the data these point to.
+         */
+#if H5_VERSION_GE(1, 12, 0) && !defined(H5_USE_110_API) && !defined(H5_USE_18_API) && !defined(H5_USE_16_API)
+    status = H5Treclaim(memtype, space, H5P_DEFAULT, rdata);
+#else
     status = H5Dvlen_reclaim(memtype, space, H5P_DEFAULT, rdata);
+#endif
     free(rdata);
     status = H5Dclose(dset);
     status = H5Sclose(space);

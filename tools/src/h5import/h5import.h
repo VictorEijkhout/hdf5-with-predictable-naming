@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -20,6 +20,9 @@
 #define H5IMPORT_H
 
 /** \page H5TOOL_IM_UG The HDF5 h5import Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5import h5import
  *
@@ -304,6 +307,11 @@
  *      of 7.<br />
  *      The dataset will be stored at \code /Second-set \endcode
  *
+ *
+ * Previous Chapter \ref sec_cltools_h5format_convert - Next Chapter \ref sec_cltools_h5jam
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -207,7 +207,7 @@ FileAccPropList::getFamilyOffset() const
 ///             refer to the H5Pset_fapl_core API in the HDF5 C Reference Manual.
 //--------------------------------------------------------------------------
 void
-FileAccPropList::setCore(size_t increment, hbool_t backing_store) const
+FileAccPropList::setCore(size_t increment, bool backing_store) const
 {
     herr_t ret_value = H5Pset_fapl_core(id, increment, backing_store);
     if (ret_value < 0) {
@@ -224,7 +224,7 @@ FileAccPropList::setCore(size_t increment, hbool_t backing_store) const
 ///\exception   H5::PropListIException
 //--------------------------------------------------------------------------
 void
-FileAccPropList::getCore(size_t &increment, hbool_t &backing_store) const
+FileAccPropList::getCore(size_t &increment, bool &backing_store) const
 {
     herr_t ret_value = H5Pget_fapl_core(id, &increment, &backing_store);
     if (ret_value < 0) {
@@ -667,7 +667,7 @@ FileAccPropList::getGcReferences() const
 ///             the HDF5 C Reference Manual.
 //--------------------------------------------------------------------------
 void
-FileAccPropList::setFileLocking(hbool_t use_file_locking, hbool_t ignore_when_disabled) const
+FileAccPropList::setFileLocking(bool use_file_locking, bool ignore_when_disabled) const
 {
     herr_t ret_value = H5Pset_file_locking(id, use_file_locking, ignore_when_disabled);
 
@@ -689,7 +689,7 @@ FileAccPropList::setFileLocking(hbool_t use_file_locking, hbool_t ignore_when_di
 ///             the HDF5 C Reference Manual.
 //--------------------------------------------------------------------------
 void
-FileAccPropList::getFileLocking(hbool_t &use_file_locking, hbool_t &ignore_when_disabled) const
+FileAccPropList::getFileLocking(bool &use_file_locking, bool &ignore_when_disabled) const
 {
     herr_t ret_value = H5Pget_file_locking(id, &use_file_locking, &ignore_when_disabled);
 
@@ -713,6 +713,7 @@ FileAccPropList::getFileLocking(hbool_t &use_file_locking, hbool_t &ignore_when_
 ///             \li \c H5F_LIBVER_110
 ///             \li \c H5F_LIBVER_112
 ///             \li \c H5F_LIBVER_114
+///             \li \c H5F_LIBVER_200
 ///             \li \c H5F_LIBVER_LATEST
 ///
 ///             Valid values of \a libver_high are as follows:
@@ -720,6 +721,7 @@ FileAccPropList::getFileLocking(hbool_t &use_file_locking, hbool_t &ignore_when_
 ///             \li \c H5F_LIBVER_110
 ///             \li \c H5F_LIBVER_112
 ///             \li \c H5F_LIBVER_114
+///             \li \c H5F_LIBVER_200
 ///             \li \c H5F_LIBVER_LATEST   (Default)
 ///
 ///             For more detail, please refer to the H5Pset_libver_bounds API in
@@ -751,6 +753,7 @@ FileAccPropList::setLibverBounds(H5F_libver_t libver_low, H5F_libver_t libver_hi
 ///             \li \c H5F_LIBVER_110
 ///             \li \c H5F_LIBVER_112
 ///             \li \c H5F_LIBVER_114
+///             \li \c H5F_LIBVER_200
 ///             \li \c H5F_LIBVER_LATEST
 ///
 ///             and \a libver_high:
@@ -758,6 +761,7 @@ FileAccPropList::setLibverBounds(H5F_libver_t libver_low, H5F_libver_t libver_hi
 ///             \li \c H5F_LIBVER_110
 ///             \li \c H5F_LIBVER_112
 ///             \li \c H5F_LIBVER_114
+///             \li \c H5F_LIBVER_200
 ///             \li \c H5F_LIBVER_LATEST
 //--------------------------------------------------------------------------
 void

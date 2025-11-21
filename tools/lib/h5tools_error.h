@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -16,7 +16,7 @@
 #ifndef H5TOOLS_ERROR_H
 #define H5TOOLS_ERROR_H
 
-#include "H5Epublic.h"
+#include "H5private.h"
 #include "H5Eprivate.h" /* Error handling       */
 
 /* tools-HDF5 Error variables */

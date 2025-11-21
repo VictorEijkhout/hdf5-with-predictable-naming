@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/types.h>
 
 #ifdef H5_HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -40,10 +41,6 @@
 
 #ifdef H5_HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-
-#ifdef H5_HAVE_SYS_TYPES_H
-#include <sys/types.h>
 #endif
 
 #ifdef H5_HAVE_UNISTD_H

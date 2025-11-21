@@ -7,16 +7,22 @@
   reopens the file, dereferences the references, and outputs
   the names of their targets to the screen.
 
+Note: This example includes older cases from previous versions
+  of HDF5 for historical reference and to illustrate how to
+  migrate older code to newer functions. However, readers are
+  encouraged to avoid using deprecated functions and earlier
+  schemas from those versions.
+
  ************************************************************/
 
 #include "hdf5.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FILE    "h5ex_t_objref.h5"
-#define DATASET "DS1"
-#define DIM0    2
-#define RANK    1
+#define FILENAME "h5ex_t_objref.h5"
+#define DATASET  "DS1"
+#define DIM0     2
+#define RANK     1
 
 int
 main(void)
@@ -47,7 +53,7 @@ main(void)
     /*
      * Create a new file using the default properties.
      */
-    file = H5Fcreate(FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     /*
      * Create a dataset with a null dataspace.
@@ -112,7 +118,7 @@ main(void)
     /*
      * Open file and dataset.
      */
-    file = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
+    file = H5Fopen(FILENAME, H5F_ACC_RDONLY, H5P_DEFAULT);
     dset = H5Dopen(file, DATASET, H5P_DEFAULT);
 
     /*

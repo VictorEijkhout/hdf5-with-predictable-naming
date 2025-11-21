@@ -16,10 +16,9 @@ ALIASES += DWNURL="\RELURL/downloads/latest"
 # URL for RFCs
 ALIASES += RFCURL="\DOCURL/rfc"
 ALIASES += AEXURL="\HDFURL/archive/support/ftp/HDF5/examples"
-# doxygen subdir (develop, v1_14)
-ALIASES += DOXURL="hdfgroup.github.io/hdf5/hdf5_1_14_6"
-#branch name (develop, hdf5_1_14)
-ALIASES += SRCURL="github.com/HDFGroup/hdf5/blob/hdf5_1_14_6"
+#branch name (develop, hdf5_2_0_0)
+ALIASES += SRCURL="github.com/HDFGroup/hdf5/blob/develop"
+ALIASES += SRCURL20="github.com/HDFGroup/hdf5/blob/hdf5_2_0_0"
 #Other projects that contribute to HDF5
 ALIASES += PRJURL="\HDFURL/archive/support/projects"
 ALIASES += HVURL="github.com/HDFGroup/hdfview/blob/master"
@@ -256,13 +255,14 @@ ALIASES += cpp_c_api_note="\anchor cpp_c_api_note \attention \Bold{C++ Developer
 ALIASES += callback_note="\attention \Bold{Leaving callback functions:}\n The callback function must return normally, even in the case of error.  Returning with H5_ITER_ERROR, instead of leaving by means of exceptions, exit() function, etc... will allow the HDF5 library to manage its resources and maintain a consistent state. See \ref cpp_c_api_note \"C++ Developers using HDF5 C-API functions\" warning for detail."
 ALIASES += par_compr_note="\attention If you are planning to use compression with parallel HDF5, ensure that calls to H5Dwrite() occur in collective mode. In other words, all MPI ranks (in the relevant communicator) call H5Dwrite() and pass a dataset transfer property list with the MPI-IO collective option property set to #H5FD_MPIO_COLLECTIVE_IO.\n Note that data transformations are currently \Bold{not} supported when writing to datasets in parallel and with compression enabled."
 ALIASES += sa_metadata_ops="\sa \li H5Pget_all_coll_metadata_ops() \li H5Pget_coll_metadata_write() \li H5Pset_all_coll_metadata_ops() \li H5Pset_coll_metadata_write() \li \ref maybe_metadata_reads"
+ALIASES += unicode_filename_note="\note On Windows, HDF5 assumes that a file name string is UTF-8 encoded and will attempt to convert it to UTF-16 before calling wide-character Windows API functions. If a file name string cannot be converted to UTF-16, the equivalent non-wide-character Windows API functions will be used, causing a file name string to be interpreted according to the active Windows code page. If an application desires that the active Windows code page be preferred, the environment variable #HDF5_PREFER_WINDOWS_CODE_PAGE can be set to the value '1' or 'TRUE' (case-insensitive)."
 
 ################################################################################
 # Specifications
 ################################################################################
 
-ALIASES += ref_spec_fileformat="\ref FMT2"
-ALIASES += ref_spec_fileformat_btrees_v1="\ref subsubsec_fmt2_infra_btrees_v1"
+ALIASES += ref_spec_fileformat="\ref FMT4"
+ALIASES += ref_spec_fileformat_btrees_v1="\ref subsubsec_fmt3_infra_btrees_v1"
 
 ################################################################################
 # References
@@ -270,11 +270,6 @@ ALIASES += ref_spec_fileformat_btrees_v1="\ref subsubsec_fmt2_infra_btrees_v1"
 
 ALIASES += ref_cons_semantics="<a href=\"https://\RFCURL/RFC%20PHDF5%20Consistency%20Semantics%20MC%20120328.docx.pdf\">Enabling a Strict Consistency Semantics Model in Parallel HDF5</a>"
 ALIASES += ref_filter_pipe="<a href=\"https://\DOCURL/advanced_topics/data_flow_pline_H5Dread.md\">Data Flow Pipeline for H5Dread()</a>"
-ALIASES += ref_group_impls="<a href=\"https://\DOXURL/group___h5_g.html\">Group implementations in HDF5</a>"
-ALIASES += ref_mdc_in_hdf5="<a href=\"https://\DOCURL/advanced_topics/FineTuningMetadataCache.md\">Metadata Caching in HDF5</a>"
-ALIASES += ref_mdc_logging="<a href=\"https://\RFCURL/Design-MetadataCache-Logging-THG20140224-v4.pdf\">Metadata Cache Logging</a>"
-ALIASES += ref_news_112="<a href=\"https://\DOCURL/release_specifics/new_features_1_12.md\">New Features in HDF5 Release 1.12</a>"
-ALIASES += ref_h5ocopy="<a href=\"https://\DOCURL/advanced_topics/CopyingCommittedDatatypesWithH5Ocopy.pdf\">Copying Committed Datatypes with H5Ocopy()</a>"
 ALIASES += ref_sencode_fmt_change="<a href=\"https://\RFCURL/H5Sencode_format.docx.pdf\">RFC H5Sencode() / H5Sdecode() Format Change</a>"
 ALIASES += ref_vlen_strings="\Emph{Creating variable-length string datatypes}"
 ALIASES += ref_vol_doc="VOL documentation"
@@ -283,6 +278,9 @@ ALIASES += ref_vol_doc="VOL documentation"
 # RFCs
 ################################################################################
 
+ALIASES += ref_rfc20240129="<a href=\"https://\RFCURL/RFC__Adding_support_for_16_bit_floating_point_and_Complex_number_datatypes_to_HDF5.pdf\">Adding support for 16-bit floating point and Complex number datatypes to HDF</a>"
+# Same RFC, but complex number datatypes was delayed to 2.0
+ALIASES += ref_rfc20240129complex="<a href=\"https://\RFCURL/RFC__Adding_support_for_16_bit_floating_point_and_Complex_number_datatypes_to_HDF5.pdf\">Support for Complex number datatypes</a>"
 ALIASES += ref_rfc20220819="<a href=\"https://\RFCURL/Terminal_VOL_Connector_Feature_Flags.pdf\">Terminal VOL Connector Feature Flags</a>"
 ALIASES += ref_rfc20210528="<a href=\"https://\RFCURL/RFC_multi_thread.pdf\">Multi-Thread HDF5</a>"
 ALIASES += ref_rfc20210219="<a href=\"https://\RFCURL/selection_io_RFC_210610.pdf\">Selection I/O</a>"
@@ -346,6 +344,7 @@ ALIASES += ref_rfc20110614="<a href=\"https://\RFCURL/RFC_h5dump_refactor_v3.doc
 ALIASES += ref_rfc20110329="<a href=\"https://\RFCURL/RFC_Tools_Extlink_Cache_v3_r2.docx.pdf\">Support External Link Open File Cache in HDF5 Tools</a>"
 ALIASES += ref_rfc20110118="<a href=\"https://\RFCURL/RFC%20for%20h5diff%20Attribute%20Comparisons_v7.docx.pdf\"><tt>h5diff</tt> Attribute Comparisons</a>"
 ALIASES += ref_rfc20101122="<a href=\"https://\RFCURL/RFC_swmr_timeouts_v2.docx.pdf\">SWMR Timeouts</a>"
+ALIASES += ref_rfc20101119="<a href=\"https://\RFCURL/2010-11_FUSEPerformanceReport-final.pdf\">FUSE Performance Report</a>"
 ALIASES += ref_rfc20101104="<a href=\"https://\RFCURL/CacheExternalLinkFileOpens.pdf\">Caching Files Opened Through External Links</a>"
 ALIASES += ref_rfc20101018="<a href=\"https://\RFCURL/HDF5-comparisons_v3-RFC-2011-08-03.pdf\">HDF5 File and Object Comparison Specification</a>"
 ALIASES += ref_rfc20100902="<a href=\"https://\RFCURL/H5edit-RFC-Draft-v5.pdf\"><tt>h5edit</tt> – An HDF5 File Editing Tool</a>"
@@ -386,7 +385,7 @@ ALIASES += ref_rfc20040811="<a href=\"https://\RFCURL/text-dtype.htm.pdf\">Conve
 
 ALIASES += click4more="(Click on a enumerator, field, or type for more information.)"
 ALIASES += csets="<table><tr><td>#H5T_CSET_ASCII</td><td>US ASCII</td></tr><tr><td>#H5T_CSET_UTF8</td><td>UTF-8 Unicode encoding</td></tr></table>"
-ALIASES += datatype_class=" \li #H5T_INTEGER \li #H5T_FLOAT \li #H5T_STRING \li #H5T_BITFIELD \li #H5T_OPAQUE \li #H5T_COMPOUND \li #H5T_REFERENCE \li #H5T_ENUM \li #H5T_VLEN \li #H5T_ARRAY"
+ALIASES += datatype_class=" \li #H5T_INTEGER \li #H5T_FLOAT \li #H5T_STRING \li #H5T_BITFIELD \li #H5T_OPAQUE \li #H5T_COMPOUND \li #H5T_REFERENCE \li #H5T_ENUM \li #H5T_VLEN \li #H5T_ARRAY \li #H5T_COMPLEX"
 ALIASES += file_access="<table><tr><td>#H5F_ACC_RDWR</td><td>File was opened with read/write access.</td></tr><tr><td>#H5F_ACC_RDONLY</td><td>File was opened with read-only access.</td></tr><tr><td>#H5F_ACC_SWMR_WRITE</td><td>File was opened with read/write access for a single-writer/multiple-reader (SWMR) scenario. Note that the writer process must also open the file with the #H5F_ACC_RDWR flag.</td></tr><tr><td>#H5F_ACC_SWMR_READ</td><td>File was opened with read-only access for a single-writer/multiple-reader (SWMR) scenario. Note that the reader process must also open the file with the #H5F_ACC_RDONLY flag.</td></tr></table>"
 ALIASES += id_types="<table><tr><td>#H5I_FILE</td><td>File</td></tr><tr><td>#H5I_GROUP</td><td>Group</td></tr><tr><td>#H5I_DATATYPE</td><td>Datatype</td></tr><tr><td>#H5I_DATASPACE</td><td>Dataspace</td></tr><tr><td>#H5I_DATASET</td><td>Dataset</td></tr><tr><td>#H5I_ATTR</td><td>Attribute</td></tr></table>"
 ALIASES += indexes="<table><tr><td>#H5_INDEX_NAME</td><td>Lexicographic order on name</td></tr><tr><td>#H5_INDEX_CRT_ORDER</td><td>Index on creation order</td></tr></table>"

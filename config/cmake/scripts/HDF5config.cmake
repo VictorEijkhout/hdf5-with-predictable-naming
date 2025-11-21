@@ -4,7 +4,7 @@
 #
 # This file is part of HDF5.  The full HDF5 copyright notice, including
 # terms governing use, modification, and redistribution, is contained in
-# the COPYING file, which can be found at the root of the source code
+# the LICENSE file, which can be found at the root of the source code
 # distribution tree, or in https://www.hdfgroup.org/licenses.
 # If you do not have access to either file, you may request a copy from
 # help@hdfgroup.org.
@@ -15,7 +15,7 @@
 ### ctest -S HDF5config.cmake,BUILD_GENERATOR=VS202264 -C Release -VV -O hdf5.log         ###
 #############################################################################################
 
-cmake_minimum_required (VERSION 3.18)
+cmake_minimum_required (VERSION 3.26)
 ############################################################################
 # Usage:
 #     ctest -S HDF5config.cmake,OPTION=VALUE -C Release -VV -O test.log
@@ -38,17 +38,17 @@ cmake_minimum_required (VERSION 3.18)
 #     CTEST_SOURCE_NAME  -  source folder
 ##############################################################################
 
-set (CTEST_SOURCE_VERSION "1.14.6")
+set (CTEST_SOURCE_VERSION "2.0.0")
 set (CTEST_SOURCE_VERSEXT "")
 
 ##############################################################################
 # handle input parameters to script.
 #BUILD_GENERATOR - which CMake generator to use, required
-#INSTALLDIR - HDF5-1.14.x root folder
+#INSTALLDIR - HDF5-2.0.x root folder
 #CTEST_CONFIGURATION_TYPE - Release, Debug, RelWithDebInfo
-#CTEST_SOURCE_NAME - name of source folder; HDF5-1.14.x
+#CTEST_SOURCE_NAME - name of source folder; HDF5-2.0.x
 #MODEL - CDash group name
-#HPC - run alternate configurations for HPC machines; sbatch, bsub, raybsub, qsub
+#HPC - run alternate configurations for HPC machines; sbatch, bsub, qsub
 #MPI - enable MPI
 if (DEFINED CTEST_SCRIPT_ARG)
     # transform ctest script arguments of the form
@@ -222,7 +222,7 @@ endif ()
 #####       Following controls source update                  #####
 #set (LOCAL_UPDATE "TRUE")
 set (REPOSITORY_URL "https://github.com/HDFGroup/hdf5.git")
-set (REPOSITORY_BRANCH "hdf5_1_14_6")
+set (REPOSITORY_BRANCH "develop")
 
 #uncomment to use a compressed source file: *.tar on linux or mac *.zip on windows
 #set(CTEST_USE_TAR_SOURCE "${CTEST_SOURCE_VERSION}")

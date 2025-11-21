@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -23,6 +23,8 @@ static bool        doxml_g       = false;
 static bool        useschema_g   = true;
 static const char *xml_dtd_uri_g = NULL;
 
+static char complex_num_fp_format[128];
+
 static bool use_custom_vol_g = false;
 static bool use_custom_vfd_g = false;
 
@@ -32,30 +34,11 @@ static h5tools_vfd_info_t vfd_info_g = {0};
 static bool get_onion_revision_count = false;
 
 #ifdef H5_HAVE_ROS3_VFD
-/* Default "anonymous" S3 configuration */
-static H5FD_ros3_fapl_ext_t ros3_fa_g = {
-    {
-        1,     /* Structure Version */
-        false, /* Authenticate?     */
-        "",    /* AWS Region        */
-        "",    /* Access Key ID     */
-        "",    /* Secret Access Key */
-    },
-    "", /* Session/security token */
-};
+static H5FD_ros3_fapl_ext_t *ros3_fa_g = NULL;
 #endif /* H5_HAVE_ROS3_VFD */
-
 #ifdef H5_HAVE_LIBHDFS
-/* "Default" HDFS configuration */
-static H5FD_hdfs_fapl_t hdfs_fa_g = {
-    1,           /* Structure Version     */
-    "localhost", /* Namenode Name         */
-    0,           /* Namenode Port         */
-    "",          /* Kerberos ticket cache */
-    "",          /* User name             */
-    2048,        /* Stream buffer size    */
-};
-#endif /* H5_HAVE_LIBHDFS */
+static H5FD_hdfs_fapl_t *hdfs_fa_g = NULL;
+#endif
 
 static H5FD_onion_fapl_info_t onion_fa_g = {
     H5FD_ONION_FAPL_INFO_VERSION_CURR,
@@ -91,14 +74,9 @@ struct handler_t {
     struct subset_t *subset_info;
 };
 
-/*
- * Command-line options: The user can specify short or long-named
- * parameters. The long-named ones can be partially spelled. When
- * adding more, make sure that they don't clash with each other.
- */
 /* The following initialization makes use of C language concatenating */
 /* "xxx" "yyy" into "xxxyyy". */
-static const char            *s_opts = "a:b*c:d:ef:g:hik:l:m:n*o*pq:rs:t:uvw:xyz:A*BCD:E*F:G:HK:M:N:O*RS:VX:";
+static const char *s_opts = "a:b*c:d:ef:g:hik:l:m:n*o*pq:rs:t:uvw:xyz:A*BCD:E*F:G:HK:L:M:N:O*RS:VX:";
 static struct h5_long_options l_opts[] = {{"attribute", require_arg, 'a'},
                                           {"binary", optional_arg, 'b'},
                                           {"count", require_arg, 'c'},
@@ -134,6 +112,7 @@ static struct h5_long_options l_opts[] = {{"attribute", require_arg, 'a'},
                                           {"vds-gap-size", require_arg, 'G'},
                                           {"header", no_arg, 'H'},
                                           {"page-buffer-size", require_arg, 'K'},
+                                          {"lformat", require_arg, 'L'},
                                           {"packed-bits", require_arg, 'M'},
                                           {"any_path", require_arg, 'N'},
                                           {"ddl", optional_arg, 'O'},
@@ -141,6 +120,7 @@ static struct h5_long_options l_opts[] = {{"attribute", require_arg, 'a'},
                                           {"stride", require_arg, 'S'},
                                           {"version", no_arg, 'V'},
                                           {"xml-ns", require_arg, 'X'},
+                                          {"endpoint-url", require_arg, '!'},
                                           {"s3-cred", require_arg, '$'},
                                           {"hdfs-attrs", require_arg, '#'},
                                           {"vol-value", require_arg, '1'},
@@ -203,11 +183,18 @@ usage(const char *prog)
     PRINTVALSTREAM(rawoutstream,
                    "     --page-buffer-size=N Set the page buffer cache size, N=non-negative integers\n");
     PRINTVALSTREAM(rawoutstream,
+                   "     --endpoint-url=P     Supply S3 endpoint url information to \"ros3\" vfd.\n");
+    PRINTVALSTREAM(rawoutstream, "                          P is the AWS service endpoint.\n");
+    PRINTVALSTREAM(rawoutstream, "                          Has no effect if filedriver is not \"ros3\".\n");
+    PRINTVALSTREAM(rawoutstream,
                    "     --s3-cred=<cred>     Supply S3 authentication information to \"ros3\" vfd.\n");
     PRINTVALSTREAM(rawoutstream,
                    "                          <cred> :: \"(<aws-region>,<access-id>,<access-key>)\"\n");
-    PRINTVALSTREAM(rawoutstream,
-                   "                          If absent or <cred> -> \"(,,)\", no authentication.\n");
+    PRINTVALSTREAM(
+        rawoutstream,
+        "                          <cred> :: \"(<aws-region>,<access-id>,<access-key>,<session-token>)\"\n");
+    PRINTVALSTREAM(rawoutstream, "                          If absent or <cred> -> \"(,,)\" or <cred> -> "
+                                 "\"(,,,)\", no authentication.\n");
     PRINTVALSTREAM(rawoutstream, "                          Has no effect if filedriver is not \"ros3\".\n");
     PRINTVALSTREAM(rawoutstream,
                    "     --hdfs-attrs=<attrs> Supply configuration information for HDFS file access.\n");
@@ -285,6 +272,8 @@ usage(const char *prog)
     PRINTVALSTREAM(rawoutstream, "     -r,   --string       Print 1-byte integer datasets as ASCII\n");
     PRINTVALSTREAM(rawoutstream, "     -y,   --noindex      Do not print array indices with the data\n");
     PRINTVALSTREAM(rawoutstream, "     -m T, --format=T     Set the floating point output format\n");
+    PRINTVALSTREAM(rawoutstream,
+                   "     -L T, --lformat=T    Set the floating point long double output format\n");
     PRINTVALSTREAM(rawoutstream, "     -q Q, --sort_by=Q    Sort groups and attributes by index Q\n");
     PRINTVALSTREAM(rawoutstream, "     -z Z, --sort_order=Z Sort groups and attributes by order Z\n");
     PRINTVALSTREAM(rawoutstream,
@@ -346,7 +335,9 @@ usage(const char *prog)
     PRINTVALSTREAM(rawoutstream, "  F - is a filename.\n");
     PRINTVALSTREAM(rawoutstream, "  P - is the full path from the root group to the object.\n");
     PRINTVALSTREAM(rawoutstream, "  N - is an integer greater than 1.\n");
-    PRINTVALSTREAM(rawoutstream, "  T - is a string containing the floating point format, e.g '%%.3f'\n");
+    PRINTVALSTREAM(rawoutstream, "  T - is a string containing the floating point format, e.g '%%.3g'\n");
+    PRINTVALSTREAM(rawoutstream,
+                   "  T - is a string containing the floating point long double format, e.g '%%.3Lg'\n");
     PRINTVALSTREAM(rawoutstream, "  U - is a URI reference (as defined in [IETF RFC 2396],\n");
     PRINTVALSTREAM(rawoutstream, "        updated by [IETF RFC 2732])\n");
     PRINTVALSTREAM(rawoutstream,
@@ -881,18 +872,6 @@ parse_start:
                 vfd_info_g.type   = VFD_BY_NAME;
                 vfd_info_g.u.name = H5_optarg;
                 use_custom_vfd_g  = true;
-
-#ifdef H5_HAVE_ROS3_VFD
-                if (0 == strcmp(vfd_info_g.u.name, drivernames[ROS3_VFD_IDX]))
-                    if (!vfd_info_g.info)
-                        vfd_info_g.info = &ros3_fa_g;
-#endif
-#ifdef H5_HAVE_LIBHDFS
-                if (0 == strcmp(vfd_info_g.u.name, drivernames[HDFS_VFD_IDX]))
-                    if (!vfd_info_g.info)
-                        vfd_info_g.info = &hdfs_fa_g;
-#endif
-
                 break;
             case 'g':
                 dump_opts.display_all = 0;
@@ -1050,9 +1029,45 @@ parse_start:
                 h5tools_nCols = 0;
                 break;
 
-            case 'm':
+            case 'm': {
+                char *format_specifier, *plus_flag;
+
                 /* specify alternative floating point printing format */
-                fp_format     = H5_optarg;
+                fp_format = H5_optarg;
+
+                /*
+                 * Compose complex number printing format from fp_format. Ideally,
+                 * we'd like for a '+' or '-' to always be printed between the real
+                 * and imaginary parts, which is why the tools use a '+' flag in the
+                 * default "%g%+gi" format for float _Complex / _Fcomplex and
+                 * double _Complex / _Dcomplex. Check to see if fp_format has a '+'
+                 * in it past the '%'. If so, just combine fp_format twice into a
+                 * single printf format buffer. Otherwise, insert a '+' flag.
+                 */
+                if (NULL == (format_specifier = strstr(fp_format, "%"))) {
+                    error_msg("invalid floating-point format specifier (missing '%%')\n");
+                    goto error;
+                }
+                format_specifier++;
+
+                plus_flag = strstr(format_specifier, "+");
+                if (plus_flag) {
+                    snprintf(complex_num_fp_format, sizeof(complex_num_fp_format), "%s%si", fp_format,
+                             fp_format);
+                }
+                else {
+                    snprintf(complex_num_fp_format, sizeof(complex_num_fp_format), "%s%%+%si", fp_format,
+                             format_specifier);
+                }
+
+                complex_format = complex_num_fp_format;
+                h5tools_nCols  = 0;
+                break;
+            }
+
+            case 'L':
+                /* specify alternative floating point long double printing format */
+                fp_lformat    = H5_optarg;
                 h5tools_nCols = 0;
                 break;
 
@@ -1165,10 +1180,22 @@ end_collect:
                 hand = NULL;
                 h5tools_setstatus(EXIT_SUCCESS);
                 goto done;
+                break;
+
+            case '!':
+#ifdef H5_HAVE_ROS3_VFD
+                snprintf(ros3_fa_g->ep_url, H5FD_ROS3_MAX_ENDPOINT_URL_LEN + 1, "%s", H5_optarg);
+#else
+                error_msg(
+                    "Read-Only S3 VFD is not available unless enabled when HDF5 is configured and built.\n");
+                h5tools_setstatus(EXIT_FAILURE);
+                goto done;
+#endif
+                break;
 
             case '$':
 #ifdef H5_HAVE_ROS3_VFD
-                if (h5tools_parse_ros3_fapl_tuple(H5_optarg, ',', &ros3_fa_g) < 0) {
+                if (h5tools_parse_ros3_fapl_tuple(H5_optarg, ',', ros3_fa_g) < 0) {
                     error_msg("failed to parse S3 VFD credential info\n");
                     usage(h5tools_getprogname());
                     free_handler(hand, argc);
@@ -1177,7 +1204,7 @@ end_collect:
                     goto done;
                 }
 
-                vfd_info_g.info = &ros3_fa_g;
+                vfd_info_g.info = ros3_fa_g;
 #else
                 error_msg(
                     "Read-Only S3 VFD is not available unless enabled when HDF5 is configured and built.\n");
@@ -1188,7 +1215,7 @@ end_collect:
 
             case '#':
 #ifdef H5_HAVE_LIBHDFS
-                if (h5tools_parse_hdfs_fapl_tuple(H5_optarg, ',', &hdfs_fa_g) < 0) {
+                if (h5tools_parse_hdfs_fapl_tuple(H5_optarg, ',', hdfs_fa_g) < 0) {
                     error_msg("failed to parse HDFS VFD configuration info\n");
                     usage(h5tools_getprogname());
                     free_handler(hand, argc);
@@ -1197,7 +1224,7 @@ end_collect:
                     goto done;
                 }
 
-                vfd_info_g.info = &hdfs_fa_g;
+                vfd_info_g.info = hdfs_fa_g;
 #else
                 error_msg("HDFS VFD is not available unless enabled when HDF5 is configured and built.\n");
                 h5tools_setstatus(EXIT_FAILURE);
@@ -1243,6 +1270,19 @@ end_collect:
                 goto error;
         }
     }
+
+#ifdef H5_HAVE_ROS3_VFD
+    if (use_custom_vfd_g && !vfd_info_g.info) {
+        if (vfd_info_g.type == VFD_BY_NAME && 0 == strcmp(vfd_info_g.u.name, drivernames[ROS3_VFD_IDX]))
+            vfd_info_g.info = ros3_fa_g;
+    }
+#endif
+#ifdef H5_HAVE_LIBHDFS
+    if (use_custom_vfd_g && !vfd_info_g.info) {
+        if (vfd_info_g.type == VFD_BY_NAME && 0 == strcmp(vfd_info_g.u.name, drivernames[HDFS_VFD_IDX]))
+            vfd_info_g.info = hdfs_fa_g;
+    }
+#endif
 
     /* If the file uses the onion VFD, get the revision number */
     if (vfd_info_g.type == VFD_BY_NAME && vfd_info_g.u.name && !strcmp(vfd_info_g.u.name, "onion")) {
@@ -1316,6 +1356,31 @@ main(int argc, char *argv[])
 
     /* Initialize h5tools lib */
     h5tools_init();
+
+    /* Initialize VFD-specific structures */
+#ifdef H5_HAVE_ROS3_VFD
+    if (NULL == (ros3_fa_g = calloc(1, sizeof(*ros3_fa_g)))) {
+        error_msg("unable to allocate space for configuration structure\n");
+        h5tools_setstatus(EXIT_FAILURE);
+        goto done;
+    }
+
+    /* Default "anonymous" S3 configuration */
+    ros3_fa_g->fa.version      = H5FD_CURR_ROS3_FAPL_T_VERSION;
+    ros3_fa_g->fa.authenticate = false;
+#endif
+#ifdef H5_HAVE_LIBHDFS
+    if (NULL == (hdfs_fa_g = calloc(1, sizeof(*hdfs_fa_g)))) {
+        error_msg("unable to allocate space for configuration structure\n");
+        h5tools_setstatus(EXIT_FAILURE);
+        goto done;
+    }
+
+    /* "Default" HDFS configuration */
+    hdfs_fa_g->version            = H5FD__CURR_HDFS_FAPL_T_VERSION;
+    hdfs_fa_g->stream_buffer_size = 2048;
+    strcpy(hdfs_fa_g->namenode_name, "localhost");
+#endif
 
     if ((hand = parse_command_line(argc, (const char *const *)argv)) == NULL) {
         goto done;
@@ -1405,6 +1470,24 @@ main(int argc, char *argv[])
 
     while (H5_optind < argc) {
         fname = strdup(argv[H5_optind++]);
+
+        if ((!use_custom_vfd_g) && (strncmp(fname, S3_URI_PREFIX, strlen(S3_URI_PREFIX)) == 0)) {
+#ifdef H5_HAVE_ROS3_VFD
+            vfd_info_g.type   = VFD_BY_NAME;
+            vfd_info_g.u.name = drivernames[ROS3_VFD_IDX];
+            vfd_info_g.info   = ros3_fa_g;
+            use_custom_vfd_g  = true;
+            if (h5tools_set_fapl_vfd(fapl_id, &vfd_info_g) < 0) {
+                error_msg("unable to set ROS3 VFD on fapl for file\n");
+                h5tools_setstatus(EXIT_FAILURE);
+                goto done;
+            }
+#else
+            error_msg("ROS3 VFD is not available unless enabled when HDF5 is configured and built.\n");
+            h5tools_setstatus(EXIT_FAILURE);
+            goto done;
+#endif
+        }
 
         /* A short cut to get the revision count of an onion file without opening the file */
         if (get_onion_revision_count && H5FD_ONION == H5Pget_driver(fapl_id)) {
@@ -1629,6 +1712,13 @@ done:
 
     if (hand)
         free_handler(hand, argc);
+
+#ifdef H5_HAVE_ROS3_VFD
+    free(ros3_fa_g);
+#endif
+#ifdef H5_HAVE_LIBHDFS
+    free(hdfs_fa_g);
+#endif
 
     /* To Do:  clean up XML table */
 

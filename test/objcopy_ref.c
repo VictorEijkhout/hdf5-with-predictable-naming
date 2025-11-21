@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -14,7 +14,7 @@
  * Purpose:    Test H5Ocopy() for references.
  */
 
-#include "testhdf5.h"
+#include "h5test.h"
 
 #define H5F_FRIEND /*suppress error about including H5Fpkg */
 #define H5F_TESTING
@@ -909,10 +909,10 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts, 
             H5R_ref_t *ref_buf1, *ref_buf2; /* Aliases for buffers to compare */
 
             /* Loop over elements in buffers */
-            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            H5_WARN_CAST_AWAY_CONST_OFF
             ref_buf1 = (H5R_ref_t *)buf1;
             ref_buf2 = (H5R_ref_t *)buf2;
-            H5_GCC_CLANG_DIAG_ON("cast-qual")
+            H5_WARN_CAST_AWAY_CONST_ON
             for (u = 0; u < nelmts; u++, ref_buf1++, ref_buf2++) {
                 hid_t      obj1_id, obj2_id;     /* IDs for objects referenced */
                 H5O_type_t obj1_type, obj2_type; /* Types of objects referenced */
@@ -1358,13 +1358,13 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
                          * our usual attributes and fall-through comments don't
                          * quiet the compiler.
                          */
-                        H5_CLANG_DIAG_OFF("implicit-fallthrough")
+                        H5_WARN_IMPLICIT_FALLTHROUGH_OFF
                     case H5O_TYPE_UNKNOWN:
                     case H5O_TYPE_NTYPES:
                     default:
                         assert(0 && "Unknown type of object");
                         break;
-                        H5_CLANG_DIAG_ON("implicit-fallthrough")
+                        H5_WARN_IMPLICIT_FALLTHROUGH_ON
                 } /* end switch */
 
                 /* Close objects */
@@ -1822,9 +1822,6 @@ main(void)
     /* Setup */
     h5_test_init();
     fapl = h5_fileaccess();
-
-    if (TestExpress > 0)
-        printf("***Express test mode %d.  Some tests may be skipped\n", TestExpress);
 
     /* Copy the file access property list */
     if ((fapl2 = H5Pcopy(fapl)) < 0)

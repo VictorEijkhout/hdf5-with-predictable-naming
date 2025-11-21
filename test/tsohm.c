@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -615,7 +615,7 @@ size1_helper(hid_t file, const char *filename, hid_t fapl_id, bool test_file_clo
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (TestExpress > 1)
+    if (h5_get_testexpress() > H5_TEST_EXPRESS_FULL)
         test_file_closing = false;
 
     /* Initialize wdata */
@@ -1553,7 +1553,7 @@ size2_helper(hid_t fcpl_id, int test_file_closing, size2_helper_struct *ret_size
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (TestExpress > 1)
+    if (h5_get_testexpress() > H5_TEST_EXPRESS_FULL)
         test_file_closing = 0;
 
     /* Create a file and get its size */
@@ -3708,7 +3708,7 @@ test_sohm_external_dtype(void)
 **
 ****************************************************************/
 void
-test_sohm(void)
+test_sohm(void H5_ATTR_UNUSED *params)
 {
     const char *driver_name;
     bool        vol_is_native;
@@ -3767,9 +3767,11 @@ test_sohm(void)
  *-------------------------------------------------------------------------
  */
 void
-cleanup_sohm(void)
+cleanup_sohm(void H5_ATTR_UNUSED *params)
 {
-    HDremove(FILENAME);
-    HDremove(FILENAME_SRC);
-    HDremove(FILENAME_DST);
+    if (GetTestCleanup()) {
+        HDremove(FILENAME);
+        HDremove(FILENAME_SRC);
+        HDremove(FILENAME_DST);
+    }
 } /* cleanup_sohm */

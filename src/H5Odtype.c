@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -421,11 +421,11 @@ H5O__dtype_decode_helper(unsigned *ioflags /*in,out*/, const uint8_t **pp, H5T_t
                 /* Decode the field offset */
                 /* (starting with version 3 of the datatype message, use the minimum # of bytes required) */
                 if (version >= H5O_DTYPE_VERSION_3) {
-                    H5_GCC_CLANG_DIAG_OFF("type-limits")
+                    H5_WARN_USELESS_COMPARISON_OFF
                     if (H5_IS_KNOWN_BUFFER_OVERFLOW(skip, *pp, offset_nbytes, p_end))
                         HGOTO_ERROR(H5E_OHDR, H5E_OVERFLOW, FAIL,
                                     "ran off end of input buffer while decoding");
-                    H5_GCC_CLANG_DIAG_ON("type-limits")
+                    H5_WARN_USELESS_COMPARISON_ON
                     UINT32DECODE_VAR(*pp, dt->shared->u.compnd.memb[dt->shared->u.compnd.nmembs].offset,
                                      offset_nbytes);
                 }
@@ -829,6 +829,52 @@ H5O__dtype_decode_helper(unsigned *ioflags /*in,out*/, const uint8_t **pp, H5T_t
             if (dt->shared->parent->shared->force_conv == true)
                 dt->shared->force_conv = true;
             break;
+
+        case H5T_COMPLEX: {
+            bool homogeneous;
+
+            /*
+             * Complex number datatypes...
+             */
+
+            /* Set whether the complex number datatype is homogeneous */
+            homogeneous = (bool)(flags & 0x01);
+
+            if (!homogeneous)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_UNSUPPORTED, FAIL,
+                            "heterogeneous complex number datatypes are currently unsupported");
+
+            /* Set the form of the complex number datatype */
+            dt->shared->u.cplx.form = (H5T_complex_form_t)((flags >> 1) & 0x03);
+
+            if (dt->shared->u.cplx.form != H5T_COMPLEX_RECTANGULAR)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_UNSUPPORTED, FAIL,
+                            "only complex number datatypes in rectangular form are currently supported");
+
+            /* Other bits of the flags beyond bits 0,1,2 should not be set */
+            if ((flags >> 3) != 0)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_BADVALUE, FAIL,
+                            "invalid flag bits set for complex number datatype");
+
+            /* Decode the base datatype of the complex number */
+            if (NULL == (dt->shared->parent = H5T__alloc()))
+                HGOTO_ERROR(H5E_DATATYPE, H5E_NOSPACE, FAIL,
+                            "unable to allocate complex number base datatype");
+            if (H5O__dtype_decode_helper(ioflags, pp, dt->shared->parent, skip, p_end) < 0)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_CANTDECODE, FAIL,
+                            "unable to decode complex number base datatype");
+
+            /* Check if the parent of this complex number type has a version greater
+             * than the type itself.
+             */
+            H5O_DTYPE_CHECK_VERSION(dt, version, dt->shared->parent->shared->version, ioflags, "complex",
+                                    FAIL)
+
+            /* There should be no complex number datatypes with version < 5. */
+            H5O_DTYPE_CHECK_VERSION(dt, version, H5O_DTYPE_VERSION_5, ioflags, "complex", FAIL)
+
+            break;
+        }
 
         case H5T_NO_CLASS:
         case H5T_NCLASSES:
@@ -1347,6 +1393,32 @@ H5O__dtype_encode_helper(uint8_t **pp, const H5T_t *dt)
                 HGOTO_ERROR(H5E_DATATYPE, H5E_CANTENCODE, FAIL, "unable to encode VL parent type");
             break;
 
+        case H5T_COMPLEX:
+            /* Check that the version is valid */
+            assert(dt->shared->version >= H5O_DTYPE_VERSION_5);
+
+            /* Check that the version is at least as great as the parent */
+            assert(dt->shared->version >= dt->shared->parent->shared->version);
+
+            if (dt->shared->u.cplx.form != H5T_COMPLEX_RECTANGULAR)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_CANTENCODE, FAIL,
+                            "complex number datatypes not in rectangular form are currently unsupported");
+
+            /* Store that complex number is homogeneous in first flag bit;
+             * Currently, only homogeneous complex number datatypes are supported.
+             */
+            flags |= 0x01;
+
+            /* Store complex number form in next two bits */
+            flags = (unsigned)(flags | (((unsigned)dt->shared->u.cplx.form & 0x03) << 1));
+
+            /* Encode the base datatype of the complex number */
+            if (H5O__dtype_encode_helper(pp, dt->shared->parent) < 0)
+                HGOTO_ERROR(H5E_DATATYPE, H5E_CANTENCODE, FAIL,
+                            "unable to encode complex number base datatype");
+
+            break;
+
         case H5T_NO_CLASS:
         case H5T_NCLASSES:
         default:
@@ -1641,6 +1713,10 @@ H5O__dtype_size(const H5F_t *f, const void *_mesg)
             ret_value += 4 * dt->shared->u.array.ndims; /* dimensions */
             if (dt->shared->version < H5O_DTYPE_VERSION_3)
                 ret_value += 4 * dt->shared->u.array.ndims; /* dimension permutations */
+            ret_value += H5O__dtype_size(f, dt->shared->parent);
+            break;
+
+        case H5T_COMPLEX:
             ret_value += H5O__dtype_size(f, dt->shared->parent);
             break;
 
@@ -2001,6 +2077,10 @@ H5O__dtype_debug(H5F_t *f, const void *mesg, FILE *stream, int indent, int fwidt
             s = "vlen";
             break;
 
+        case H5T_COMPLEX:
+            s = "complex number";
+            break;
+
         case H5T_NO_CLASS:
         case H5T_NCLASSES:
         default:
@@ -2244,6 +2324,25 @@ H5O__dtype_debug(H5F_t *f, const void *mesg, FILE *stream, int indent, int fwidt
         fprintf(stream, "%*s%s\n", indent, "", "Base type:");
         H5O__dtype_debug(f, dt->shared->parent, stream, indent + 3, MAX(0, fwidth - 3));
     } /* end else if */
+    else if (H5T_COMPLEX == dt->shared->type) {
+        switch (dt->shared->u.cplx.form) {
+            case H5T_COMPLEX_RECTANGULAR:
+                fprintf(stream, "%*s%-*s %s\n", indent, "", fwidth, "Form:", "rectangular");
+                break;
+            case H5T_COMPLEX_POLAR:
+                fprintf(stream, "%*s%-*s %s\n", indent, "", fwidth, "Form:", "polar");
+                break;
+            case H5T_COMPLEX_EXPONENTIAL:
+                fprintf(stream, "%*s%-*s %s\n", indent, "", fwidth, "Form:", "exponential");
+                break;
+            default:
+                fprintf(stream, "%*s%-*s %s\n", indent, "", fwidth, "Form:", "invalid");
+                break;
+        }
+
+        fprintf(stream, "%*s%s\n", indent, "", "Base type:");
+        H5O__dtype_debug(f, dt->shared->parent, stream, indent + 3, MAX(0, fwidth - 3));
+    }
     else {
         switch (dt->shared->u.atomic.order) {
             case H5T_ORDER_LE:

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -14,6 +14,9 @@
 #define H5COPY_H
 
 /** \page H5TOOL_CP_UG The HDF5 h5copy Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5copy h5copy
  *
@@ -66,6 +69,11 @@
  * \li <strong>#H5O_COPY_EXPAND_REFERENCE_FLAG</strong>
  * \li <strong>#H5O_COPY_WITHOUT_ATTR_FLAG</strong>
  * \li <strong>#H5O_COPY_ALL</strong>
+ *
+ * Next Chapter \ref sec_cltools_h5diff
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -82,11 +82,11 @@ usage(const char *progname)
  *
  *-------------------------------------------------------------------------
  */
-static off_t
+static HDoff_t
 get_size(const char *progname, int *argno, int argc, char *argv[])
 {
-    off_t retval = -1;
-    char *suffix = NULL;
+    HDoff_t retval = -1;
+    char   *suffix = NULL;
 
     if (isdigit((int)(argv[*argno][2]))) {
         retval = strtol(argv[*argno] + 2, &suffix, 10);
@@ -128,7 +128,6 @@ get_size(const char *progname, int *argno, int argc, char *argv[])
  * Function:    main
  *-------------------------------------------------------------------------
  */
-H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 int
 main(int argc, char *argv[])
 {
@@ -156,12 +155,12 @@ main(int argc, char *argv[])
     int         dst_is_family;   /*is dst name a family name?    */
     int         dst_membno = 0;  /*destination member number    */
 
-    off_t   left_overs = 0;  /*amount of zeros left over    */
-    off_t   src_offset = 0;  /*offset in source member    */
-    off_t   dst_offset = 0;  /*offset in destination member    */
-    off_t   src_size;        /*source logical member size    */
-    off_t   src_act_size;    /*source actual member size    */
-    off_t   dst_size = 1 GB; /*destination logical memb size    */
+    HDoff_t left_overs = 0;  /*amount of zeros left over    */
+    HDoff_t src_offset = 0;  /*offset in source member    */
+    HDoff_t dst_offset = 0;  /*offset in destination member    */
+    HDoff_t src_size;        /*source logical member size    */
+    HDoff_t src_act_size;    /*source actual member size    */
+    HDoff_t dst_size = 1 GB; /*destination logical memb size    */
     hid_t   fapl;            /*file access property list     */
     hid_t   file;
     hsize_t hdsize;                   /*destination logical memb size */
@@ -224,7 +223,9 @@ main(int argc, char *argv[])
         fprintf(stderr, "invalid source file name pointer");
         exit(EXIT_FAILURE);
     }
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(src_name, NAMELEN, src_gen_name, src_membno);
+    H5_WARN_FORMAT_NONLITERAL_ON
     src_is_family = strcmp(src_name, src_gen_name);
 
     if ((src = HDopen(src_name, O_RDONLY)) < 0) {
@@ -251,7 +252,9 @@ main(int argc, char *argv[])
         fprintf(stderr, "invalid destination file name pointer");
         exit(EXIT_FAILURE);
     }
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(dst_name, NAMELEN, dst_gen_name, dst_membno);
+    H5_WARN_FORMAT_NONLITERAL_ON
     dst_is_family = strcmp(dst_name, dst_gen_name);
 
     if ((dst = HDopen(dst_name, O_RDWR | O_CREAT | O_TRUNC, H5_POSIX_CREATE_MODE_RW)) < 0) {
@@ -276,14 +279,14 @@ main(int argc, char *argv[])
          */
         n = blk_size;
         if (dst_is_family)
-            n = (size_t)MIN((off_t)n, dst_size - dst_offset);
+            n = (size_t)MIN((HDoff_t)n, dst_size - dst_offset);
         if (left_overs) {
-            n          = (size_t)MIN((off_t)n, left_overs);
-            left_overs = left_overs - (off_t)n;
+            n          = (size_t)MIN((HDoff_t)n, left_overs);
+            left_overs = left_overs - (HDoff_t)n;
             need_write = false;
         }
         else if (src_offset < src_act_size) {
-            n = (size_t)MIN((off_t)n, src_act_size - src_offset);
+            n = (size_t)MIN((HDoff_t)n, src_act_size - src_offset);
             if ((nio = HDread(src, buf, n)) < 0) {
                 perror("read");
                 exit(EXIT_FAILURE);
@@ -336,16 +339,18 @@ main(int argc, char *argv[])
          * loop.   The destination offset must be updated so we can fix
          * trailing holes.
          */
-        src_offset = src_offset + (off_t)n;
+        src_offset = src_offset + (HDoff_t)n;
         if (src_offset == src_act_size) {
             HDclose(src);
             if (!src_is_family) {
-                dst_offset = dst_offset + (off_t)n;
+                dst_offset = dst_offset + (HDoff_t)n;
                 break;
             }
+            H5_WARN_FORMAT_NONLITERAL_OFF
             snprintf(src_name, NAMELEN, src_gen_name, ++src_membno);
+            H5_WARN_FORMAT_NONLITERAL_ON
             if ((src = HDopen(src_name, O_RDONLY)) < 0 && ENOENT == errno) {
-                dst_offset = dst_offset + (off_t)n;
+                dst_offset = dst_offset + (HDoff_t)n;
                 break;
             }
             else if (src < 0) {
@@ -392,7 +397,9 @@ main(int argc, char *argv[])
                 }
             }
             HDclose(dst);
+            H5_WARN_FORMAT_NONLITERAL_OFF
             snprintf(dst_name, NAMELEN, dst_gen_name, ++dst_membno);
+            H5_WARN_FORMAT_NONLITERAL_ON
             if ((dst = HDopen(dst_name, O_RDWR | O_CREAT | O_TRUNC, H5_POSIX_CREATE_MODE_RW)) < 0) {
                 perror(dst_name);
                 exit(EXIT_FAILURE);
@@ -495,4 +502,3 @@ main(int argc, char *argv[])
     free(buf);
     return EXIT_SUCCESS;
 } /* end main */
-H5_GCC_CLANG_DIAG_ON("format-nonliteral")

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -769,10 +769,10 @@ test_direct(void)
         TEST_ERROR;
 
     /* There is no guarantee of the number of metadata allocations, but it's
-     * 4 currently and the size of the file should be between 3 & 4 file buffer
+     * 4 currently and the size of the file should be between 1 & 2 file buffer
      * sizes..
      */
-    if (file_size < (FBSIZE * 3) || file_size >= (FBSIZE * 4))
+    if (file_size < FBSIZE || file_size >= (FBSIZE * 2))
         TEST_ERROR;
 
     /* Allocate aligned memory for data set 1. For data set 1, everything is aligned including
@@ -916,13 +916,6 @@ error:
  *
  *-------------------------------------------------------------------------
  */
-/* Disable warning for "format not a string literal" here -QAK */
-/*
- *      This pragma only needs to surround the snprintf() calls with
- *      'first_name' in the code below, but early (4.4.7, at least) gcc only
- *      allows diagnostic pragmas to be toggled outside of functions.
- */
-H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 static herr_t
 test_family_opens(char *fname, hid_t fa_pl)
 {
@@ -932,7 +925,9 @@ test_family_opens(char *fname, hid_t fa_pl)
     int   i;
 
     /* Case 1: reopen file with 1st member file name and default property list */
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(first_name, sizeof(first_name), fname, 0);
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     H5E_BEGIN_TRY
     {
@@ -987,7 +982,6 @@ test_family_opens(char *fname, hid_t fa_pl)
 error:
     return -1;
 } /* end test_family_opens() */
-H5_GCC_CLANG_DIAG_ON("format-nonliteral")
 
 /*-------------------------------------------------------------------------
  * Function:    test_family
@@ -1031,6 +1025,10 @@ test_family(void)
     if (H5Pset_fapl_family(fapl, (hsize_t)FAMILY_SIZE, H5P_DEFAULT) < 0)
         TEST_ERROR;
     h5_fixname(FILENAME[2], fapl, filename, sizeof(filename));
+
+    /* Set earliest file format */
+    if (H5Pset_libver_bounds(fapl, H5F_LIBVER_EARLIEST, H5F_LIBVER_LATEST) < 0)
+        TEST_ERROR;
 
     /* Check that the VFD feature flags are correct */
     if ((driver_id = H5Pget_driver(fapl)) < 0)
@@ -1202,13 +1200,6 @@ error:
  *
  *-------------------------------------------------------------------------
  */
-/* Disable warning for "format not a string literal" here -QAK */
-/*
- *      This pragma only needs to surround the snprintf() calls with
- *      'newname_individual', etc. in the code below, but early (4.4.7, at least) gcc only
- *      allows diagnostic pragmas to be toggled outside of functions.
- */
-H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 static herr_t
 test_family_compat(void)
 {
@@ -1238,6 +1229,7 @@ test_family_compat(void)
      * Since we're going to open the files with write mode, this protects the original
      * files.
      */
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(newname_individual, sizeof(newname_individual), newname, counter);
     snprintf(pathname_individual, sizeof(pathname_individual), pathname, counter);
 
@@ -1246,6 +1238,7 @@ test_family_compat(void)
         snprintf(newname_individual, sizeof(newname_individual), newname, counter);
         snprintf(pathname_individual, sizeof(pathname_individual), pathname, counter);
     } /* end while */
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     /* Make sure we can open the file.  Use the read and write mode to flush the
      * superblock. */
@@ -1294,7 +1287,6 @@ error:
 
     return -1;
 } /* end test_family_compat() */
-H5_GCC_CLANG_DIAG_ON("format-nonliteral")
 
 /*-------------------------------------------------------------------------
  * Function:    test_family_member_fapl
@@ -1422,13 +1414,6 @@ error:
  *
  *-------------------------------------------------------------------------
  */
-/* Disable warning for "format not a string literal" here -QAK */
-/*
- *      This pragma only needs to surround the snprintf() calls with
- *      'sf_name' in the code below, but early (4.4.7, at least) gcc only
- *      allows diagnostic pragmas to be toggled outside of functions.
- */
-H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 static herr_t
 test_multi_opens(char *fname)
 {
@@ -1438,7 +1423,9 @@ test_multi_opens(char *fname)
 
     /* Case: reopen with the name of super file and default property list */
     snprintf(super_name, sizeof(super_name), "%%s-%c.h5", 's');
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(sf_name, sizeof(sf_name), super_name, fname);
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     H5E_BEGIN_TRY
     {
@@ -1448,7 +1435,6 @@ test_multi_opens(char *fname)
 
     return (fid >= 0 ? FAIL : SUCCEED);
 } /* end test_multi_opens() */
-H5_GCC_CLANG_DIAG_ON("format-nonliteral")
 
 /*-------------------------------------------------------------------------
  * Function:    test_multi
@@ -1496,6 +1482,10 @@ test_multi(void)
 
     /* Set file access property list for MULTI driver */
     if ((fapl = H5Pcreate(H5P_FILE_ACCESS)) < 0)
+        TEST_ERROR;
+
+    /* Set earliest file format */
+    if (H5Pset_libver_bounds(fapl, H5F_LIBVER_EARLIEST, H5F_LIBVER_LATEST) < 0)
         TEST_ERROR;
 
     memset(memb_map, 0, sizeof(memb_map));
@@ -2243,8 +2233,8 @@ error:
  * Purpose:     Tests the file handle interface for the ROS3 driver
  *
  *              As the ROS3 driver is 1) read only, 2) requires access
- *              to an S3 server (minio for now), this test is quite
- *              different from the other tests.
+ *              to an S3 server, this test is quite different from the
+ *              other tests.
  *
  *              For now, test only fapl & flags.  Extend as the
  *              work on the VFD continues.
@@ -3461,7 +3451,7 @@ setup_rand(void)
         fprintf(stdout, "\n%s: predefined_seed = %d.\n\n", __func__, seed);
         fflush(stdout);
 
-        HDsrand(seed);
+        srand(seed);
     }
     else {
 
@@ -3477,7 +3467,7 @@ setup_rand(void)
             fprintf(stdout, "\n%s: seed = %d.\n\n", __func__, seed);
             fflush(stdout);
 
-            HDsrand(seed);
+            srand(seed);
         }
     }
 
@@ -5873,15 +5863,17 @@ error:
 int
 main(void)
 {
-    const char *driver_name;
+    const char *hdf5_driver;
+    const char *hdf5_test_driver;
     int         nerrors = 0;
 
     /* Don't run VFD tests when HDF5_DRIVER or HDF5_TEST_DRIVER is set. These
      * tests expect a specific VFD to be set and HDF5_DRIVER/HDF5_TEST_DRIVER
      * being set can interfere with that.
      */
-    driver_name = h5_get_test_driver_name();
-    if (driver_name) {
+    hdf5_driver      = getenv(HDF5_DRIVER);
+    hdf5_test_driver = getenv("HDF5_TEST_DRIVER");
+    if ((hdf5_driver && (*hdf5_driver != '\0')) || (hdf5_test_driver && (*hdf5_test_driver != '\0'))) {
         printf(" -- SKIPPED VFD tests because driver environment variable is set -- \n");
         exit(EXIT_SUCCESS);
     }

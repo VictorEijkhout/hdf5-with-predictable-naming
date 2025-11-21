@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -13,6 +13,9 @@
 #define H5REPART_H
 
 /** \page H5TOOL_RT_UG The HDF5 h5repart Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5repart h5repart
  *
@@ -41,6 +44,11 @@
  *
  *  Sizes may be suffixed with 'g' for GB, 'm' for MB or 'k' for kB.
  *  File family names include an integer printf format such as '%%d'
+ *
+ * Previous Chapter \ref sec_cltools_h5mkgrp - Next Chapter \ref sec_cltools_h5watch
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

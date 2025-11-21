@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -555,10 +555,10 @@ test_reference_region_1D()
             *drbuf;            // Buffer for reading numeric data from disk
 
         // Allocate write & read buffers
-        wbuf  = static_cast<hdset_reg_ref_t *>(calloc(sizeof(hdset_reg_ref_t), SPACE1_DIM1));
-        rbuf  = static_cast<hdset_reg_ref_t *>(malloc(sizeof(hdset_reg_ref_t) * SPACE1_DIM1));
-        dwbuf = static_cast<uint8_t *>(malloc(sizeof(uint8_t) * SPACE3_DIM1));
-        drbuf = static_cast<uint8_t *>(calloc(sizeof(uint8_t), SPACE3_DIM1));
+        wbuf  = static_cast<hdset_reg_ref_t *>(calloc(SPACE1_DIM1, sizeof(hdset_reg_ref_t)));
+        rbuf  = static_cast<hdset_reg_ref_t *>(calloc(SPACE1_DIM1, sizeof(hdset_reg_ref_t)));
+        dwbuf = static_cast<uint8_t *>(calloc(SPACE3_DIM1, sizeof(uint8_t)));
+        drbuf = static_cast<uint8_t *>(calloc(SPACE3_DIM1, sizeof(uint8_t)));
 
         // Create file FILE1
         H5File file1(FILE2, H5F_ACC_TRUNC);
@@ -827,8 +827,10 @@ test_reference_region_1D()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_reference()
+test_reference(void *params)
 {
+    (void)params;
+
     // Output message about test being performed
     MESSAGE(5, ("Testing References\n"));
 
@@ -848,8 +850,12 @@ test_reference()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-cleanup_reference()
+cleanup_reference(void *params)
 {
-    HDremove(FILE1.c_str());
-    HDremove(FILE2.c_str());
+    (void)params;
+
+    if (GetTestCleanup()) {
+        HDremove(FILE1.c_str());
+        HDremove(FILE2.c_str());
+    }
 }

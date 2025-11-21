@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -251,9 +251,9 @@ h5tools_str_fmt(h5tools_str_t *str /*in,out*/, size_t start, const char *fmt)
 
     /* Reset the output string and append a formatted version */
     h5tools_str_trunc(str, start);
-    H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
+    H5_WARN_FORMAT_NONLITERAL_OFF
     h5tools_str_append(str, fmt, temp);
-    H5_GCC_CLANG_DIAG_ON("format-nonliteral")
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     /* Free the temp buffer if we allocated one */
     if (temp != _temp)
@@ -283,23 +283,22 @@ h5tools_str_prefix(h5tools_str_t *str /*in,out*/, const h5tool_format_t *info, h
     h5tools_str_reset(str);
 
     calc_acc_pos(ctx->ndims, elmtno, ctx->acc, ctx->pos);
+
+    H5_WARN_FORMAT_NONLITERAL_OFF
     if (ctx->ndims > 0) {
         /* Print the index values */
         for (i = 0; i < (size_t)ctx->ndims; i++) {
             if (i)
                 h5tools_str_append(str, "%s", OPT(info->idx_sep, ","));
 
-            H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
             h5tools_str_append(str, OPT(info->idx_n_fmt, "%" PRIuHSIZE), (hsize_t)ctx->pos[i]);
-            H5_GCC_CLANG_DIAG_ON("format-nonliteral")
         }
     }
     else {
         /* Scalar */
-        H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
         h5tools_str_append(str, OPT(info->idx_n_fmt, "%" PRIuHSIZE), (hsize_t)elmtno);
-        H5_GCC_CLANG_DIAG_ON("format-nonliteral")
     }
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     H5TOOLS_DEBUG("str=%s", str->s);
 
@@ -330,6 +329,8 @@ h5tools_str_region_prefix(h5tools_str_t *str /*in,out*/, const h5tool_format_t *
     h5tools_str_reset(str);
 
     calc_acc_pos(ctx->ndims, elmtno, ctx->acc, ctx->pos);
+
+    H5_WARN_FORMAT_NONLITERAL_OFF
     if (ctx->ndims > 0) {
         /* Print the index values */
         for (i = 0; i < (size_t)ctx->ndims; i++) {
@@ -337,17 +338,14 @@ h5tools_str_region_prefix(h5tools_str_t *str /*in,out*/, const h5tool_format_t *
             if (i)
                 h5tools_str_append(str, "%s", OPT(info->idx_sep, ","));
 
-            H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
             h5tools_str_append(str, OPT(info->idx_n_fmt, "%" PRIuHSIZE), (hsize_t)ctx->pos[i]);
-            H5_GCC_CLANG_DIAG_ON("format-nonliteral")
         }
     }
     else {
         /* Scalar */
-        H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
         h5tools_str_append(str, OPT(info->idx_n_fmt, "%" PRIuHSIZE), (hsize_t)0);
-        H5_GCC_CLANG_DIAG_ON("format-nonliteral")
     }
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     H5TOOLS_DEBUG("str=%s", str->s);
 
@@ -466,9 +464,10 @@ h5tools_str_dump_space_blocks(h5tools_str_t *str, hid_t rspace, const h5tool_for
         for (u = 0; u < nblocks; u++) {
             unsigned v;
 
-            H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
+            H5_WARN_FORMAT_NONLITERAL_OFF
             h5tools_str_append(str, info->dset_blockformat_pre, u ? "," OPTIONAL_LINE_BREAK " " : "",
                                (unsigned long)u);
+            H5_WARN_FORMAT_NONLITERAL_ON
 
             /* Start coordinates and opposite corner */
             for (v = 0; v < ndims; v++)
@@ -478,7 +477,6 @@ h5tools_str_dump_space_blocks(h5tools_str_t *str, hid_t rspace, const h5tool_for
                 h5tools_str_append(str, "%s%" PRIuHSIZE, v ? "," : ")-(", ptdata[u * 2 * ndims + v + ndims]);
 
             h5tools_str_append(str, ")");
-            H5_GCC_CLANG_DIAG_ON("format-nonliteral")
         }
 
         free(ptdata);
@@ -527,15 +525,15 @@ h5tools_str_dump_space_points(h5tools_str_t *str, hid_t rspace, const h5tool_for
         for (u = 0; u < npoints; u++) {
             unsigned v;
 
-            H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
+            H5_WARN_FORMAT_NONLITERAL_OFF
             h5tools_str_append(str, info->dset_ptformat_pre, u ? "," OPTIONAL_LINE_BREAK " " : "",
                                (unsigned long)u);
+            H5_WARN_FORMAT_NONLITERAL_ON
 
             for (v = 0; v < ndims; v++)
                 h5tools_str_append(str, "%s%" PRIuHSIZE, v ? "," : "(", (ptdata[u * ndims + v]));
 
             h5tools_str_append(str, ")");
-            H5_GCC_CLANG_DIAG_ON("format-nonliteral")
         }
 
         free(ptdata);
@@ -648,6 +646,7 @@ h5tools_str_indent(h5tools_str_t *str, const h5tool_format_t *info, h5tools_cont
  * Return:      A pointer to memory containing the result or NULL on error.
  *-------------------------------------------------------------------------
  */
+H5_WARN_FORMAT_NONLITERAL_OFF
 char *
 h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t container, hid_t type, void *vp,
                    h5tools_context_t *ctx)
@@ -663,8 +662,6 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
     H5T_str_t      pad;
     H5T_class_t    type_class;
     char          *ret_value = NULL;
-
-    H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 
     H5TOOLS_START_DEBUG(" ");
     /* Build default formats for long long types */
@@ -729,7 +726,7 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
                     long double templdouble;
 
                     memcpy(&templdouble, vp, sizeof(long double));
-                    h5tools_str_append(str, "%Lg", templdouble);
+                    h5tools_str_append(str, OPT(info->fmt_ldouble, "%Lg"), templdouble);
                 }
                 else {
                     size_t i;
@@ -1356,6 +1353,74 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
                 H5Tclose(memb);
             } break;
 
+            case H5T_COMPLEX:
+                H5TOOLS_DEBUG("H5T_COMPLEX");
+
+#ifdef H5_HAVE_COMPLEX_NUMBERS
+                /* If complex number support is available, use creal/cimag function
+                 * variants to retrieve the real and imaginary parts of the complex
+                 * number and print them in real+imaginary"i" format.
+                 */
+                if (H5Tequal(type, H5T_NATIVE_FLOAT_COMPLEX) == true) {
+                    H5_float_complex fc;
+                    float            real, imag;
+
+                    memcpy(&fc, vp, sizeof(H5_float_complex));
+
+                    real = crealf(fc);
+                    imag = cimagf(fc);
+
+                    h5tools_str_append(str, OPT(info->fmt_float_complex, "%g%+gi"), (double)real,
+                                       (double)imag);
+                }
+                else if (H5Tequal(type, H5T_NATIVE_DOUBLE_COMPLEX) == true) {
+                    H5_double_complex dc;
+                    double            real, imag;
+
+                    memcpy(&dc, vp, sizeof(H5_double_complex));
+
+                    real = creal(dc);
+                    imag = cimag(dc);
+
+                    h5tools_str_append(str, OPT(info->fmt_double_complex, "%g%+gi"), real, imag);
+                }
+                else if (H5Tequal(type, H5T_NATIVE_LDOUBLE_COMPLEX) == true) {
+                    H5_ldouble_complex ldc;
+                    long double        real, imag;
+
+                    memcpy(&ldc, vp, sizeof(H5_ldouble_complex));
+
+                    real = creall(ldc);
+                    imag = cimagl(ldc);
+
+                    h5tools_str_append(str, OPT(info->fmt_ldouble_complex, "%Lg%+Lgi"), real, imag);
+                }
+                else
+#endif
+                {
+                    h5tools_str_t real_part, imag_part;
+                    size_t        part_size;
+
+                    /* Get the base datatype for the complex number type */
+                    memb      = H5Tget_super(type);
+                    part_size = H5Tget_size(memb);
+
+                    memset(&real_part, 0, sizeof(h5tools_str_t));
+                    memset(&imag_part, 0, sizeof(h5tools_str_t));
+
+                    h5tools_str_sprint(&real_part, info, container, memb, vp, ctx);
+                    h5tools_str_sprint(&imag_part, info, container, memb, (uint8_t *)vp + part_size, ctx);
+
+                    h5tools_str_append(str, "%s+%si", real_part.s, imag_part.s);
+
+                    h5tools_str_close(&real_part);
+                    h5tools_str_close(&imag_part);
+
+                    H5Tclose(memb);
+                }
+
+                break;
+
             case H5T_TIME:
             case H5T_BITFIELD:
             case H5T_OPAQUE: {
@@ -1380,11 +1445,10 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
 
     ret_value = h5tools_str_fmt(str, start, OPT(info->elmt_fmt, "%s"));
 
-    H5_GCC_CLANG_DIAG_ON("format-nonliteral")
-
     H5TOOLS_ENDDEBUG(" with %s", ret_value);
     return ret_value;
 }
+H5_WARN_FORMAT_NONLITERAL_ON
 
 /*-------------------------------------------------------------------------
  * Function:    h5tools_str_sprint_old_reference

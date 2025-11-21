@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -24,19 +24,23 @@
 h5tool_format_t h5tools_dataformat = {
     0, /*raw */
 
-    "",     /*fmt_raw */
-    "%d",   /*fmt_int */
-    "%u",   /*fmt_uint */
-    "%hhd", /*fmt_schar */
-    "%u",   /*fmt_uchar */
-    "%d",   /*fmt_short */
-    "%u",   /*fmt_ushort */
-    "%ld",  /*fmt_long */
-    "%lu",  /*fmt_ulong */
-    NULL,   /*fmt_llong */
-    NULL,   /*fmt_ullong */
-    "%g",   /*fmt_double */
-    "%g",   /*fmt_float */
+    "",         /*fmt_raw */
+    "%hhd",     /*fmt_schar */
+    "%u",       /*fmt_uchar */
+    "%d",       /*fmt_short */
+    "%u",       /*fmt_ushort */
+    "%d",       /*fmt_int */
+    "%u",       /*fmt_uint */
+    "%ld",      /*fmt_long */
+    "%lu",      /*fmt_ulong */
+    NULL,       /*fmt_llong */
+    NULL,       /*fmt_ullong */
+    "%g",       /*fmt_float */
+    "%g",       /*fmt_double */
+    "%Lg",      /*fmt_ldouble */
+    "%g%+gi",   /*fmt_float_complex */
+    "%g%+gi",   /*fmt_double_complex */
+    "%Lg%+Lgi", /*fmt_ldouble_complex */
 
     0, /*ascii */
     0, /*str_locale */
@@ -163,6 +167,8 @@ const h5tools_dump_header_t h5tools_standardformat = {
     "}",                /*strblockend */
     "H5T_VLEN { ",      /*vlenblockbegin */
     " }",               /*vlenblockend */
+    "H5T_COMPLEX { ",   /*complexblockbegin */
+    " }",               /*complexblockend */
     "{",                /*structblockbegin */
     "}",                /*structblockend */
     "{",                /*subsettingblockbegin */
@@ -728,10 +734,10 @@ h5tools_dump_region_data_blocks(hid_t region_space, hid_t region_id, FILE *strea
     for (indx = 0; indx < nblocks; indx++) {
         unsigned loop_indx;
 
-        H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
+        H5_WARN_FORMAT_NONLITERAL_OFF
         h5tools_str_append(buffer, outputformat.dset_blockformat_pre, indx ? "," OPTIONAL_LINE_BREAK " " : "",
                            (unsigned long)indx);
-        H5_GCC_CLANG_DIAG_ON("format-nonliteral")
+        H5_WARN_FORMAT_NONLITERAL_ON
 
         /* Start coordinates and opposite corner */
         for (loop_indx = 0; loop_indx < ndims; loop_indx++)
@@ -1087,10 +1093,10 @@ h5tools_dump_region_data_points(hid_t region_space, hid_t region_id, FILE *strea
     for (indx = 0; indx < npoints; indx++) {
         unsigned loop_indx;
 
-        H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
+        H5_WARN_FORMAT_NONLITERAL_OFF
         h5tools_str_append(buffer, outputformat.dset_ptformat_pre, indx ? "," OPTIONAL_LINE_BREAK " " : "",
                            (unsigned long)indx);
-        H5_GCC_CLANG_DIAG_ON("format-nonliteral")
+        H5_WARN_FORMAT_NONLITERAL_ON
 
         for (loop_indx = 0; loop_indx < ndims; loop_indx++)
             h5tools_str_append(buffer, "%s%" PRIuHSIZE, loop_indx ? "," : "(",
@@ -2202,6 +2208,14 @@ h5tools_print_datatype(FILE *stream, h5tools_str_t *buffer, const h5tool_format_
                 h5tools_str_append(buffer, "H5T_IEEE_F64BE");
             else if (H5Tequal(type, H5T_IEEE_F64LE) == true)
                 h5tools_str_append(buffer, "H5T_IEEE_F64LE");
+            else if (H5Tequal(type, H5T_FLOAT_BFLOAT16BE) == true)
+                h5tools_str_append(buffer, "H5T_FLOAT_BFLOAT16BE");
+            else if (H5Tequal(type, H5T_FLOAT_BFLOAT16LE) == true)
+                h5tools_str_append(buffer, "H5T_FLOAT_BFLOAT16LE");
+            else if (H5Tequal(type, H5T_FLOAT_F8E4M3) == true)
+                h5tools_str_append(buffer, "H5T_FLOAT_F8E4M3");
+            else if (H5Tequal(type, H5T_FLOAT_F8E5M2) == true)
+                h5tools_str_append(buffer, "H5T_FLOAT_F8E5M2");
             else if (H5Tequal(type, H5T_VAX_F32) == true)
                 h5tools_str_append(buffer, "H5T_VAX_F32");
             else if (H5Tequal(type, H5T_VAX_F64) == true)
@@ -2624,6 +2638,46 @@ found_string_type:
                 H5TOOLS_ERROR((-1), "H5Tget_super failed");
 
             h5tools_str_append(buffer, "%s", h5tools_dump_header_format->arrblockend);
+
+            break;
+
+        case H5T_COMPLEX:
+            if (H5Tequal(type, H5T_COMPLEX_IEEE_F16BE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F16BE");
+            else if (H5Tequal(type, H5T_COMPLEX_IEEE_F16LE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F16LE");
+            else if (H5Tequal(type, H5T_COMPLEX_IEEE_F32BE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F32BE");
+            else if (H5Tequal(type, H5T_COMPLEX_IEEE_F32LE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F32LE");
+            else if (H5Tequal(type, H5T_COMPLEX_IEEE_F64BE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F64BE");
+            else if (H5Tequal(type, H5T_COMPLEX_IEEE_F64LE) == true)
+                h5tools_str_append(buffer, "H5T_COMPLEX_IEEE_F64LE");
+#ifdef H5_HAVE_COMPLEX_NUMBERS
+            else if (H5Tequal(type, H5T_NATIVE_FLOAT_COMPLEX) == true)
+                h5tools_str_append(buffer, "H5T_NATIVE_FLOAT_COMPLEX");
+            else if (H5Tequal(type, H5T_NATIVE_DOUBLE_COMPLEX) == true)
+                h5tools_str_append(buffer, "H5T_NATIVE_DOUBLE_COMPLEX");
+            else if (H5Tequal(type, H5T_NATIVE_LDOUBLE_COMPLEX) == true)
+                h5tools_str_append(buffer, "H5T_NATIVE_LDOUBLE_COMPLEX");
+#endif
+            else {
+                h5tools_str_append(buffer, "%s", h5tools_dump_header_format->complexblockbegin);
+
+                /* Get complex number base type */
+                if ((super = H5Tget_super(type)) < 0)
+                    H5TOOLS_ERROR((-1), "H5Tget_super failed");
+                else {
+                    /* Print base type */
+                    h5tools_print_datatype(stream, buffer, info, ctx, super, true);
+
+                    if (H5Tclose(super) < 0)
+                        H5TOOLS_ERROR((-1), "H5Tclose failed");
+                }
+
+                h5tools_str_append(buffer, "%s", h5tools_dump_header_format->complexblockend);
+            }
 
             break;
 
@@ -3133,8 +3187,8 @@ h5tools_dump_dcpl(FILE *stream, const h5tool_format_t *info, h5tools_context_t *
     int              rank;          /* rank */
     int              i;
     unsigned         j;
-    unsigned         filt_flags;    /* filter flags */
-    unsigned         cd_values[20]; /* filter client data values */
+    unsigned         filt_flags;                  /* filter flags */
+    unsigned         cd_values[DEFAULT_CDELEMTS]; /* filter client data values */
     unsigned         szip_options_mask;
     unsigned         szip_pixels_per_block;
     H5Z_filter_t     filtn; /* filter identification number */
@@ -3144,7 +3198,7 @@ h5tools_dump_dcpl(FILE *stream, const h5tool_format_t *info, h5tools_context_t *
     H5D_layout_t     stl      = H5D_LAYOUT_ERROR;
     size_t           ncols    = 80; /* available output width        */
     size_t           cd_nelmts;     /* filter client number of values */
-    off_t            offset;        /* offset of external file     */
+    HDoff_t          offset;        /* offset of external file     */
     char             f_name[256];   /* filter name */
     char             name[256];     /* external or virtual file name       */
     hsize_t          chsize[64];    /* chunk size in elements */

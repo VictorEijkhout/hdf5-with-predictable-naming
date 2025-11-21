@@ -13,7 +13,7 @@
 !                                                                             *
 !   This file is part of HDF5.  The full HDF5 copyright notice, including     *
 !   terms governing use, modification, and redistribution, is contained in    *
-!   the COPYING file, which can be found at the root of the source code       *
+!   the LICENSE file, which can be found at the root of the source code       *
 !   distribution tree, or in https://www.hdfgroup.org/licenses.               *
 !   If you do not have access to either file, you may request a copy from     *
 !   help@hdfgroup.org.                                                        *
@@ -1145,7 +1145,7 @@ CONTAINS
 
     CALL h5fget_freespace_f(fid, free_space, error)
     CALL check("h5fget_freespace_f",error,total_error)
-    IF(error .EQ.0 .AND. free_space .NE. 1248) THEN
+    IF(error .EQ.0 .AND. free_space .NE. 1853) THEN
        total_error = total_error + 1
        WRITE(*,*) "1: Wrong amount of free space reported, ", free_space
     ENDIF
@@ -1161,7 +1161,7 @@ CONTAINS
     ! Check the free space now
     CALL h5fget_freespace_f(fid, free_space, error)
     CALL check("h5fget_freespace_f",error,total_error)
-    IF(error .EQ.0 .AND. free_space .NE. 216) THEN
+    IF(error .EQ.0 .AND. free_space .NE. 1706) THEN
        total_error = total_error + 1
        WRITE(*,*) "2: Wrong amount of free space reported, ", free_space
     ENDIF
@@ -1173,7 +1173,7 @@ CONTAINS
     ! Check the free space now
     CALL h5fget_freespace_f(fid, free_space, error)
     CALL check("h5fget_freespace_f",error,total_error)
-    IF(error .EQ.0 .AND. free_space .NE. 1248) THEN
+    IF(error .EQ.0 .AND. free_space .NE. 1853) THEN
        total_error = total_error + 1
        WRITE(*,*) "3: Wrong amount of free space reported, ", free_space
     ENDIF

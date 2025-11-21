@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -164,7 +164,7 @@ DSetMemXferPropList::getBuffer(void **tconv, void **bkg) const
 void
 DSetMemXferPropList::setPreserve(bool status) const
 {
-    herr_t ret_value = H5Pset_preserve(id, static_cast<hbool_t>(status));
+    herr_t ret_value = H5Pset_preserve(id, static_cast<bool>(status));
     if (ret_value < 0) {
         throw PropListIException("DSetMemXferPropList::setPreserve", "H5Pset_preserve failed");
     }

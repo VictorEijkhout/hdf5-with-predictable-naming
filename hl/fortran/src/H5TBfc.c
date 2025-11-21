@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -92,12 +92,12 @@ h5tbmake_table_c(size_t_f *namelen1, _fcd name1, hid_t_f *loc_id, size_t_f *name
     /*
      * call H5TBmake_table function.
      */
-    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+    H5_WARN_CAST_AWAY_CONST_OFF
     if (H5TBmake_table(c_name1, (hid_t)*loc_id, c_name, c_nfields, (hsize_t)*nrecords, (size_t)*type_size,
                        (const char **)c_field_names, c_field_offset, c_field_types, (hsize_t)*chunk_size,
                        NULL, *compress, NULL) < 0)
         HGOTO_DONE(FAIL);
-    H5_GCC_CLANG_DIAG_ON("cast-qual")
+    H5_WARN_CAST_AWAY_CONST_ON
 
 done:
     if (c_name)
@@ -195,12 +195,12 @@ h5tbmake_table_ptr_c(size_t_f *namelen1, _fcd name1, hid_t_f *loc_id, size_t_f *
     /*
      * call H5TBmake_table function.
      */
-    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+    H5_WARN_CAST_AWAY_CONST_OFF
     if (H5TBmake_table(c_name1, (hid_t)*loc_id, c_name, c_nfields, (hsize_t)*nrecords, (size_t)*type_size,
                        (const char **)c_field_names, c_field_offset, c_field_types, (hsize_t)*chunk_size,
                        fill_data, *compress, data) < 0)
         HGOTO_DONE(FAIL);
-    H5_GCC_CLANG_DIAG_ON("cast-qual")
+    H5_WARN_CAST_AWAY_CONST_ON
 
 done:
     if (c_name)

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -1061,7 +1061,7 @@ main(int argc, char **argv)
      * We assume (but we'll check) that the h5jam utility
      * is in the directory as this executable.  If that
      * isn't true, then we can use a relative path that
-     * should be valid for the Autotools environment.
+     * should be valid for the environment.
      */
     test_argv0 = strdup(argv[0]);
 

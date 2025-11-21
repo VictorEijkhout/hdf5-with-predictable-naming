@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -1269,9 +1269,7 @@ do_cleanupfile(iotype iot, char *filename)
 
                 if (driver == H5FD_FAMILY) {
                     for (j = 0; /*void*/; j++) {
-                        H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
                         snprintf(temp, temp_sz, filename, j);
-                        H5_GCC_CLANG_DIAG_ON("format-nonliteral")
 
                         if (HDaccess(temp, F_OK) < 0)
                             break;

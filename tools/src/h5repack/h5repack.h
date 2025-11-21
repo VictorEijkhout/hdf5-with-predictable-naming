@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -14,6 +14,9 @@
 #define H5REPACK_H
 
 /** \page H5TOOL_RP_UG The HDF5 h5repack Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5repack h5repack
  *
@@ -118,7 +121,8 @@
  * \li <strong>2</strong> This is #H5F_LIBVER_V110 in #H5F_libver_t struct
  * \li <strong>3</strong> This is #H5F_LIBVER_V112 in #H5F_libver_t struct
  * \li <strong>4</strong> This is #H5F_LIBVER_V114 in #H5F_libver_t struct
- * \li #H5F_LIBVER_LATEST is aliased to #H5F_LIBVER_V114 for this release
+ * \li <strong>5</strong> This is #H5F_LIBVER_V200 in #H5F_libver_t struct
+ * \li #H5F_LIBVER_LATEST is aliased to #H5F_LIBVER_V200 for this release
  *
  * \subsubsection subsubsec_cltools_h5repack_options_fs File Strategy Settings
  * <strong>FS_STRATEGY</strong> is a string indicating the file space strategy used:
@@ -235,11 +239,18 @@
  *      H5Pset_libver_bounds() when creating the repacked file, file2
  *
  *
+ * Previous Chapter \ref sec_cltools_h5ls - Next Chapter \ref sec_cltools_h5stat
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ *
  */
 
 #include "H5private.h"
 #include "hdf5.h"
 #include "h5trav.h"
+#include "h5tools.h"
+#include "h5tools_utils.h"
 
 #define H5FOPENERROR      "unable to open file"
 #define PFORMAT           "%-7s %-7s %-7s\n" /* chunk info, compression info, name*/
@@ -284,13 +295,11 @@ typedef struct {
  H5Z_FILTER_SCALEOFFSET 6 , scaleoffset compression
 */
 
-#define CD_VALUES 20
-
 typedef struct {
-    H5Z_filter_t filtn;                /* filter identification number */
-    unsigned     filt_flag;            /* filter definition flag */
-    unsigned     cd_values[CD_VALUES]; /* filter client data values */
-    size_t       cd_nelmts;            /* filter client number of values */
+    H5Z_filter_t filtn;                       /* filter identification number */
+    unsigned     filt_flag;                   /* filter definition flag */
+    unsigned     cd_values[DEFAULT_CDELEMTS]; /* filter client data values */
+    size_t       cd_nelmts;                   /* filter client number of values */
 } filter_info_t;
 
 /* chunk lengths along each dimension and rank */

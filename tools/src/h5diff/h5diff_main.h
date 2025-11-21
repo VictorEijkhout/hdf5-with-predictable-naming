@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -14,6 +14,9 @@
 #define H5DIFF_H
 
 /** \page H5TOOL_DF_UG The HDF5 h5diff Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5diff h5diff
  *
@@ -208,6 +211,11 @@
  * Notes:
  *  file1 and file2 can be the same file.
  *  Use h5diff file1 file1 /g1/dset1 /g1/dset2 to compare '/g1/dset1' and '/g1/dset2' in the same file
+ *
+ * Previous Chapter \ref sec_cltools_h5copy - Next Chapter \ref sec_cltools_h5dump
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

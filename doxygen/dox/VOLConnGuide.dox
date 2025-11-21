@@ -1,6 +1,6 @@
 /** \page VOL_Connector HDF5 Virtual Object Layer (VOL) Connector Author Guide
 
-Navigate back: \ref index "Main"
+Navigate back: \ref index "Main" / \ref TN
 <hr>
 
 \section secVOLIntro Introduction
@@ -1138,7 +1138,7 @@ typedef struct H5VL_attr_specific_args_t {
         /* H5VL_ATTR_EXISTS */
         struct {
             const char *name;   /* Name of attribute to check */
-            hbool_t    *exists; /* Whether attribute exists (OUT) */
+            bool       *exists; /* Whether attribute exists (OUT) */
         } exists;
 
         /* H5VL_ATTR_ITER */
@@ -2090,7 +2090,7 @@ typedef struct H5VL_file_specific_args_t {
         struct {
             const char *filename;   /* Name of file to check */
             hid_t       fapl_id;    /* File access property list to use */
-            hbool_t    *accessible; /* Whether file is accessible with FAPL settings (OUT) */
+            bool       *accessible; /* Whether file is accessible with FAPL settings (OUT) */
         } is_accessible;
 
         /* H5VL_FILE_DELETE */
@@ -2102,7 +2102,7 @@ typedef struct H5VL_file_specific_args_t {
         /* H5VL_FILE_IS_EQUAL */
         struct {
             void    *obj2;      /* Second file object to compare against */
-            hbool_t *same_file; /* Whether files are the same (OUT) */
+            bool    *same_file; /* Whether files are the same (OUT) */
         } is_equal;
     } args;
 } H5VL_file_specific_args_t;
@@ -2711,7 +2711,7 @@ typedef enum H5VL_link_specific_t {
 
 /* Parameters for link 'iterate' operation */
 typedef struct H5VL_link_iterate_args_t {
-    hbool_t         recursive; /* Whether iteration is recursive */
+    bool            recursive; /* Whether iteration is recursive */
     H5_index_t      idx_type;  /* Type of index to iterate over */
     H5_iter_order_t order;     /* Order of index iteration */
     hsize_t        *idx_p;     /* Start/stop iteration index (OUT) */
@@ -2730,7 +2730,7 @@ typedef struct H5VL_link_specific_args_t {
 
         /* H5VL_LINK_EXISTS */
         struct {
-            hbool_t *exists; /* Whether link exists (OUT) */
+            bool *exists; /* Whether link exists (OUT) */
         } exists;
 
         /* H5VL_LINK_ITER */
@@ -2993,7 +2993,7 @@ typedef struct H5VL_object_specific_args_t {
 
         /* H5VL_OBJECT_EXISTS */
         struct {
-            hbool_t *exists; /* Whether object exists (OUT) */
+            bool *exists; /* Whether object exists (OUT) */
         } exists;
 
         /* H5VL_OBJECT_LOOKUP */
@@ -3132,7 +3132,7 @@ Query a class for a capability or functionality.
 <tr>
 <td>
 \code
-  herr_t (*opt_query)(void *obj, H5VL_subclass_t cls, int opt_type, hbool_t *supported);
+  herr_t (*opt_query)(void *obj, H5VL_subclass_t cls, int opt_type, bool *supported);
 \endcode
 </td>
 </tr>
@@ -3519,7 +3519,7 @@ typedef struct H5VL_blob_specific_args_t {
 
         /* H5VL_BLOB_ISNULL */
         struct {
-            hbool_t *isnull; /* Whether blob ID is "null" (OUT) */
+            bool *isnull; /* Whether blob ID is "null" (OUT) */
         } is_null;
 
         /* H5VL_BLOB_SETNULL */
@@ -4111,62 +4111,6 @@ Retrieves a pointer to the VOL object from an HDF5 file or object identifier.
 Returns a copy of the <em>dtype_id</em> parameter but with the location set to be in the file. Returns a negative
 value (#H5I_INVALID_HID) on errors.
 
-\subsubsection subsubsecVOLNewConnpeek_name H5VLpeek_connector_id_by_name
-<table>
-<tr>
-<th>Signature:</th>
-</tr>
-<tr>
-<td>
-\code
-  hid_t H5VLpeek_connector_id_by_name(const char *name);
-\endcode
-</td>
-</tr>
-<tr>
-<th>Arguments:</th>
-</tr>
-<tr>
-<td>
-\code
-  name (IN): name of the connector to query.
-\endcode
-</td>
-</tr>
-</table>
-Retrieves the ID for a registered VOL connector based on a connector name. This is done without duplicating
-the ID and transferring ownership to the caller (as it normally the case in the HDF5 library). The ID returned
-from this operation should not be closed. This is intended for use by VOL connectors to find their own ID.
-Returns a negative value (#H5I_INVALID_HID) on errors.
-
-\subsubsection subsubsecVOLNewConnpeek_value H5VLpeek_connector_id_by_value
-<table>
-<tr>
-<th>Signature:</th>
-</tr>
-<tr>
-<td>
-\code
-  hid_t H5VLpeek_connector_id_by_value(H5VL_class_value_t value);
-\endcode
-</td>
-</tr>
-<tr>
-<th>Arguments:</th>
-</tr>
-<tr>
-<td>
-\code
-  value (IN): value of the connector to query.
-\endcode
-</td>
-</tr>
-</table>
-Retrieves the ID for a registered VOL connector based on a connector value. This is done without duplicating
-the ID and transferring ownership to the caller (as it normally the case in the HDF5 library). The ID returned
-from this operation should not be closed. This is intended for use by VOL connectors to find their own ID.
-Returns a negative value (#H5I_INVALID_HID) on errors.
-
 \subsection subsecVOLNewPass H5VLconnector_passthru.h
 This functionality is intended for VOL connector authors who are writing pass-through connectors and
 includes helper functions that are useful for writing such connectors. Callback equivalent functions can be
@@ -4262,7 +4206,7 @@ he type must be a VOL-managed object class:
 Retrieves a copy of the internal state of the HDF5 library, so that it can be restored later. Returns a positive
 value on success and a negative value on errors.
 
-\subsubsection subsubsecVOLNewPassstar H5VLstart_lib_state
+\subsubsection subsubsecVOLNewPassstar H5VLopen_lib_context
 <table>
 <tr>
 <th>Signature:</th>
@@ -4270,13 +4214,12 @@ value on success and a negative value on errors.
 <tr>
 <td>
 \code
-  herr_t H5VLstart_lib_state(void);
+  herr_t H5VLopen_lib_context(void **context);
 \endcode
 </td>
 </tr>
 </table>
-Opens a new internal state for the HDF5 library. Returns a positive value on success and a negative value
-on errors.
+Opens a new internal context for the HDF5 library. Returns a non-negative value if \p *context is set; otherwise returns negative value if \p *context is unset.
 
 \subsubsection subsubsecVOLNewPassrestore H5VLrestore_lib_state
 <table>
@@ -4303,7 +4246,7 @@ on errors.
 </table>
 Restores the internal state of the HDF5 library. Returns a positive value on success and a negative value on errors.
 
-\subsubsection subsubsecVOLNewPassfinish H5VLfinish_lib_state
+\subsubsection subsubsecVOLNewPassfinish H5VLclose_lib_context
 <table>
 <tr>
 <th>Signature:</th>
@@ -4311,12 +4254,12 @@ Restores the internal state of the HDF5 library. Returns a positive value on suc
 <tr>
 <td>
 \code
-  herr_t H5VLfinish_lib_state(void);
+ herr_t H5VLclose_lib_context(void *context);
 \endcode
 </td>
 </tr>
 </table>
-Closes the state of the library, undoing the effects of #H5VLstart_lib_state. Returns a positive value on
+Closes the state of the library, undoing the effects of #H5VLopen_lib_context. Returns a positive value on
 success and a negative value on errors.
 
 \subsubsection subsubsecVOLNewPassfree H5VLfree_lib_state
@@ -4933,5 +4876,5 @@ H5_DLL herr_t H5VLoptional(void *obj, hid_t connector_id, H5VL_optional_args_t *
 \endcode
 
 <hr>
-Navigate back: \ref index "Main" / \ref VOL_Connector
+Navigate back: \ref index "Main" / \ref TN
 */

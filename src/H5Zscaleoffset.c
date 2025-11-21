@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -938,7 +938,7 @@ H5Z__set_local_scaleoffset(hid_t dcpl_id, hid_t type_id, hid_t space_id)
     FUNC_ENTER_PACKAGE
 
     /* Get the plist structure */
-    if (NULL == (dcpl_plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (dcpl_plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get datatype */
@@ -988,6 +988,7 @@ H5Z__set_local_scaleoffset(hid_t dcpl_id, hid_t type_id, hid_t space_id)
         case H5T_ENUM:
         case H5T_VLEN:
         case H5T_ARRAY:
+        case H5T_COMPLEX:
         case H5T_NCLASSES:
         default:
             HGOTO_ERROR(H5E_PLINE, H5E_BADTYPE, FAIL, "datatype class not supported by scaleoffset");
@@ -1205,12 +1206,15 @@ H5Z__filter_scaleoffset(unsigned flags, size_t cd_nelmts, const unsigned cd_valu
         unsigned           minval_size  = 0;
 
         minbits = 0;
+        if (H5_IS_BUFFER_OVERFLOW((unsigned char *)*buf, 5, (unsigned char *)*buf + *buf_size - 1))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, 0, "buffer too short");
+
         for (i = 0; i < 4; i++) {
             minbits_mask = ((unsigned char *)*buf)[i];
             minbits_mask <<= i * 8;
             minbits |= minbits_mask;
         }
-        if (minbits >= p.size * 8)
+        if (minbits > p.size * 8)
             HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, 0, "minimum number of bits exceeds size of type");
 
         /* retrieval of minval takes into consideration situation where sizeof
@@ -1220,6 +1224,9 @@ H5Z__filter_scaleoffset(unsigned flags, size_t cd_nelmts, const unsigned cd_valu
         minval_size = sizeof(unsigned long long) <= ((unsigned char *)*buf)[4] ? sizeof(unsigned long long)
                                                                                : ((unsigned char *)*buf)[4];
         minval      = 0;
+        if (H5_IS_BUFFER_OVERFLOW((unsigned char *)*buf, 5 + minval_size,
+                                  (unsigned char *)*buf + *buf_size - 1))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, 0, "buffer too short");
         for (i = 0; i < minval_size; i++) {
             minval_mask = ((unsigned char *)*buf)[5 + i];
             minval_mask <<= i * 8;

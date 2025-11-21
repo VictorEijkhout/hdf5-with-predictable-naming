@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -55,7 +55,7 @@ typedef struct H5D_efl_writevv_ud_t {
 
 /* Layout operation callbacks */
 static herr_t  H5D__efl_construct(H5F_t *f, H5D_t *dset);
-static herr_t  H5D__efl_init(H5F_t *f, const H5D_t *dset, hid_t dapl_id);
+static herr_t  H5D__efl_init(H5F_t *f, H5D_t *dset, hid_t dapl_id, bool open_op);
 static herr_t  H5D__efl_io_init(H5D_io_info_t *io_info, H5D_dset_io_info_t *dinfo);
 static ssize_t H5D__efl_readvv(const H5D_io_info_t *io_info, const H5D_dset_io_info_t *dset_info,
                                size_t dset_max_nseq, size_t *dset_curr_seq, size_t dset_len_arr[],
@@ -174,7 +174,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5D__efl_init(H5F_t H5_ATTR_UNUSED *f, const H5D_t *dset, hid_t H5_ATTR_UNUSED dapl_id)
+H5D__efl_init(H5F_t H5_ATTR_UNUSED *f, H5D_t *dset, hid_t H5_ATTR_UNUSED dapl_id, bool H5_ATTR_UNUSED open_op)
 {
     size_t   dt_size;             /* Size of datatype */
     hssize_t snelmts;             /* Temporary holder for number of elements in dataspace */

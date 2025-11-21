@@ -3,11 +3,17 @@
   This example shows how to create intermediate groups with
   a single call to H5Gcreate.
 
+Note: This example includes older cases from previous versions
+  of HDF5 for historical reference and to illustrate how to
+  migrate older code to newer functions. However, readers are
+  encouraged to avoid using deprecated functions and earlier
+  schemas from those versions.
+
  ************************************************************/
 
 #include "hdf5.h"
 
-#define FILE "h5ex_g_intermediate.h5"
+#define FILENAME "h5ex_g_intermediate.h5"
 
 /*
  * Operator function to be called by H5Ovisit.
@@ -25,7 +31,7 @@ main(void)
     /*
      * Create a new file using the default properties.
      */
-    file = H5Fcreate(FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file = H5Fcreate(FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     /*
      * Create group creation property list and set it to allow creation

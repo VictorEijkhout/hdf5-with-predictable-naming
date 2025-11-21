@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -292,8 +292,7 @@ FileCreatPropList::getIstorek() const
 ///             API in the HDF5 C Reference Manual.
 //--------------------------------------------------------------------------
 void
-FileCreatPropList::setFileSpaceStrategy(H5F_fspace_strategy_t strategy, hbool_t persist,
-                                        hsize_t threshold) const
+FileCreatPropList::setFileSpaceStrategy(H5F_fspace_strategy_t strategy, bool persist, hsize_t threshold) const
 {
     herr_t ret_value = H5Pset_file_space_strategy(id, strategy, persist, threshold);
     if (ret_value < 0) {
@@ -312,7 +311,7 @@ FileCreatPropList::setFileSpaceStrategy(H5F_fspace_strategy_t strategy, hbool_t 
 ///\exception   H5::PropListIException
 //--------------------------------------------------------------------------
 void
-FileCreatPropList::getFileSpaceStrategy(H5F_fspace_strategy_t &strategy, hbool_t &persist,
+FileCreatPropList::getFileSpaceStrategy(H5F_fspace_strategy_t &strategy, bool &persist,
                                         hsize_t &threshold) const
 {
     herr_t ret_value = H5Pget_file_space_strategy(id, &strategy, &persist, &threshold);

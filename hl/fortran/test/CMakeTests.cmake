@@ -4,7 +4,7 @@
 #
 # This file is part of HDF5.  The full HDF5 copyright notice, including
 # terms governing use, modification, and redistribution, is contained in
-# the COPYING file, which can be found at the root of the source code
+# the LICENSE file, which can be found at the root of the source code
 # distribution tree, or in https://www.hdfgroup.org/licenses.
 # If you do not have access to either file, you may request a copy from
 # help@hdfgroup.org.
@@ -50,10 +50,9 @@ set_tests_properties (HL_FORTRAN_test-clean-objects PROPERTIES
 
 macro (ADD_H5_FORTRAN_TEST file)
   if (HDF5_ENABLE_USING_MEMCHECKER)
-    add_test (NAME HL_FORTRAN_f90_${file} COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:hl_f90_${file}>)
+    add_test (NAME HL_FORTRAN_f90_${file} COMMAND $<TARGET_FILE:hl_f90_${file}>)
   else ()
     add_test (NAME HL_FORTRAN_f90_${file} COMMAND "${CMAKE_COMMAND}"
-        -D "TEST_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR}"
         -D "TEST_PROGRAM=$<TARGET_FILE:hl_f90_${file}>"
         -D "TEST_ARGS:STRING="
         -D "TEST_EXPECT=0"
@@ -67,6 +66,7 @@ macro (ADD_H5_FORTRAN_TEST file)
   set_tests_properties (HL_FORTRAN_f90_${file} PROPERTIES
       FIXTURES_REQUIRED clear_HL_FORTRAN_test
       WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+      ENVIRONMENT "${CROSSCOMPILING_PATH}"
   )
   if ("HL_FORTRAN_f90_${file}" MATCHES "${HDF5_DISABLE_TESTS_REGEX}")
     set_tests_properties (HL_FORTRAN_f90_${file} PROPERTIES DISABLED true)

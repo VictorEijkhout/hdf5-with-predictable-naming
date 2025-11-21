@@ -3,12 +3,18 @@
   This example shows how to iterate over group members using
   H5Literate.
 
+Note: This example includes older cases from previous versions
+  of HDF5 for historical reference and to illustrate how to
+  migrate older code to newer functions. However, readers are
+  encouraged to avoid using deprecated functions and earlier
+  schemas from those versions.
+
  ************************************************************/
 
 #include "hdf5.h"
 #include <stdio.h>
 
-#define FILE "h5ex_g_iterate.h5"
+#define FILENAME "h5ex_g_iterate.h5"
 
 /*
  * Operator function to be called by H5Literate.
@@ -24,7 +30,7 @@ main(void)
     /*
      * Open file.
      */
-    file = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
+    file = H5Fopen(FILENAME, H5F_ACC_RDONLY, H5P_DEFAULT);
 
     /*
      * Begin iteration.

@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -13,6 +13,9 @@
 #define H5MKGRP_H
 
 /** \page H5TOOL_MG_UG The HDF5 h5mkgrp Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5mkgrp h5mkgrp
  *
@@ -47,6 +50,11 @@
  *                   HDF5 file specified
  * \li <strong>--vfd-info</strong>  VFD-specific info to pass to the VFL driver used for
  *                   opening the HDF5 file specified
+ *
+ * Previous Chapter \ref sec_cltools_h5delete - Next Chapter \ref sec_cltools_h5repart
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
  *
  */
 

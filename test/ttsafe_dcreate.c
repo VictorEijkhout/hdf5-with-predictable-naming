@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -25,18 +25,18 @@
  ********************************************************************/
 #include "ttsafe.h"
 
-#ifdef H5_HAVE_THREADSAFE
+#ifdef H5_HAVE_THREADSAFE_API
 
 #define FILENAME   "ttsafe_dcreate.h5"
 #define NUM_THREAD 16
 
-void *tts_dcreate_creator(void *);
+H5TS_THREAD_RETURN_TYPE tts_dcreate_creator(void *);
 
-typedef struct thread_info {
+typedef struct thr_info {
     int         id;
     hid_t       file;
     const char *dsetname;
-} thread_info;
+} thr_info;
 
 /*
  * Set individual dataset names (rather than generated the names
@@ -46,7 +46,7 @@ const char *dsetname[NUM_THREAD] = {"zero",   "one",      "two",      "three",  
                                     "six",    "seven",    "eight",    "nine",   "ten",  "eleven",
                                     "twelve", "thirteen", "fourteen", "fifteen"};
 
-thread_info thread_out[NUM_THREAD];
+thr_info thread_out[NUM_THREAD];
 
 /*
  **********************************************************************
@@ -54,25 +54,16 @@ thread_info thread_out[NUM_THREAD];
  **********************************************************************
  */
 void
-tts_dcreate(void)
+tts_dcreate(void H5_ATTR_UNUSED *params)
 {
     /* thread definitions */
     H5TS_thread_t threads[NUM_THREAD];
 
     /* HDF5 data definitions */
-    hid_t       file    = H5I_INVALID_HID;
-    hid_t       dataset = H5I_INVALID_HID;
-    int         datavalue, i;
-    H5TS_attr_t attribute;
-    herr_t      status;
-
-    /* set pthread attribute to perform global scheduling */
-    H5TS_attr_init(&attribute);
-
-    /* set thread scope to system */
-#ifdef H5_HAVE_SYSTEM_SCOPE_THREADS
-    H5TS_attr_setscope(&attribute, H5TS_SCOPE_SYSTEM);
-#endif /* H5_HAVE_SYSTEM_SCOPE_THREADS */
+    hid_t  file    = H5I_INVALID_HID;
+    hid_t  dataset = H5I_INVALID_HID;
+    int    datavalue, i;
+    herr_t status;
 
     /*
      * Create a hdf5 file using H5F_ACC_TRUNC access, default file
@@ -86,11 +77,13 @@ tts_dcreate(void)
         thread_out[i].id       = i;
         thread_out[i].file     = file;
         thread_out[i].dsetname = dsetname[i];
-        threads[i]             = H5TS_create_thread(tts_dcreate_creator, NULL, &thread_out[i]);
+        if (H5TS_thread_create(&threads[i], tts_dcreate_creator, &thread_out[i]) < 0)
+            TestErrPrintf("thread # %d did not start", i);
     }
 
     for (i = 0; i < NUM_THREAD; i++)
-        H5TS_wait_for_thread(threads[i]);
+        if (H5TS_thread_join(threads[i], NULL) < 0)
+            TestErrPrintf("thread %d failed to join", i);
 
     /* compare data to see if it is written correctly */
 
@@ -122,21 +115,18 @@ tts_dcreate(void)
     /* close remaining resources */
     status = H5Fclose(file);
     CHECK(status, FAIL, "H5Fclose");
-
-    /* Destroy the thread attribute */
-    H5TS_attr_destroy(&attribute);
 } /* end tts_dcreate() */
 
-void *
+H5TS_THREAD_RETURN_TYPE
 tts_dcreate_creator(void *_thread_data)
 {
-    hid_t              dataspace = H5I_INVALID_HID;
-    hid_t              dataset   = H5I_INVALID_HID;
-    herr_t             status;
-    hsize_t            dimsf[1]; /* dataset dimensions */
-    struct thread_info thread_data;
+    hid_t           dataspace = H5I_INVALID_HID;
+    hid_t           dataset   = H5I_INVALID_HID;
+    herr_t          status;
+    hsize_t         dimsf[1]; /* dataset dimensions */
+    struct thr_info thread_data;
 
-    memcpy(&thread_data, _thread_data, sizeof(struct thread_info));
+    memcpy(&thread_data, _thread_data, sizeof(struct thr_info));
 
     /* define dataspace for dataset */
     dimsf[0]  = 1;
@@ -158,12 +148,14 @@ tts_dcreate_creator(void *_thread_data)
     status = H5Sclose(dataspace);
     CHECK(status, FAIL, "H5Sclose");
 
-    return NULL;
+    return (H5TS_thread_ret_t)0;
 } /* end tts_dcreate_creator() */
 
 void
-cleanup_dcreate(void)
+cleanup_dcreate(void H5_ATTR_UNUSED *params)
 {
-    HDunlink(FILENAME);
+    if (GetTestCleanup()) {
+        HDunlink(FILENAME);
+    }
 }
-#endif /*H5_HAVE_THREADSAFE*/
+#endif /* H5_HAVE_THREADSAFE_API */

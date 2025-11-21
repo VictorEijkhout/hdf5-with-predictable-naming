@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -13,6 +13,9 @@
 #define H5DUMP_H
 
 /** \page H5TOOL_DP_UG The HDF5 h5dump Tool
+ *
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ * <hr>
  *
  * \section sec_cltools_h5dump h5dump
  *
@@ -41,23 +44,22 @@
  * \li <strong>--ddl=F</strong>      Output ddl text into file F
  *                                   Use blank(empty) filename F to suppress ddl display
  * \li <strong>--page-buffer-size=N</strong> Set the page buffer cache size, N=non-negative integers
+ * \li <strong>--endpoint-url=P</strong> Supply S3 endpoint url information to "ros3" vfd.
+ *                                       P is the AWS service endpoint.
+ *                                       Has no effect if filedriver is not "ros3".
  * \li <strong>--s3-cred=\<cred\></strong>   Supply S3 authentication information to "ros3" vfd.
- *                          \code \<cred\> :: "(<aws-region>,<access-id>,<access-key>)" \endcode
- *                          If absent or \code \<cred\> -> "(,,)" \endcode, no authentication.
- *                          Has no effect if filedriver is not "ros3".
- * \li <strong>--hdfs-attrs=\<attrs\></strong> Supply configuration information for HDFS file access.
- *                          For use with <strong>--filedriver=hdfs</strong>
- *                          \code \<attrs\> :: (\<namenode name\>,\<namenode port\>,
- *                                      \<kerberos cache path\>,\<username\>,
- *                                      \<buffer size\>) \endcode
- *                          Any absent attribute will use a default value.
- * \li <strong>--vol-value</strong> Value (ID) of the VOL connector to use for opening the HDF5 file specified
- * \li <strong>--vol-name</strong>  Name of the VOL connector to use for opening the HDF5 file specified
- * \li <strong>--vol-info</strong>  VOL-specific info to pass to the VOL connector used for
- *                   opening the HDF5 file specified.<br />
- *                   If none of the above options are used to specify a VOL, then
- *                   the VOL named by \b HDF5_VOL_CONNECTOR (or the native VOL connector,
- *                   if that environment variable is unset) will be used
+ *                          \code <cred> :: "(<aws-region>,<access-id>,<access-key>)" \endcode
+ *                          \code <cred> :: "(<aws-region>,<access-id>,<access-key>,<session-token>)" \endcode
+ *                          If absent or \code \<cred\> -> "(,,)" \endcode or \code \<cred\> -> "(,,,)"
+ * \endcode, no authentication. Has no effect if filedriver is not "ros3". \li
+ * <strong>--hdfs-attrs=\<attrs\></strong> Supply configuration information for HDFS file access. For use with
+ * <strong>--filedriver=hdfs</strong> \code <attrs> :: (<namenode name>,<namenode port>, <kerberos cache
+ * path>,<username>, <buffer size>) \endcode Any absent attribute will use a default value. \li
+ * <strong>--vol-value</strong> Value (ID) of the VOL connector to use for opening the HDF5 file specified \li
+ * <strong>--vol-name</strong>  Name of the VOL connector to use for opening the HDF5 file specified \li
+ * <strong>--vol-info</strong>  VOL-specific info to pass to the VOL connector used for opening the HDF5 file
+ * specified.<br /> If none of the above options are used to specify a VOL, then the VOL named by \b
+ * HDF5_VOL_CONNECTOR (or the native VOL connector, if that environment variable is unset) will be used
  * \li<strong>--vfd-value</strong> Value (ID) of the VFL driver to use for opening the HDF5 file specified
  * \li <strong>--vfd-name</strong> Name of the VFL driver to use for opening the HDF5 file specified
  * \li <strong>--vfd-info</strong> VFD-specific info to pass to the VFL driver used for
@@ -95,6 +97,7 @@
  * \li <strong>--string</strong>       Print 1-byte integer datasets as ASCII
  * \li <strong>--noindex</strong>      Do not print array indices with the data
  * \li <strong>--format=T</strong>     Set the floating point output format
+ * \li <strong>--lformat=T</strong>    Set the floating point long double output format
  * \li <strong>--sort_by=Q</strong>    Sort groups and attributes by index Q
  * \li <strong>--sort_order=Z</strong> Sort groups and attributes by order Z
  * \li <strong>--no-compact-subset</strong>  Disable compact form of subsetting and allow the use
@@ -143,7 +146,8 @@
  * \li <strong>F</strong> - is a filename.
  * \li <strong>P</strong> - is the full path from the root group to the object.
  * \li <strong>N</strong> - is an integer greater than 1.
- * \li <strong>T</strong> - is a string containing the floating point format, e.g '%.3f'
+ * \li <strong>T</strong> - is a string containing the floating point format, e.g '%.3g'
+ * \li <strong>T</strong> - is a string containing the floating point long double format, e.g '%.3Lg'
  * \li <strong>U</strong> - is a URI reference (as defined in [IETF RFC 2396],
  *        updated by [IETF RFC 2732])
  * \li <strong>B</strong> - is the form of binary output: NATIVE for a memory type, FILE for the
@@ -191,6 +195,18 @@
  *
  *      h5dump --dataset=/foo --filedriver=family fam%05d.h5
  *
+ * Previous Chapter \ref sec_cltools_h5diff - Next Chapter \ref sec_cltools_h5format_convert
+ *
+ * <hr>
+ * Navigate back: \ref index "Main" / \ref UG / \ref CommandTools
+ *
+ * \subsubsection subsubsec_cltools_h5dump_xml XML Deprecated
+ * The XML option for h5dump has been deprecated. The methods for displaying XML output
+ * has not been updated since 1.10.0 was released. Many new features introduced into the
+ * library have never been added to the XML generation functions. Also the dtd and xsd
+ * files for XML have been archived, and copies of the files, HDF5-File.dtd and HDF5-File.xsd,
+ * have been saved in the "source"/tools/test/h5dump/testfiles/xml folder.
+ *
  */
 
 #include "hdf5.h"
@@ -233,12 +249,14 @@ typedef struct h5dump_table_list_t {
 h5dump_table_list_t table_list  = {0, 0, NULL};
 table_t            *group_table = NULL, *dset_table = NULL, *type_table = NULL;
 
-unsigned    dump_indent = 0;     /* how far in to indent the line */
-int         unamedtype  = 0;     /* shared datatype with no name */
-bool        hit_elink   = false; /* whether we have traversed an external link */
-size_t      prefix_len  = 1024;
-char       *prefix      = NULL;
-const char *fp_format   = NULL;
+unsigned    dump_indent    = 0;     /* how far in to indent the line */
+int         unamedtype     = 0;     /* shared datatype with no name */
+bool        hit_elink      = false; /* whether we have traversed an external link */
+size_t      prefix_len     = 1024;
+char       *prefix         = NULL;
+const char *fp_format      = NULL;
+const char *fp_lformat     = NULL;
+const char *complex_format = NULL; /* format for printing complex numbers */
 
 /* things to display or which are set via command line parameters */
 typedef struct {

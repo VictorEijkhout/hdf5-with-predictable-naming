@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -70,14 +70,9 @@ test_encode_decode(hid_t orig_pl, int mpi_rank, int recv_proc)
     } /* end if */
 
     if (0 == mpi_rank) {
-        /* gcc 11 complains about passing MPI_STATUSES_IGNORE as an MPI_Status
-         * array. See the discussion here:
-         *
-         * https://github.com/pmodels/mpich/issues/5687
-         */
-        H5_GCC_DIAG_OFF("stringop-overflow")
+        H5_WARN_MPI_STATUSES_IGNORE_OFF
         MPI_Waitall(2, req, MPI_STATUSES_IGNORE);
-        H5_GCC_DIAG_ON("stringop-overflow")
+        H5_WARN_MPI_STATUSES_IGNORE_ON
     }
 
     if (NULL != sbuf)
@@ -88,7 +83,7 @@ test_encode_decode(hid_t orig_pl, int mpi_rank, int recv_proc)
 }
 
 void
-test_plist_ed(void)
+test_plist_ed(void H5_ATTR_UNUSED *params)
 {
     hid_t dcpl;   /* dataset create prop. list */
     hid_t dapl;   /* dataset access prop. list */
@@ -451,7 +446,7 @@ test_plist_ed(void)
 }
 
 void
-external_links(void)
+external_links(void H5_ATTR_UNUSED *params)
 {
     hid_t lcpl  = H5I_INVALID_HID; /* link create prop. list */
     hid_t lapl  = H5I_INVALID_HID; /* link access prop. list */

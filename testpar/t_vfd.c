@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -14,7 +14,7 @@
  *      This file is a catchall for parallel VFD tests.
  */
 
-#include "testphdf5.h"
+#include "testpar.h"
 
 #ifdef H5_HAVE_SUBFILING_VFD
 #include "H5FDsubfiling.h"
@@ -477,6 +477,12 @@ setup_vfd_test_file(int file_name_id, char *file_name, int mpi_size, H5FD_mpio_x
             }
 
             /* Assign the IOC fapl as the underlying VPD */
+            if ((pass) && (H5Pclose(subfiling_conf.ioc_fapl_id) == FAIL)) {
+
+                pass         = false;
+                failure_mssg = "Can't close default IOC FAPL.";
+            }
+
             subfiling_conf.ioc_fapl_id = ioc_fapl;
 
             /* Now we can set the SUBFILING fapl before returning. */

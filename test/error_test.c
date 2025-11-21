@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -311,13 +311,6 @@ long_desc_cb(unsigned H5_ATTR_UNUSED n, const H5E_error2_t *err_desc, void *clie
  *
  *-------------------------------------------------------------------------
  */
-/* Disable warning for "format not a string literal" here -QAK */
-/*
- *      This pragma only needs to surround the snprintf() calls with
- *      'full_desc' in the code below, but early (4.4.7, at least) gcc only
- *      allows diagnostic pragmas to be toggled outside of functions.
- */
-H5_GCC_CLANG_DIAG_OFF("format-nonliteral")
 static herr_t
 test_long_desc(void)
 {
@@ -347,10 +340,10 @@ test_long_desc(void)
                 long_desc) < 0)
         TEST_ERROR;
 
-    /* Create the string that should be in the description. Must use snprintf here
-     * because snprintf is _snprintf on Windows
-     */
+    /* Create the string that should be in the description */
+    H5_WARN_FORMAT_NONLITERAL_OFF
     snprintf(full_desc, (size_t)(LONG_DESC_SIZE + 128), format, long_desc);
+    H5_WARN_FORMAT_NONLITERAL_ON
 
     /* Make certain that the description is correct */
     if (H5Ewalk2(H5E_DEFAULT, H5E_WALK_UPWARD, long_desc_cb, full_desc) < 0)
@@ -373,7 +366,6 @@ error:
 
     return -1;
 } /* end test_long_desc() */
-H5_GCC_CLANG_DIAG_ON("format-nonliteral")
 
 /*-------------------------------------------------------------------------
  * Function:    dump_error
@@ -659,7 +651,7 @@ test_append(void)
         TEST_ERROR;
 
     /* Append error stack #2 to error stack #1, and close stack #2 */
-    if (H5Eappend_stack(estack_id1, estack_id2, TRUE) < 0)
+    if (H5Eappend_stack(estack_id1, estack_id2, true) < 0)
         TEST_ERROR;
 
     /* Try to close error stack #2.  Should fail because H5Eappend_stack
@@ -700,7 +692,7 @@ test_pause(void)
     const char *err_msg1 = "Error message #1"; /* Error message #1 for pushing error */
     ssize_t     err_num;                       /* Number of errors on stack */
     hid_t       estack_id1 = H5I_INVALID_HID;  /* Error stack ID */
-    hbool_t     is_paused;                     /* Whether error stack is paused */
+    bool        is_paused;                     /* Whether error stack is paused */
     herr_t      ret;                           /* Generic return value */
 
     /* Push an error */
@@ -718,7 +710,7 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check for bad arguments */
-    is_paused = TRUE;
+    is_paused = true;
     H5E_BEGIN_TRY
     {
         ret = H5Eis_paused(H5I_INVALID_HID, &is_paused);
@@ -728,17 +720,17 @@ test_pause(void)
         TEST_ERROR;
 
     /* Verify that default stack is not paused */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(H5E_DEFAULT, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     /* Verify that application stack is not paused */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(estack_id1, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     /* Check for bad arguments */
@@ -763,10 +755,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused */
-    is_paused = FALSE;
+    is_paused = false;
     if (H5Eis_paused(estack_id1, &is_paused) < 0)
         TEST_ERROR;
-    if (TRUE != is_paused)
+    if (true != is_paused)
         TEST_ERROR;
 
     /* Resume error stack */
@@ -774,10 +766,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(estack_id1, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     /* Check for resuming too many times */
@@ -790,10 +782,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused, after trying to resume too many times */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(estack_id1, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     /* Close error stack */
@@ -805,10 +797,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused */
-    is_paused = FALSE;
+    is_paused = false;
     if (H5Eis_paused(H5E_DEFAULT, &is_paused) < 0)
         TEST_ERROR;
-    if (TRUE != is_paused)
+    if (true != is_paused)
         TEST_ERROR;
 
     /* Resume error stack */
@@ -816,10 +808,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(H5E_DEFAULT, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     /* Check for resuming too many times */
@@ -832,10 +824,10 @@ test_pause(void)
         TEST_ERROR;
 
     /* Check if stack is paused, after trying to resume too many times */
-    is_paused = TRUE;
+    is_paused = true;
     if (H5Eis_paused(H5E_DEFAULT, &is_paused) < 0)
         TEST_ERROR;
-    if (FALSE != is_paused)
+    if (false != is_paused)
         TEST_ERROR;
 
     return 0;

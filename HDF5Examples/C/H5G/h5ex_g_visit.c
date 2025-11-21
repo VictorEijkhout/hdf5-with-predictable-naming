@@ -7,12 +7,18 @@
   example implements the structure described in the User's
   Guide, chapter 4, figure 26.
 
+Note: This example includes older cases from previous versions
+  of HDF5 for historical reference and to illustrate how to
+  migrate older code to newer functions. However, readers are
+  encouraged to avoid using deprecated functions and earlier
+  schemas from those versions.
+
  ************************************************************/
 
 #include "hdf5.h"
 #include <stdio.h>
 
-#define FILE "h5ex_g_visit.h5"
+#define FILENAME "h5ex_g_visit.h5"
 
 /*
  * Operator function to be called by H5Ovisit.
@@ -33,7 +39,7 @@ main(void)
     /*
      * Open file
      */
-    file = H5Fopen(FILE, H5F_ACC_RDONLY, H5P_DEFAULT);
+    file = H5Fopen(FILENAME, H5F_ACC_RDONLY, H5P_DEFAULT);
 
     /*
      * Begin iteration using H5Ovisit

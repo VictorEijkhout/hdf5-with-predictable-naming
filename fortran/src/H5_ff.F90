@@ -26,7 +26,7 @@
 !                                                                             *
 !   This file is part of HDF5.  The full HDF5 copyright notice, including     *
 !   terms governing use, modification, and redistribution, is contained in    *
-!   the COPYING file, which can be found at the root of the source code       *
+!   the LICENSE file, which can be found at the root of the source code       *
 !   distribution tree, or in https://www.hdfgroup.org/licenses.               *
 !   If you do not have access to either file, you may request a copy from     *
 !   help@hdfgroup.org.                                                        *
@@ -56,7 +56,7 @@ MODULE H5LIB
   !
   ! H5F flags declaration
   !
-  INTEGER, PARAMETER :: H5F_FLAGS_LEN = 30
+  INTEGER, PARAMETER :: H5F_FLAGS_LEN = 33
   INTEGER, DIMENSION(1:H5F_FLAGS_LEN) :: H5F_flags
   !
   ! H5generic flags declaration
@@ -144,7 +144,7 @@ MODULE H5LIB
   !
   ! H5T flags declaration
   !
-  INTEGER, PARAMETER :: H5T_FLAGS_LEN = 35
+  INTEGER, PARAMETER :: H5T_FLAGS_LEN = 36
   INTEGER, DIMENSION(1:H5T_FLAGS_LEN) :: H5T_flags
   !
   ! H5VL flags declaration
@@ -287,10 +287,16 @@ CONTAINS
     H5T_NATIVE_B64                = predef_types(18)
     H5T_NATIVE_FLOAT_128          = predef_types(19)
 
-    H5T_IEEE_F32BE = floating_types(1)
-    H5T_IEEE_F32LE = floating_types(2)
-    H5T_IEEE_F64BE = floating_types(3)
-    H5T_IEEE_F64LE = floating_types(4)
+    H5T_IEEE_F32BE       = floating_types(1)
+    H5T_IEEE_F32LE       = floating_types(2)
+    H5T_IEEE_F64BE       = floating_types(3)
+    H5T_IEEE_F64LE       = floating_types(4)
+    H5T_IEEE_F16BE       = floating_types(5)
+    H5T_IEEE_F16LE       = floating_types(6)
+    H5T_FLOAT_BFLOAT16BE = floating_types(7)
+    H5T_FLOAT_BFLOAT16LE = floating_types(8)
+    H5T_FLOAT_F8E4M3     = floating_types(9)
+    H5T_FLOAT_F8E5M2     = floating_types(10)
 
     H5T_STD_I8BE   = integer_types(1)
     H5T_STD_I8LE   = integer_types(2)
@@ -379,6 +385,9 @@ CONTAINS
     H5F_LIBVER_V110_F              = H5F_flags(28)
     H5F_LIBVER_V112_F              = H5F_flags(29)
     H5F_LIBVER_V114_F              = H5F_flags(30)
+    H5F_LIBVER_V200_F              = H5F_flags(31)
+    H5F_ACC_SWMR_READ_F            = H5F_flags(32)
+    H5F_ACC_SWMR_WRITE_F           = H5F_flags(33)
     !
     ! H5generic flags
     !
@@ -704,6 +713,7 @@ CONTAINS
     H5T_ARRAY_F          = H5T_flags(33)
     H5T_DIR_ASCEND_F     = H5T_flags(34)
     H5T_DIR_DESCEND_F    = H5T_flags(35)
+    H5T_COMPLEX_F        = H5T_flags(36)
     !
     ! H5VL flags
     !

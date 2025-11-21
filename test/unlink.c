@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -816,7 +816,7 @@ test_filespace(hid_t fapl)
 
         /* Set buffer to different random numbers each time */
         for (v = 0, tmp_data = data; v < (FILESPACE_DIM0 * FILESPACE_DIM1 * FILESPACE_DIM2); v++)
-            *tmp_data++ = (int)HDrandom();
+            *tmp_data++ = (int)rand();
 
         /* Write the buffer to the dataset */
         if (H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data) < 0)
@@ -2906,7 +2906,7 @@ main(void)
     double rdcc_w0;
 
     /* Set the random # seed */
-    HDsrandom((unsigned)time(NULL));
+    srand((unsigned)time(NULL));
 
     /* Open */
     h5_test_init();

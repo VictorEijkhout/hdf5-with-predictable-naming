@@ -4,7 +4,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -80,7 +80,7 @@ test_file_create()
     H5File *file1 = NULL;
     try {
         // Create file FILE1
-        file1 = new H5File(FILE1, H5F_ACC_EXCL);
+        file1 = new H5File(FILE1, H5F_ACC_TRUNC);
 
         // Try to create the same file with H5F_ACC_TRUNC. This should fail
         // because file1 is the same file and is currently open.
@@ -759,7 +759,7 @@ test_libver_bounds()
 
     /* Run the tests */
     test_libver_bounds_real(H5F_LIBVER_EARLIEST, H5O_VERSION_1, H5F_LIBVER_LATEST, H5O_VERSION_2);
-    test_libver_bounds_real(H5F_LIBVER_LATEST, H5O_VERSION_2, H5F_LIBVER_EARLIEST, H5O_VERSION_2);
+    test_libver_bounds_real(H5F_LIBVER_LATEST, H5O_VERSION_2, H5F_LIBVER_EARLIEST, H5O_VERSION_1);
     PASSED();
 } /* end test_libver_bounds() */
 
@@ -842,13 +842,15 @@ test_file_info()
     SUBTEST("File general information");
 
     hsize_t out_threshold = 0;     // Free space section threshold to get
-    hbool_t out_persist   = FALSE; // Persist free-space read
+    bool    out_persist   = false; // Persist free-space read
     // File space handling strategy
     H5F_fspace_strategy_t out_strategy = H5F_FSPACE_STRATEGY_FSM_AGGR;
 
     try {
-        // Create a file using default properties.
-        H5File tempfile(FILE7, H5F_ACC_TRUNC);
+        // Create a file using the earliest format.
+        FileAccPropList fapl;
+        fapl.setLibverBounds(H5F_LIBVER_EARLIEST, H5F_LIBVER_LATEST);
+        H5File tempfile(FILE7, H5F_ACC_TRUNC, FileCreatPropList::DEFAULT, fapl);
 
         // Get the file's version information.
         H5F_info2_t finfo;
@@ -869,7 +871,7 @@ test_file_info()
         // Verify file space information.
         verify_val(static_cast<long>(out_strategy), static_cast<long>(H5F_FSPACE_STRATEGY_FSM_AGGR),
                    "H5File::getFileInfo", __LINE__, __FILE__);
-        verify_val(out_persist, FALSE, "H5File::getFileInfo", __LINE__, __FILE__);
+        verify_val(out_persist, false, "H5File::getFileInfo", __LINE__, __FILE__);
         verify_val(static_cast<long>(out_threshold), 1, "H5File::getFileInfo", __LINE__, __FILE__);
 
         /* Retrieve file space page size */
@@ -884,7 +886,7 @@ test_file_info()
         fcpl.setIstorek(F2_ISTORE);
 
         hsize_t               threshold = 5;    // Free space section threshold to set
-        hbool_t               persist   = TRUE; // Persist free-space to set
+        bool                  persist   = true; // Persist free-space to set
         H5F_fspace_strategy_t strategy  = H5F_FSPACE_STRATEGY_PAGE;
 
         fcpl.setFileSpaceStrategy(strategy, persist, threshold);
@@ -968,8 +970,10 @@ test_file_info()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_file()
+test_file(void *params)
 {
+    (void)params;
+
     // Output message about test being performed
     MESSAGE(5, ("Testing File I/O Operations\n"));
 
@@ -992,17 +996,18 @@ test_file()
  * Return       none
  *-------------------------------------------------------------------------
  */
-#ifdef __cplusplus
-extern "C"
-#endif
-    void
-    cleanup_file()
+extern "C" void
+cleanup_file(void *params)
 {
-    HDremove(FILE1.c_str());
-    HDremove(FILE2.c_str());
-    HDremove(FILE3.c_str());
-    HDremove(FILE4.c_str());
-    HDremove(FILE5.c_str());
-    HDremove(FILE6.c_str());
-    HDremove(FILE7.c_str());
+    (void)params;
+
+    if (GetTestCleanup()) {
+        HDremove(FILE1.c_str());
+        HDremove(FILE2.c_str());
+        HDremove(FILE3.c_str());
+        HDremove(FILE4.c_str());
+        HDremove(FILE5.c_str());
+        HDremove(FILE6.c_str());
+        HDremove(FILE7.c_str());
+    }
 } // cleanup_file

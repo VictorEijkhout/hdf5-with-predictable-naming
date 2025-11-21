@@ -9,7 +9,7 @@
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
  * terms governing use, modification, and redistribution, is contained in    *
- * the COPYING file, which can be found at the root of the source code       *
+ * the LICENSE file, which can be found at the root of the source code       *
  * distribution tree, or in https://www.hdfgroup.org/licenses.               *
  * If you do not have access to either file, you may request a copy from     *
  * help@hdfgroup.org.                                                        *
@@ -212,11 +212,12 @@ h5tequal_c(hid_t_f *type1_id, hid_t_f *type2_id, int_f *c_flag)
  *               H5T_STRING_F (3)
  *               H5T_BITFIELD_F (4)
  *               H5T_OPAQUE_F (5)
- *               H5T_COMPOUNDF (6)
+ *               H5T_COMPOUND_F (6)
  *               H5T_REFERENCE_F (7)
  *               H5T_ENUM_F (8)
  *               H5T_VLEN_F (9)
  *               H5T_ARRAY_F (10)
+ *               H5T_COMPLEX_F (11)
  * RETURNS
  *  0 on success, -1 on failure
  * SOURCE
@@ -239,17 +240,7 @@ h5tget_class_c(hid_t_f *type_id, int_f *classtype)
         return ret_value;
     }
     *classtype = c_classtype;
-    /*
-      if (c_classtype == H5T_INTEGER)   *classtype = H5T_INTEGER_F;
-      if (c_classtype == H5T_FLOAT)     *classtype = H5T_FLOAT_F;
-      if (c_classtype == H5T_TIME)      *classtype = H5T_TIME_F;
-      if (c_classtype == H5T_STRING)    *classtype = H5T_STRING_F;
-      if (c_classtype == H5T_BITFIELD)  *classtype = H5T_BITFIELD_F;
-      if (c_classtype == H5T_OPAQUE)    *classtype = H5T_OPAQUE_F;
-      if (c_classtype == H5T_COMPOUND)  *classtype = H5T_COMPOUND_F;
-      if (c_classtype == H5T_REFERENCE) *classtype = H5T_REFERENCE_F;
-      if (c_classtype == H5T_ENUM)      *classtype = H5T_ENUM_F;
-    */
+
     return ret_value;
 }
 
@@ -1895,47 +1886,6 @@ h5tcommitted_c(hid_t_f *dtype_id)
     /* Call H5Tcommitted function */
 
     ret_value = (int_f)H5Tcommitted((hid_t)*dtype_id);
-
-    return ret_value;
-}
-
-/****if* H5Tf/h5tdecode_c
- * NAME
- *  h5tdecode_c
- * PURPOSE
- *  Call H5Tdecode
- * INPUTS
- *
- *		buf     - Buffer for the data space object to be decoded.
- * OUTPUTS
- *
- *  obj_id  - Object_id (non-negative)
- *
- * RETURNS
- *  0 on success, -1 on failure
- * SOURCE
- */
-
-int_f
-h5tdecode_c(_fcd buf, hid_t_f *obj_id)
-/******/
-{
-    int            ret_value = -1;
-    unsigned char *c_buf     = NULL; /* Buffer to hold C string */
-    hid_t          c_obj_id;
-
-    /*
-     * Call H5Tdecode function.
-     */
-
-    c_buf = (unsigned char *)buf;
-
-    c_obj_id = H5Tdecode(c_buf);
-    if (c_obj_id < 0)
-        return ret_value;
-
-    *obj_id   = (hid_t_f)c_obj_id;
-    ret_value = 0;
 
     return ret_value;
 }
